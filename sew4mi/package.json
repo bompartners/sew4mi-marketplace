@@ -7,8 +7,12 @@
     "build": "turbo build",
     "build:web": "turbo build --filter=web",
     "test": "turbo test",
+    "test:e2e": "playwright test",
+    "test:coverage": "turbo test --coverage",
     "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
     "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\"",
     "check-env": "node scripts/validate-env.js",
     "clean": "turbo clean && rm -rf node_modules",
     "prepare": "husky"

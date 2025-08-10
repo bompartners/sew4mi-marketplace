@@ -1,20 +1,50 @@
 version: 2
 updates:
-  # Enable version updates for npm
+  # Enable version updates for npm (pnpm)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
-    reviewers:
-      - "bompartners"
-    assignees:
-      - "bompartners"
     commit-message:
-      prefix: "chore"
+      prefix: "deps"
       include: "scope"
+    labels:
+      - "dependencies"
+      - "automated"
+    ignore:
+      # Ignore major version updates for these packages to avoid breaking changes
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "vitest*"
+          - "@vitest/*"
+          - "playwright*"
+          - "@playwright/*"
+      linting:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+          - "prettier*"
+      build-tools:
+        patterns:
+          - "turbo*"
+          - "typescript*"
+          - "@types/*"
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -22,12 +52,12 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "09:00"
+      time: "10:00"
+      timezone: "UTC"
     open-pull-requests-limit: 5
-    reviewers:
-      - "bompartners"
-    assignees:
-      - "bompartners"
     commit-message:
       prefix: "ci"
       include: "scope"
+    labels:
+      - "github-actions"
+      - "automated"
