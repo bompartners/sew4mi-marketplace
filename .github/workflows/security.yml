@@ -10,6 +10,10 @@ on:
     - cron: '0 0 * * 0'
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: sew4mi
+
 jobs:
   dependency-security:
     name: Dependency Security Scan
@@ -30,6 +34,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -38,9 +43,7 @@ jobs:
         run: pnpm audit --audit-level=moderate
 
       - name: Security audit with npm audit
-        run: |
-          cd sew4mi
-          npm audit --audit-level=moderate
+        run: npm audit --audit-level=moderate
 
   secret-scanning:
     name: Secret Scanning
@@ -55,10 +58,11 @@ jobs:
 
       - name: Run TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
+        if: github.event_name == 'pull_request'
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          base: ${{ github.event.pull_request.base.sha }}
+          head: ${{ github.event.pull_request.head.sha }}
           extra_args: --debug --only-verified
 
   codeql-analysis:
@@ -112,6 +116,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

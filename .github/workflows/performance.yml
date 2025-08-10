@@ -30,6 +30,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -40,13 +41,13 @@ jobs:
       - name: Analyze bundle size
         uses: vercel/next-bundle-analyzer@v1
         with:
-          working-directory: sew4mi/apps/web
+          working-directory: apps/web
 
       - name: Upload bundle analysis
         uses: actions/upload-artifact@v3
         with:
           name: bundle-analysis
-          path: sew4mi/apps/web/.next/analyze/
+          path: apps/web/.next/analyze/
 
   lighthouse-desktop:
     name: Lighthouse (Desktop)
@@ -67,15 +68,16 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Create .env.local
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
-          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> apps/web/.env.local
 
       - name: Build application
         run: pnpm build:web
@@ -108,15 +110,16 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Create .env.local
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
-          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> apps/web/.env.local
 
       - name: Build application
         run: pnpm build:web
@@ -164,6 +167,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -173,9 +177,9 @@ jobs:
 
       - name: Create .env.local
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
-          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> apps/web/.env.local
 
       - name: Start application
         run: |
@@ -255,6 +259,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -263,13 +268,13 @@ jobs:
         run: |
           # Get current bundle size
           pnpm build:web
-          CURRENT_SIZE=$(du -sb sew4mi/apps/web/.next | cut -f1)
+          CURRENT_SIZE=$(du -sb apps/web/.next | cut -f1)
           
           # Get main branch bundle size (stored in cache or calculated)
           git checkout main
           pnpm install --frozen-lockfile
           pnpm build:web
-          MAIN_SIZE=$(du -sb sew4mi/apps/web/.next | cut -f1)
+          MAIN_SIZE=$(du -sb apps/web/.next | cut -f1)
           
           # Calculate difference
           DIFF=$((CURRENT_SIZE - MAIN_SIZE))

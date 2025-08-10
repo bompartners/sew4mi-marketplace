@@ -52,6 +52,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -94,6 +95,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -101,7 +103,7 @@ jobs:
       - name: Create build artifacts
         run: |
           pnpm build
-          cd sew4mi/apps/web
+          cd apps/web
           tar -czf ../../../sew4mi-web-${{ needs.validate-release.outputs.version }}.tar.gz .next/ public/ package.json
 
       - name: Generate changelog
@@ -165,6 +167,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

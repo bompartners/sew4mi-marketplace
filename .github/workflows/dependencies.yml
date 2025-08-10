@@ -28,6 +28,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          cache-dependency-path: sew4mi/pnpm-lock.yaml
 
       - name: Update dependencies
         run: |
