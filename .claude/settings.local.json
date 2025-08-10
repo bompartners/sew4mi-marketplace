@@ -61,7 +61,12 @@
       "Bash(gh:*)",
       "Bash(git branch:*)",
       "Bash(touch:*)",
-      "Bash(pnpm format:check:*)"
+      "Bash(pnpm format:check:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm check-env:*)",
+      "Bash(npx next:*)",
+      "Bash(pnpm format:*)",
+      "Bash(pnpm typecheck:*)"
     ],
     "deny": []
   }

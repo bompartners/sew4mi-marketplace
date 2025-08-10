@@ -10,14 +10,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json'],
-      exclude: [
-        'node_modules/',
-        '.next/',
-        'tests/',
-        '*.config.ts',
-        '*.config.js',
-        'coverage/',
-      ],
+      exclude: ['node_modules/', '.next/', 'tests/', '*.config.ts', '*.config.js', 'coverage/'],
       thresholds: {
         statements: 60,
         branches: 50,

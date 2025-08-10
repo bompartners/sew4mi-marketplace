@@ -5,7 +5,7 @@ export const UserSchema = z.object({
   email: z.string().email(),
   role: z.enum(['customer', 'tailor', 'admin']),
   createdAt: z.date(),
-  updatedAt: z.date()
+  updatedAt: z.date(),
 });
 
 export const OrderSchema = z.object({
@@ -16,7 +16,7 @@ export const OrderSchema = z.object({
   totalAmount: z.number().positive(),
   escrowAmount: z.number().positive(),
   createdAt: z.date(),
-  updatedAt: z.date()
+  updatedAt: z.date(),
 });
 
 export type UserInput = z.infer<typeof UserSchema>;

@@ -3,6 +3,7 @@
 ## Production Setup Checklist
 
 ### 1. GitHub Repository Setup ✅
+
 - [x] Main/develop branch structure configured
 - [x] Branch protection rules applied
 - [x] GitHub Actions CI/CD pipeline
@@ -34,6 +35,7 @@ CODECOV_TOKEN=<your-codecov-token>  # Optional: Code coverage reports
 Set these in Vercel dashboard (Project Settings -> Environment Variables):
 
 #### Required Production Variables
+
 ```bash
 # Database
 DATABASE_URL=<supabase-connection-string>
@@ -41,7 +43,7 @@ NEXT_PUBLIC_SUPABASE_URL=<supabase-project-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
 
-# Authentication  
+# Authentication
 JWT_SECRET=<random-256-bit-key>
 NEXTAUTH_URL=<your-production-domain>
 
@@ -70,6 +72,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=<google-analytics-id>
 ```
 
 #### Optional Production Variables
+
 ```bash
 # MTN Mobile Money (if used)
 MTN_MOMO_API_KEY=<mtn-momo-api-key>
@@ -84,10 +87,11 @@ OPENAI_ORGANIZATION_ID=<openai-org-id>
 ### 4. Vercel Project Setup
 
 1. **Connect Repository:**
+
    ```bash
    # Install Vercel CLI
    npm i -g vercel@latest
-   
+
    # Login and link project
    vercel login
    vercel link
@@ -122,16 +126,19 @@ OPENAI_ORGANIZATION_ID=<openai-org-id>
 ### 6. External Service Configuration
 
 #### WhatsApp Business API
+
 1. Meta Business Account setup
 2. WhatsApp Business Account verification
 3. Webhook endpoint: `https://sew4mi.com/api/webhooks/whatsapp`
 
 #### Hubtel Payment Gateway
+
 1. Merchant account setup
 2. API credentials generation
 3. Webhook endpoint: `https://sew4mi.com/api/webhooks/payment`
 
 #### Google Maps Platform
+
 1. Enable Maps JavaScript API
 2. Enable Places API
 3. Enable Geocoding API
@@ -140,11 +147,13 @@ OPENAI_ORGANIZATION_ID=<openai-org-id>
 ### 7. Monitoring & Analytics Setup
 
 #### Sentry (Error Tracking)
+
 1. Create Sentry project
 2. Configure both client and server DSNs
 3. Set up release tracking
 
 #### Google Analytics
+
 1. Create GA4 property
 2. Configure enhanced ecommerce tracking
 3. Set up conversion goals
@@ -162,12 +171,13 @@ CNAME api.sew4mi.com      sew4mi.com
 
 1. **Pre-deployment Checklist:**
    - [ ] All environment variables set
-   - [ ] Database migrations applied  
+   - [ ] Database migrations applied
    - [ ] External services configured
    - [ ] DNS records pointing to Vercel
    - [ ] SSL certificates issued
 
 2. **Deploy to Production:**
+
    ```bash
    # Push to main branch triggers automatic deployment
    git checkout main

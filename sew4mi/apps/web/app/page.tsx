@@ -25,11 +25,11 @@ export default function Home() {
             Connect with Ghana's
             <span className="block text-yellow-600">Finest Tailors</span>
           </h2>
-          
+
           <p className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
-            Sew4Mi bridges the gap between you and skilled Ghanaian tailors. 
-            Get custom clothing made with traditional craftsmanship, modern convenience, 
-            and secure payments through mobile money.
+            Sew4Mi bridges the gap between you and skilled Ghanaian tailors. Get custom clothing
+            made with traditional craftsmanship, modern convenience, and secure payments through
+            mobile money.
           </p>
 
           {/* Action Buttons */}
@@ -89,9 +89,7 @@ export default function Home() {
           <p className="text-gray-400">
             Connecting Ghana's tailoring heritage with modern technology
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Built with ❤️ for Ghana's creative community
-          </p>
+          <p className="text-sm text-gray-500 mt-2">Built with ❤️ for Ghana's creative community</p>
         </div>
       </footer>
     </div>

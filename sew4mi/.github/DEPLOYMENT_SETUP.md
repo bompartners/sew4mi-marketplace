@@ -8,19 +8,19 @@ Configure these secrets in your GitHub repository settings (`Settings` → `Secr
 
 ### Vercel Deployment Secrets
 
-| Secret Name | Description | How to Get |
-|------------|-------------|------------|
-| `VERCEL_TOKEN` | Vercel API token for deployments | 1. Go to [Vercel Dashboard](https://vercel.com/account/tokens)<br>2. Click "Create Token"<br>3. Name: "GitHub Actions"<br>4. Scope: Full Account<br>5. Copy the generated token |
-| `VERCEL_ORG_ID` | Your Vercel organization/team ID | 1. Run `vercel link` in your project<br>2. Check `.vercel/project.json`<br>3. Copy the `orgId` value |
-| `VERCEL_PROJECT_ID` | Your Vercel project ID | 1. Run `vercel link` in your project<br>2. Check `.vercel/project.json`<br>3. Copy the `projectId` value |
+| Secret Name         | Description                      | How to Get                                                                                                                                                                      |
+| ------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VERCEL_TOKEN`      | Vercel API token for deployments | 1. Go to [Vercel Dashboard](https://vercel.com/account/tokens)<br>2. Click "Create Token"<br>3. Name: "GitHub Actions"<br>4. Scope: Full Account<br>5. Copy the generated token |
+| `VERCEL_ORG_ID`     | Your Vercel organization/team ID | 1. Run `vercel link` in your project<br>2. Check `.vercel/project.json`<br>3. Copy the `orgId` value                                                                            |
+| `VERCEL_PROJECT_ID` | Your Vercel project ID           | 1. Run `vercel link` in your project<br>2. Check `.vercel/project.json`<br>3. Copy the `projectId` value                                                                        |
 
 ### Optional Security & Monitoring Secrets
 
-| Secret Name | Description | Required | How to Get |
-|------------|-------------|----------|------------|
-| `CODECOV_TOKEN` | Code coverage reporting | No | 1. Sign up at [Codecov.io](https://codecov.io)<br>2. Connect your repository<br>3. Copy the upload token |
-| `TURBO_TOKEN` | Turbo Remote Cache token | No | 1. Sign up at [Turbo](https://turbo.build)<br>2. Create a team<br>3. Generate API token |
-| `TURBO_TEAM` | Turbo team name | No | Your Turbo team slug |
+| Secret Name     | Description              | Required | How to Get                                                                                               |
+| --------------- | ------------------------ | -------- | -------------------------------------------------------------------------------------------------------- |
+| `CODECOV_TOKEN` | Code coverage reporting  | No       | 1. Sign up at [Codecov.io](https://codecov.io)<br>2. Connect your repository<br>3. Copy the upload token |
+| `TURBO_TOKEN`   | Turbo Remote Cache token | No       | 1. Sign up at [Turbo](https://turbo.build)<br>2. Create a team<br>3. Generate API token                  |
+| `TURBO_TEAM`    | Turbo team name          | No       | Your Turbo team slug                                                                                     |
 
 ## Setup Instructions
 
@@ -47,6 +47,7 @@ cat .vercel/project.json
 Create these files with your environment variables:
 
 #### `apps/web/.env.local` (Development)
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -59,7 +60,7 @@ NEXT_TELEMETRY_DISABLED=1
 Configure in Vercel Dashboard → Project Settings → Environment Variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` 
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `DATABASE_URL`
 - `NEXT_TELEMETRY_DISABLED=1`
 
@@ -102,14 +103,17 @@ Configure in Vercel Dashboard → Project Settings → Environment Variables:
 ### Common Issues
 
 #### ❌ Vercel deployment fails with "Project not found"
+
 - **Cause**: Incorrect `VERCEL_PROJECT_ID` or `VERCEL_ORG_ID`
 - **Solution**: Re-run `vercel link` and update secrets
 
 #### ❌ Tests fail on CI but pass locally
+
 - **Cause**: Environment differences or missing env vars
 - **Solution**: Check environment validation step logs
 
 #### ❌ Build artifacts not found in E2E tests
+
 - **Cause**: Build stage failed or artifacts not uploaded properly
 - **Solution**: Check build stage logs and artifact paths
 
@@ -132,6 +136,7 @@ Configure in Vercel Dashboard → Project Settings → Environment Variables:
 ## Monitoring & Alerts
 
 The pipeline includes:
+
 - Build status notifications
 - Security vulnerability alerts
 - Dependency update notifications via Dependabot
