@@ -67,7 +67,8 @@
       "Bash(npx next:*)",
       "Bash(pnpm format:*)",
       "Bash(pnpm typecheck:*)",
-      "Bash(pnpm audit:*)"
+      "Bash(pnpm audit:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
