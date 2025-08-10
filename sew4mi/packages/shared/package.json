@@ -1,0 +1,19 @@
+{
+  "name": "@sew4mi/shared",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "eslint": "^9",
+    "@sew4mi/config": "workspace:*"
+  }
+}
