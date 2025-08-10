@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sew4Mi External Services Progress Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8fafc;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .stat-card h3 {
+            color: #1e293b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .progress-section {
+            padding: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .service-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .service-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+        }
+        
+        .service-header {
+            padding: 20px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .service-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-not-started {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .status-in-progress {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .status-completed {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+        
+        .service-body {
+            padding: 20px;
+        }
+        
+        .service-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            text-align: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+        }
+        
+        .info-label {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+        
+        .checklist {
+            margin-top: 15px;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.9rem;
+        }
+        
+        .checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .checkbox.checked {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: white;
+        }
+        
+        .urgency-high { border-left-color: #dc2626; }
+        .urgency-medium { border-left-color: #d97706; }
+        .urgency-low { border-left-color: #16a34a; }
+        
+        .timeline {
+            background: #f8fafc;
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 8px;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+        
+        .timeline-date {
+            font-weight: 600;
+            color: #1e40af;
+            min-width: 80px;
+        }
+        
+        .timeline-task {
+            flex: 1;
+            color: #374151;
+        }
+        
+        .timeline-owner {
+            font-size: 0.8rem;
+            color: #6b7280;
+            background: #f3f4f6;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .update-time {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9rem;
+            padding: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .service-info {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🇬🇭 Sew4Mi External Services</h1>
+            <p>Setup Progress Dashboard - Epic 0 Tracking</p>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Overall Progress</h3>
+                <div class="stat-value">0/6</div>
+                <div class="stat-label">Services Ready</div>
+            </div>
+            <div class="stat-card">
+                <h3>Days Remaining</h3>
+                <div class="stat-value" style="color: #dc2626;">7</div>
+                <div class="stat-label">Until Dev Start</div>
+            </div>
+            <div class="stat-card">
+                <h3>Budget Approved</h3>
+                <div class="stat-value" style="color: #d97706;">$0</div>
+                <div class="stat-label">of $320/month</div>
+            </div>
+            <div class="stat-card">
+                <h3>Critical Blockers</h3>
+                <div class="stat-value" style="color: #dc2626;">6</div>
+                <div class="stat-label">Need Attention</div>
+            </div>
+        </div>
+        
+        <div class="progress-section">
+            <h2 class="section-title">
+                🚨 Service Setup Progress
+            </h2>
+            
+            <div class="service-grid">
+                <div class="service-card urgency-high">
+                    <div class="service-header">
+                        <div class="service-title">📱 WhatsApp Business API</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">Business Admin</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">HIGH</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">3 days</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Target Date</span>
+                                <span class="info-value">Aug 15</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create Meta Business Account</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create WhatsApp Business App</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Submit 5 message templates</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Configure webhook URL</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Complete verification</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card urgency-high">
+                    <div class="service-header">
+                        <div class="service-title">💳 Hubtel Payments</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">Finance Lead</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">CRITICAL</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">7 days</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Target Date</span>
+                                <span class="info-value">Aug 13</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Register Hubtel account</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Upload KYC documents</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Complete verification</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Get production credentials</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Configure webhooks</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card urgency-medium">
+                    <div class="service-header">
+                        <div class="service-title">🤖 OpenAI Whisper API</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">Tech Lead</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">HIGH</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">1 day</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Budget</span>
+                                <span class="info-value">$100/month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create OpenAI account</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Add payment method</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Generate API key</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Test with Ghana audio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card urgency-medium">
+                    <div class="service-header">
+                        <div class="service-title">🗺️ Google Maps API</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">Tech Lead</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">MEDIUM</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">1 day</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Budget</span>
+                                <span class="info-value">$200/month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create GCP project</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Enable Maps APIs</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create restricted API key</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Enable billing</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card urgency-low">
+                    <div class="service-header">
+                        <div class="service-title">📧 Resend Email</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">DevOps Lead</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">MEDIUM</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">2 days</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Budget</span>
+                                <span class="info-value">$20/month</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create Resend account</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Add domain sew4mi.com</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Configure DNS records</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Verify domain ownership</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="service-card urgency-low">
+                    <div class="service-header">
+                        <div class="service-title">⚙️ Development Environment</div>
+                        <div class="status-badge status-not-started">Not Started</div>
+                    </div>
+                    <div class="service-body">
+                        <div class="service-info">
+                            <div class="info-item">
+                                <span class="info-label">Owner</span>
+                                <span class="info-value">DevOps Lead</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Priority</span>
+                                <span class="info-value">HIGH</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Est. Days</span>
+                                <span class="info-value">1 day</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Depends On</span>
+                                <span class="info-value">API Keys</span>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                        
+                        <div class="checklist">
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Create .env.example template</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Set Vercel environment vars</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Configure GitHub Secrets</span>
+                            </div>
+                            <div class="checklist-item">
+                                <div class="checkbox"></div>
+                                <span>Test all integrations</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timeline">
+            <h3 class="section-title" style="margin-bottom: 20px;">📅 Critical Timeline</h3>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 8</div>
+                <div class="timeline-task">Start WhatsApp Business & Hubtel applications</div>
+                <div class="timeline-owner">Business Admin, Finance</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 8</div>
+                <div class="timeline-task">Create OpenAI & Google Cloud accounts</div>
+                <div class="timeline-owner">Tech Lead</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 9</div>
+                <div class="timeline-task">Complete technical service setups</div>
+                <div class="timeline-owner">Tech Lead</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 10</div>
+                <div class="timeline-task">Submit all documentation</div>
+                <div class="timeline-owner">All Teams</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 13</div>
+                <div class="timeline-task">🎯 Target: Hubtel approval received</div>
+                <div class="timeline-owner">Finance</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-date">Aug 15</div>
+                <div class="timeline-task">🎯 All services operational</div>
+                <div class="timeline-owner">All Teams</div>
+            </div>
+            <div class="timeline-item" style="background: #f0fdf4; border-left: 4px solid #16a34a;">
+                <div class="timeline-date">Aug 16</div>
+                <div class="timeline-task">🚀 DEVELOPMENT CAN BEGIN</div>
+                <div class="timeline-owner">Development Team</div>
+            </div>
+        </div>
+        
+        <div class="update-time">
+            Last Updated: August 8, 2025 at 2:00 PM GMT | 
+            <a href="mailto:pm@sew4mi.com">Report Issues</a> | 
+            <a href="/docs/external-services-tracker.md">Detailed Tracker</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh every 5 minutes
+        setTimeout(() => {
+            window.location.reload();
+        }, 300000);
+        
+        // Mock progress update (replace with real API)
+        function updateProgress() {
+            // This would connect to your actual tracking system
+            console.log('Checking for progress updates...');
+        }
+        
+        // Check for updates every minute
+        setInterval(updateProgress, 60000);
+        
+        // Add click handlers for interactive elements
+        document.querySelectorAll('.checkbox').forEach(checkbox => {
+            checkbox.addEventListener('click', function() {
+                this.classList.toggle('checked');
+                if (this.classList.contains('checked')) {
+                    this.innerHTML = '✓';
+                } else {
+                    this.innerHTML = '';
+                }
+                updateProgressBars();
+            });
+        });
+        
+        function updateProgressBars() {
+            document.querySelectorAll('.service-card').forEach(card => {
+                const checkboxes = card.querySelectorAll('.checkbox');
+                const checkedBoxes = card.querySelectorAll('.checkbox.checked');
+                const progress = checkedBoxes.length / checkboxes.length * 100;
+                
+                const progressBar = card.querySelector('.progress-fill');
+                progressBar.style.width = progress + '%';
+                
+                // Update status badge
+                const statusBadge = card.querySelector('.status-badge');
+                if (progress === 100) {
+                    statusBadge.className = 'status-badge status-completed';
+                    statusBadge.textContent = 'Completed';
+                } else if (progress > 0) {
+                    statusBadge.className = 'status-badge status-in-progress';
+                    statusBadge.textContent = 'In Progress';
+                } else {
+                    statusBadge.className = 'status-badge status-not-started';
+                    statusBadge.textContent = 'Not Started';
+                }
+            });
+            
+            updateOverallStats();
+        }
+        
+        function updateOverallStats() {
+            const allServices = document.querySelectorAll('.service-card');
+            const completedServices = document.querySelectorAll('.status-completed').length;
+            
+            // Update overall progress
+            const overallStat = document.querySelector('.stat-value');
+            overallStat.textContent = `${completedServices}/6`;
+            
+            // Update progress color based on completion
+            if (completedServices === 6) {
+                overallStat.style.color = '#16a34a';
+            } else if (completedServices > 2) {
+                overallStat.style.color = '#d97706';
+            } else {
+                overallStat.style.color = '#dc2626';
+            }
+        }
+    </script>
+</body>
+</html>

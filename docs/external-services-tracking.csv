@@ -1,0 +1,7 @@
+Service,Owner,Status,Account Created,Credentials Obtained,Sandbox Access,Production Ready,Start Date,Target Date,Actual Date,Blockers,Notes,Contact Info
+WhatsApp Business,Business Admin,Not Started,FALSE,FALSE,FALSE,FALSE,,2025-08-15,,,"Meta verification takes 2-3 days",Meta Business Support
+MTN Mobile Money,Finance Lead,Not Started,FALSE,FALSE,FALSE,FALSE,,2025-08-13,,,"Via Hubtel - KYC required",Hubtel Merchant Support
+Vodafone Cash,Finance Lead,Not Started,FALSE,FALSE,FALSE,FALSE,,2025-08-13,,,"Via Hubtel - IP whitelisting needed",Hubtel Merchant Support
+OpenAI Whisper,Tech Lead,Not Started,FALSE,FALSE,N/A,FALSE,,2025-08-09,,,"Set $100 monthly limit",OpenAI Support
+Google Maps API,Tech Lead,Not Started,FALSE,FALSE,N/A,FALSE,,2025-08-09,,,"Enable billing for production",Google Cloud Support
+Resend Email,DevOps Lead,Not Started,FALSE,FALSE,N/A,FALSE,,2025-08-10,,,"DNS propagation 24 hours",Resend Support
