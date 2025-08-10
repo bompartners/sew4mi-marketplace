@@ -1,0 +1,237 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  validate-release:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run all checks
+        run: |
+          pnpm lint
+          pnpm test:coverage
+          pnpm build
+
+      - name: Validate version format
+        run: |
+          if [[ ! "${{ steps.version.outputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format: ${{ steps.version.outputs.version }}"
+            echo "Expected format: v1.2.3"
+            exit 1
+          fi
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: validate-release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create build artifacts
+        run: |
+          pnpm build
+          cd sew4mi/apps/web
+          tar -czf ../../../sew4mi-web-${{ needs.validate-release.outputs.version }}.tar.gz .next/ public/ package.json
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "## What's Changed" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            # Get commits since last tag
+            git log --pretty=format:"- %s (%an)" $PREVIOUS_TAG..HEAD >> CHANGELOG.md
+            
+            echo "" >> CHANGELOG.md
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...${{ needs.validate-release.outputs.tag }}" >> CHANGELOG.md
+          else
+            echo "## Initial Release" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            echo "This is the initial release of Sew4Mi - a digital marketplace connecting customers with skilled Ghanaian tailors." >> CHANGELOG.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate-release.outputs.tag }}
+          name: Release ${{ needs.validate-release.outputs.version }}
+          body_path: CHANGELOG.md
+          files: |
+            sew4mi-web-${{ needs.validate-release.outputs.version }}.tar.gz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [validate-release, create-release]
+    environment:
+      name: production
+      url: https://sew4mi.com
+
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          deployment_url=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "deployment_url=$deployment_url" >> $GITHUB_OUTPUT
+
+      - name: Update release with deployment URL
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate-release.outputs.tag }}
+          append_body: true
+          body: |
+            
+            ## Deployment
+            - 🚀 **Production URL**: ${{ steps.deploy.outputs.deployment_url }}
+            - 📦 **Version**: ${{ needs.validate-release.outputs.version }}
+            - 🗓️ **Released**: ${{ github.event.head_commit.timestamp }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify-stakeholders:
+    name: Notify Stakeholders
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [validate-release, deploy-production]
+    if: always()
+
+    steps:
+      - name: Send deployment notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ needs.deploy-production.result }}' === 'success' ? '✅ SUCCESS' : '❌ FAILED';
+            const version = '${{ needs.validate-release.outputs.version }}';
+            const deploymentUrl = '${{ needs.deploy-production.outputs.deployment_url }}' || 'Not available';
+            
+            const body = `
+            ## Release Deployment ${status}
+            
+            **Version:** ${version}
+            **Status:** ${status}
+            **Production URL:** ${deploymentUrl}
+            **Workflow:** https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+            
+            ${status.includes('SUCCESS') ? 'The release has been successfully deployed to production.' : 'The release deployment encountered issues. Please check the workflow logs.'}
+            `;
+            
+            // Create issue for failed deployments
+            if (!status.includes('SUCCESS')) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Release ${version} deployment failed`,
+                body: body,
+                labels: ['bug', 'deployment', 'high-priority']
+              });
+            }

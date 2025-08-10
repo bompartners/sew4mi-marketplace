@@ -12,8 +12,12 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@eslint/js": "^9.33.0",
+    "@sew4mi/config": "workspace:*",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
     "eslint": "^9",
-    "@sew4mi/config": "workspace:*"
+    "typescript": "^5"
   }
 }

@@ -1,18 +1,38 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import js from '@eslint/js';
+import typescript from '@typescript-eslint/eslint-plugin';
+import typescriptParser from '@typescript-eslint/parser';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
-const eslintConfig = [
-  ...compat.config({
-    extends: ["@sew4mi/config"],
-  }),
+export default [
+  js.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+    },
+    rules: {
+      ...typescript.configs.recommended.rules,
+      '@typescript-eslint/no-unused-vars': ['error', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_'
+      }],
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'prefer-const': 'error',
+      'no-var': 'error',
+    },
+  },
+  {
+    ignores: ['node_modules/', '.next/', 'dist/', 'build/', 'coverage/'],
+  },
 ];
-
-export default eslintConfig;

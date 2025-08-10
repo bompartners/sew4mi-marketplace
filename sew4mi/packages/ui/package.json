@@ -8,18 +8,22 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@eslint/js": "^9.33.0",
+    "@sew4mi/config": "workspace:*",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/eslint-plugin": "^8.39.0",
+    "@typescript-eslint/parser": "^8.39.0",
     "eslint": "^9",
-    "@sew4mi/config": "workspace:*"
+    "typescript": "^5"
   },
   "peerDependencies": {
     "react": "^19.0.0",

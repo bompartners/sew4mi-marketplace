@@ -1,0 +1,290 @@
+name: Performance Monitoring
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  bundle-analysis:
+    name: Bundle Size Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm build:web
+
+      - name: Analyze bundle size
+        uses: vercel/next-bundle-analyzer@v1
+        with:
+          working-directory: sew4mi/apps/web
+
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v3
+        with:
+          name: bundle-analysis
+          path: sew4mi/apps/web/.next/analyze/
+
+  lighthouse-desktop:
+    name: Lighthouse (Desktop)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env.local
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+
+      - name: Build application
+        run: pnpm build:web
+
+      - name: Run Lighthouse CI (Desktop)
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
+  lighthouse-mobile:
+    name: Lighthouse (Mobile)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create .env.local
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+
+      - name: Build application
+        run: pnpm build:web
+
+      - name: Run Lighthouse CI (Mobile)
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          LIGHTHOUSE_CONFIG: |
+            {
+              "settings": {
+                "formFactor": "mobile",
+                "throttling": {
+                  "rttMs": 150,
+                  "throughputKbps": 1638.4,
+                  "requestLatencyMs": 562.5,
+                  "downloadThroughputKbps": 1474.56,
+                  "uploadThroughputKbps": 675,
+                  "cpuSlowdownMultiplier": 4
+                }
+              }
+            }
+
+  web-vitals:
+    name: Web Vitals Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium
+
+      - name: Create .env.local
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=https://demo.supabase.co" >> sew4mi/apps/web/.env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=demo-key" >> sew4mi/apps/web/.env.local
+          echo "DATABASE_URL=postgresql://demo:demo@localhost:5432/demo" >> sew4mi/apps/web/.env.local
+
+      - name: Start application
+        run: |
+          pnpm dev:web &
+          sleep 30
+        env:
+          CI: true
+
+      - name: Measure Web Vitals
+        run: |
+          cat > measure-vitals.js << 'EOF'
+          const { chromium } = require('@playwright/test');
+          
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            
+            // Capture Web Vitals
+            const vitals = [];
+            
+            await page.evaluateOnNewDocument(() => {
+              new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                  if (entry.entryType === 'navigation') {
+                    window.navigationEntry = entry;
+                  } else if (['largest-contentful-paint', 'first-input', 'layout-shift'].includes(entry.entryType)) {
+                    window.webVitals = window.webVitals || [];
+                    window.webVitals.push({
+                      name: entry.name || entry.entryType,
+                      value: entry.value || entry.startTime,
+                      timestamp: Date.now()
+                    });
+                  }
+                }
+              }).observe({ entryTypes: ['navigation', 'largest-contentful-paint', 'first-input', 'layout-shift'] });
+            });
+            
+            await page.goto('http://localhost:3000');
+            await page.waitForLoadState('networkidle');
+            await page.waitForTimeout(5000);
+            
+            const vitalsData = await page.evaluate(() => {
+              return {
+                webVitals: window.webVitals || [],
+                navigation: window.navigationEntry
+              };
+            });
+            
+            console.log('Web Vitals Data:', JSON.stringify(vitalsData, null, 2));
+            
+            await browser.close();
+          })();
+          EOF
+          
+          node measure-vitals.js
+
+      - name: Stop application
+        run: pkill -f "next-server" || true
+
+  performance-regression:
+    name: Performance Regression Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check bundle size against main
+        run: |
+          # Get current bundle size
+          pnpm build:web
+          CURRENT_SIZE=$(du -sb sew4mi/apps/web/.next | cut -f1)
+          
+          # Get main branch bundle size (stored in cache or calculated)
+          git checkout main
+          pnpm install --frozen-lockfile
+          pnpm build:web
+          MAIN_SIZE=$(du -sb sew4mi/apps/web/.next | cut -f1)
+          
+          # Calculate difference
+          DIFF=$((CURRENT_SIZE - MAIN_SIZE))
+          PERCENT_DIFF=$((DIFF * 100 / MAIN_SIZE))
+          
+          echo "Current bundle size: $CURRENT_SIZE bytes"
+          echo "Main bundle size: $MAIN_SIZE bytes"
+          echo "Difference: $DIFF bytes ($PERCENT_DIFF%)"
+          
+          # Fail if bundle size increased by more than 10%
+          if [ $PERCENT_DIFF -gt 10 ]; then
+            echo "❌ Bundle size increased by $PERCENT_DIFF%, which exceeds the 10% threshold"
+            exit 1
+          elif [ $PERCENT_DIFF -gt 5 ]; then
+            echo "⚠️ Bundle size increased by $PERCENT_DIFF%, consider optimizing"
+          else
+            echo "✅ Bundle size change is within acceptable limits"
+          fi
