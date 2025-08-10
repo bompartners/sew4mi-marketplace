@@ -1,0 +1,19 @@
+# Global ownership
+* @bompartners
+
+# Core application code
+/sew4mi/apps/ @bompartners
+/sew4mi/packages/ @bompartners
+
+# Documentation
+/docs/ @bompartners
+*.md @bompartners
+
+# Configuration files
+*.json @bompartners
+*.yaml @bompartners
+*.yml @bompartners
+
+# CI/CD and deployment
+/.github/ @bompartners
+/vercel.json @bompartners
