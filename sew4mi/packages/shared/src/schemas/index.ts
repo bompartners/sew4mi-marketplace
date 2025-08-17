@@ -21,3 +21,24 @@ export const OrderSchema = z.object({
 
 export type UserInput = z.infer<typeof UserSchema>;
 export type OrderInput = z.infer<typeof OrderSchema>;
+
+// Re-export auth schemas to make them available through the main schemas export
+export {
+  phoneSchema,
+  emailSchema,
+  passwordSchema,
+  registrationSchema,
+  loginSchema,
+  otpSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  profileUpdateSchema,
+  tailorProfileSchema,
+  type RegistrationInput,
+  type LoginInput,
+  type OTPInput,
+  type ForgotPasswordInput,
+  type ResetPasswordInput,
+  type ProfileUpdateInput,
+  type TailorProfileInput,
+} from './auth.schema';

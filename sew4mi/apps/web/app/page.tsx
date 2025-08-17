@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-yellow-100">
@@ -11,9 +13,14 @@ export default function Home() {
               </div>
               <h1 className="text-2xl font-bold text-gray-800">Sew4Mi</h1>
             </div>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-              Get Started
-            </button>
+            <div className="flex space-x-2">
+              <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                Login
+              </Link>
+              <Link href="/register" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                Sign Up
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -34,12 +41,12 @@ export default function Home() {
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors">
+            <Link href="/register?role=customer" className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors text-center">
               Find a Tailor
-            </button>
-            <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors">
+            </Link>
+            <Link href="/register?role=tailor" className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg text-lg font-medium transition-colors text-center">
               Join as Tailor
-            </button>
+            </Link>
           </div>
 
           {/* Features Grid */}

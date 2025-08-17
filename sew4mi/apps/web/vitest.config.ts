@@ -22,6 +22,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
+      '@sew4mi/shared': path.resolve(__dirname, '../../packages/shared/src'),
     },
   },
   // CSS processing disabled for tests

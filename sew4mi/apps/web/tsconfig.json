@@ -4,7 +4,9 @@
     "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@sew4mi/shared": ["../../packages/shared/src"],
+      "@sew4mi/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
