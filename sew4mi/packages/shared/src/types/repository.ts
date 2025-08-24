@@ -33,7 +33,7 @@ export type User = Database['public']['Tables']['users']['Row']
 export type UserInsert = Database['public']['Tables']['users']['Insert'] 
 export type UserUpdate = Database['public']['Tables']['users']['Update']
 
-export type TailorProfile = Database['public']['Tables']['tailor_profiles']['Row']
+export type TailorProfileRow = Database['public']['Tables']['tailor_profiles']['Row']
 export type TailorProfileInsert = Database['public']['Tables']['tailor_profiles']['Insert']
 export type TailorProfileUpdate = Database['public']['Tables']['tailor_profiles']['Update']
 
@@ -58,7 +58,7 @@ export interface ProfileUpdateData {
   whatsapp_opted_in?: boolean
   whatsapp_number?: string
   avatar_url?: string
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 }
 
 // Tailor profile completion data
@@ -79,7 +79,7 @@ export interface TailorProfileData {
 // User with profile status
 export interface UserWithProfileStatus extends User {
   profileStatus: ProfileCompletionStatus
-  tailorProfile?: TailorProfile
+  tailorProfile?: TailorProfileRow
 }
 
 export abstract class Repository<T> implements BaseRepository<T> {
@@ -92,7 +92,7 @@ export abstract class Repository<T> implements BaseRepository<T> {
   }
 
   protected async executeWithRetry<R>(
-    operation: () => Promise<{ data: R | null, error: any }>,
+    operation: () => Promise<{ data: R | null, error: unknown }>,
     operationName: string = 'database operation'
   ): Promise<R> {
     try {
@@ -103,8 +103,12 @@ export abstract class Repository<T> implements BaseRepository<T> {
       }
       
       return data as R
-    } catch (error: any) {
-      console.error(`${operationName} failed on table ${this.tableName}:`, error)
+    } catch (error: unknown) {
+      // eslint-disable-next-line no-undef
+      if (typeof console !== 'undefined' && console.error) {
+        // eslint-disable-next-line no-undef
+        console.error(`${operationName} failed on table ${this.tableName}:`, error)
+      }
       throw error
     }
   }
@@ -125,11 +129,15 @@ export abstract class Repository<T> implements BaseRepository<T> {
       }
 
       return data as T
-    } catch (error: any) {
-      console.error(`findById failed for ${this.tableName} with id ${id}:`, error)
+    } catch (error: unknown) {
+      // eslint-disable-next-line no-undef
+      if (typeof console !== 'undefined' && console.error) {
+        // eslint-disable-next-line no-undef
+        console.error(`findById failed for ${this.tableName} with id ${id}:`, error)
+      }
       
       // Re-throw PGRST116 as null (not found)
-      if (error.code === 'PGRST116') {
+      if ((error as { code?: string }).code === 'PGRST116') {
         return null
       }
       

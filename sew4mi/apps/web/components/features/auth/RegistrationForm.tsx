@@ -15,15 +15,17 @@ import {
   registrationSchema,
   type RegistrationInput,
 } from '@sew4mi/shared/schemas';
+import { USER_ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '@sew4mi/shared';
 import { Eye, EyeOff, Loader2, Mail, Phone } from 'lucide-react';
 import Link from 'next/link';
 
 interface RegistrationFormProps {
-  onSuccess?: (data: RegistrationInput) => void;
+  initialRole?: string;
+  onSuccess?: (data: RegistrationInput, user: any) => void;
   onOTPRequired?: (identifier: string, type: 'email' | 'phone') => void;
 }
 
-export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormProps) {
+export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: RegistrationFormProps) {
   const { signUp } = useAuth();
   const [identifierType, setIdentifierType] = useState<'email' | 'phone'>('email');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +43,7 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       identifierType: 'email',
-      role: 'customer',
+      role: initialRole || USER_ROLES.CUSTOMER,
       acceptTerms: false,
     },
   });
@@ -53,15 +55,7 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
       setIsLoading(true);
       setError(null);
       
-      // Client-side logging only
-      if (typeof window !== 'undefined') {
-        console.log('Registration form submitting:', {
-          identifierType: data.identifierType,
-          identifier: data.identifier,
-          role: data.role,
-          hasPassword: !!data.password
-        });
-      }
+      // Submitting registration form
       
       const result = await signUp(data);
       
@@ -80,7 +74,7 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
       } else {
         // Registration completed without verification
         if (onSuccess) {
-          onSuccess(data);
+          onSuccess(data, result.user);
         }
       }
     } catch (err) {
@@ -99,23 +93,43 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
       )}
 
       {/* Role Selection */}
-      <div className="space-y-3">
-        <Label>I want to register as</Label>
+      <div className="space-y-4">
+        <div>
+          <Label className="text-base font-semibold">I want to register as</Label>
+          <p className="text-sm text-muted-foreground mt-1">Choose your account type below</p>
+        </div>
         <RadioGroup
           value={role}
-          onValueChange={(value) => setValue('role', value as 'customer' | 'tailor')}
+          onValueChange={(value) => setValue('role', value as typeof USER_ROLES.CUSTOMER | typeof USER_ROLES.TAILOR)}
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="customer" id="customer" />
-            <Label htmlFor="customer" className="font-normal cursor-pointer">
-              Customer - Order custom clothing
-            </Label>
+          <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+            <RadioGroupItem value={USER_ROLES.CUSTOMER} id="customer" className="mt-1" />
+            <div className="flex-1">
+              <Label htmlFor="customer" className="font-medium cursor-pointer">
+                {ROLE_LABELS[USER_ROLES.CUSTOMER]}
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                {ROLE_DESCRIPTIONS[USER_ROLES.CUSTOMER]}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="tailor" id="tailor" />
-            <Label htmlFor="tailor" className="font-normal cursor-pointer">
-              Tailor - Offer tailoring services
-            </Label>
+          <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+            <RadioGroupItem value={USER_ROLES.TAILOR} id="tailor" className="mt-1" />
+            <div className="flex-1">
+              <Label htmlFor="tailor" className="font-medium cursor-pointer">
+                {ROLE_LABELS[USER_ROLES.TAILOR]}
+              </Label>
+              <p className="text-sm text-muted-foreground mt-1">
+                {ROLE_DESCRIPTIONS[USER_ROLES.TAILOR]}
+              </p>
+              {role === USER_ROLES.TAILOR && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <p className="text-xs text-blue-800">
+                    📋 Tailor applications require verification. You'll need to provide business details and portfolio samples during profile completion.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </RadioGroup>
       </div>
@@ -131,6 +145,7 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
             onClick={() => {
               setIdentifierType('email');
               setValue('identifierType', 'email');
+              setValue('identifier', ''); // Clear identifier when switching modes
             }}
             className="flex-1"
           >
@@ -144,6 +159,7 @@ export function RegistrationForm({ onSuccess, onOTPRequired }: RegistrationFormP
             onClick={() => {
               setIdentifierType('phone');
               setValue('identifierType', 'phone');
+              setValue('identifier', ''); // Clear identifier when switching modes
             }}
             className="flex-1"
           >

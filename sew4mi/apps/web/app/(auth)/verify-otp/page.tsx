@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { OTPVerification } from '@/components/features/auth/OTPVerification';
-import { useHydrationSafe, useBrowserSafe } from '@/hooks/useHydrationSafe';
+import { useHydrationSafe } from '@/hooks/useHydrationSafe';
 
 export default function VerifyOTPPage() {
   const router = useRouter();
@@ -44,32 +44,21 @@ export default function VerifyOTPPage() {
     }
   }, [isMounted, searchParams, router]);
 
-  const handleVerified = async (otp: string) => {
+  const handleVerified = async (_otp: string) => {
     try {
       // Clear stored verification data (client-side only)
       if (typeof window !== 'undefined') {
         localStorage.removeItem('otp-verification');
       }
       
-      // TODO: Complete user registration/login flow
-      console.log('OTP verified successfully:', otp);
-      
-      // For now, redirect to a success page or dashboard
-      router.push('/dashboard'); // This will be created later
+      // OTP verified successfully - user is now authenticated
+      // Check if user needs to complete their profile
+      router.push('/complete-profile');
     } catch (error) {
       console.error('Verification completion failed:', error);
     }
   };
 
-  const handleResend = async () => {
-    if (!verificationData) return;
-    
-    // TODO: Implement actual OTP resend logic
-    console.log('Resending OTP to:', verificationData.identifier);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  };
 
   const handleCancel = () => {
     // Clear stored verification data (client-side only)
@@ -96,7 +85,6 @@ export default function VerifyOTPPage() {
         identifier={verificationData.identifier}
         identifierType={verificationData.type}
         onVerified={handleVerified}
-        onResend={handleResend}
         onCancel={handleCancel}
       />
     </div>

@@ -103,7 +103,15 @@ export function OTPVerification({
         onVerified(otpCode);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid OTP code. Please try again.');
+      const errorMessage = err instanceof Error ? err.message : 'Invalid OTP code. Please try again.';
+      setError(errorMessage);
+      
+      // If OTP expired, automatically enable resend
+      if (errorMessage.toLowerCase().includes('expired')) {
+        setCanResend(true);
+        setResendTimer(0);
+      }
+      
       setOtp(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -165,8 +173,15 @@ export function OTPVerification({
       </CardHeader>
       <CardContent className="space-y-6">
         {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant={error.toLowerCase().includes('expired') ? 'default' : 'destructive'}>
+            <AlertDescription>
+              {error}
+              {error.toLowerCase().includes('expired') && (
+                <span className="block mt-2 font-medium">
+                  Click "Resend Code" below to get a new verification code.
+                </span>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 
@@ -211,14 +226,17 @@ export function OTPVerification({
         {/* Resend Section */}
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">
-            Didn't receive the code?
+            {error?.toLowerCase().includes('expired') ? 
+              'Your verification code has expired' : 
+              "Didn't receive the code?"}
           </p>
           {canResend ? (
             <Button
-              variant="ghost"
+              variant={error?.toLowerCase().includes('expired') ? "outline" : "ghost"}
               size="sm"
               onClick={handleResend}
               disabled={isResending}
+              className={error?.toLowerCase().includes('expired') ? "font-medium" : ""}
             >
               {isResending ? (
                 <>

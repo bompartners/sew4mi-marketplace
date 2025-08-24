@@ -5,7 +5,7 @@ import { UserRepository } from '@/lib/repositories/userRepository'
 import { profileUpdateSchema } from '@sew4mi/shared/schemas/auth.schema'
 import { emailService } from '@/lib/services/emailService'
 
-export async function PUT(request: NextRequest) {
+export async function PUT(_request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     
@@ -17,7 +17,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Parse and validate request body
-    const body = await request.json()
+    const body = await _request.json()
     const validatedData = profileUpdateSchema.parse(body)
 
     // Update user profile
@@ -60,7 +60,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     

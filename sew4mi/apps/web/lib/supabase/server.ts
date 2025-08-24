@@ -1,9 +1,17 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@sew4mi/shared/types/database'
 import { DatabaseError, mapSupabaseError } from './errors'
 import { withRetry, DEFAULT_RETRY_OPTIONS } from './retry'
 
-export async function createServerSupabaseClient() {
+// For API routes - creates a client with environment variables
+export async function createClient() {
+  return createServerSupabaseClient();
+}
+
+// Export raw client creation function for explicit usage
+export { createSupabaseClient }
+
+export async function createServerSupabaseClient(): Promise<ReturnType<typeof createSupabaseClient<Database>>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -18,7 +26,7 @@ export async function createServerSupabaseClient() {
 
   try {
     return await withRetry(
-      () => createClient<Database>(
+      () => createSupabaseClient<Database>(
         supabaseUrl,
         supabaseAnonKey,
         {
@@ -75,7 +83,7 @@ export async function createServerSupabaseClient() {
   }
 }
 
-export async function createServiceRoleClient() {
+export async function createServiceRoleClient(): Promise<ReturnType<typeof createSupabaseClient<Database>>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -90,7 +98,7 @@ export async function createServiceRoleClient() {
 
   try {
     return await withRetry(
-      () => createClient<Database>(
+      () => createSupabaseClient<Database>(
         supabaseUrl,
         supabaseServiceKey,
         {

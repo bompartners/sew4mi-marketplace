@@ -37,7 +37,7 @@ describe('AuthService', () => {
         identifierType: 'email',
         password: 'Password123!',
         confirmPassword: 'Password123!',
-        role: 'customer',
+        role: 'CUSTOMER',
         acceptTerms: true,
       };
 
@@ -54,7 +54,7 @@ describe('AuthService', () => {
         password: 'Password123!',
         options: {
           data: {
-            role: 'customer',
+            role: 'CUSTOMER',
             full_name: '',
             phone: null,
           },
@@ -74,7 +74,7 @@ describe('AuthService', () => {
         identifierType: 'phone',
         password: 'Password123!',
         confirmPassword: 'Password123!',
-        role: 'tailor',
+        role: 'TAILOR',
         acceptTerms: true,
       };
 
@@ -91,7 +91,7 @@ describe('AuthService', () => {
         password: 'Password123!',
         options: {
           data: {
-            role: 'tailor',
+            role: 'TAILOR',
             full_name: '',
             phone: '+233241234567',
           },
@@ -111,7 +111,7 @@ describe('AuthService', () => {
         identifierType: 'email',
         password: 'Password123!',
         confirmPassword: 'Password123!',
-        role: 'customer',
+        role: 'CUSTOMER',
         acceptTerms: true,
       };
 
@@ -225,10 +225,10 @@ describe('AuthService', () => {
         error: null,
       });
 
-      const result = await authService.signIn({
-        identifier: 'test@example.com',
-        password: 'Password123!',
-      });
+      const result = await authService.signIn(
+        'test@example.com',
+        'Password123!'
+      );
 
       expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
         email: 'test@example.com',
@@ -245,10 +245,10 @@ describe('AuthService', () => {
         error: null,
       });
 
-      const result = await authService.signIn({
-        identifier: '+233241234567',
-        password: 'Password123!',
-      });
+      const result = await authService.signIn(
+        '+233241234567',
+        'Password123!'
+      );
 
       expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
         phone: '+233241234567',

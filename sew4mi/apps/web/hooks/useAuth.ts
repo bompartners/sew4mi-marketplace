@@ -4,12 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { authService } from '@/services/auth.service';
 import type { User, Session } from '@supabase/supabase-js';
 import type { RegistrationInput } from '@sew4mi/shared/schemas/auth.schema';
+import { USER_ROLES, type UserRole, parseUserRole } from '@sew4mi/shared';
+import { authCache } from '@/lib/cache/authCache';
 
 interface AuthState {
   user: User | null;
   session: Session | null;
+  userRole: UserRole | null;
   loading: boolean;
   initialized: boolean;
+  isLoading: boolean; // Alias for loading for consistency
 }
 
 interface AuthActions {
@@ -26,9 +30,77 @@ export function useAuth(): AuthState & AuthActions {
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
+    userRole: null,
     loading: true,
     initialized: false,
+    isLoading: true,
   });
+
+  // Helper function to get user role
+  // Cached fetchUserRole to prevent excessive API calls and rate limiting
+  const fetchUserRole = useCallback(async (user: User | null): Promise<UserRole | null> => {
+    if (!user) return null;
+    
+    // Step 1: Check cache first (prevents API calls)
+    const cachedRole = authCache.getUserRole(user.id);
+    if (cachedRole) {
+      console.log('✅ Using cached user role:', cachedRole, 'for user:', user.id);
+      return cachedRole;
+    }
+    
+    // Step 2: Try to get role from user metadata first (faster than DB)
+    const metadataRole = user.user_metadata?.role || user.app_metadata?.role;
+    if (metadataRole) {
+      const parsedRole = parseUserRole(metadataRole);
+      if (parsedRole) {
+        // Cache the role to prevent future API calls
+        authCache.setUserRole(user.id, parsedRole, {
+          email: user.email || '',
+          full_name: user.user_metadata?.full_name,
+        });
+        console.log('✅ Cached role from metadata:', parsedRole, 'for user:', user.id);
+        return parsedRole;
+      }
+    }
+    
+    // Step 3: Fallback to database lookup (will be cached for 5 minutes)
+    try {
+      console.log('🔄 Fetching user role from database for:', user.id);
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        return USER_ROLES.CUSTOMER; // Default fallback
+      }
+      
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('role, email, full_name')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) {
+        console.error('❌ Failed to fetch user role:', error);
+        return USER_ROLES.CUSTOMER; // Default fallback
+      }
+      
+      const role = userData?.role || USER_ROLES.CUSTOMER;
+      
+      // Cache the result to prevent future database calls
+      authCache.setUserRole(user.id, role, {
+        email: userData?.email || user.email || '',
+        full_name: userData?.full_name,
+      });
+      
+      console.log('✅ Cached role from database:', role, 'for user:', user.id);
+      return role;
+    } catch (error) {
+      console.error('❌ Error fetching user role:', error);
+      return USER_ROLES.CUSTOMER; // Default fallback
+    }
+  }, []);
 
   // Initialize auth state
   useEffect(() => {
@@ -37,12 +109,16 @@ export function useAuth(): AuthState & AuthActions {
     const initializeAuth = async () => {
       try {
         const session = await authService.getSession();
+        const userRole = await fetchUserRole(session?.user ?? null);
+        
         if (isMounted) {
           setState(prev => ({
             ...prev,
             user: session?.user ?? null,
             session,
+            userRole,
             loading: false,
+            isLoading: false,
             initialized: true,
           }));
         }
@@ -52,6 +128,7 @@ export function useAuth(): AuthState & AuthActions {
           setState(prev => ({
             ...prev,
             loading: false,
+            isLoading: false,
             initialized: true,
           }));
         }
@@ -61,13 +138,16 @@ export function useAuth(): AuthState & AuthActions {
     initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = authService.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = authService.onAuthStateChange(async (_, session) => {
       if (isMounted) {
+        const userRole = await fetchUserRole(session?.user ?? null);
         setState(prev => ({
           ...prev,
           user: session?.user ?? null,
           session: session ?? null,
+          userRole,
           loading: false,
+          isLoading: false,
           initialized: true,
         }));
       }
@@ -85,19 +165,30 @@ export function useAuth(): AuthState & AuthActions {
       const result = await authService.signIn(credential, password, rememberMe);
       
       if (result.success) {
+        const userRole = await fetchUserRole(result.user ?? null);
         setState(prev => ({
           ...prev,
           user: result.user ?? null,
           session: result.session ?? null,
+          userRole,
           loading: false,
+          isLoading: false,
         }));
       } else {
-        setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ 
+          ...prev, 
+          loading: false,
+          isLoading: false
+        }));
       }
       
       return { success: result.success, error: result.error };
     } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
       return {
         success: false,
         error: error instanceof Error ? error.message : 'An unexpected error occurred'
@@ -111,22 +202,33 @@ export function useAuth(): AuthState & AuthActions {
       const result = await authService.register(data);
       
       if (result.requiresVerification) {
-        setState(prev => ({ ...prev, loading: false }));
+        setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
         return {
           requiresVerification: true,
           verificationMethod: result.verificationMethod,
         };
       } else {
+        const userRole = await fetchUserRole(result.user ?? null);
         setState(prev => ({
           ...prev,
           user: result.user,
           session: result.session,
+          userRole,
           loading: false,
+          isLoading: false,
         }));
         return { requiresVerification: false };
       }
     } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
       throw error;
     }
   }, []);
@@ -136,14 +238,24 @@ export function useAuth(): AuthState & AuthActions {
       setState(prev => ({ ...prev, loading: true }));
       await authService.signOut();
       
+      // Clear all cached auth data to prevent stale data
+      authCache.clearAllCache();
+      console.log('🗑️ Cleared all auth cache on sign out');
+      
       setState(prev => ({
         ...prev,
         user: null,
         session: null,
+        userRole: null,
         loading: false,
+        isLoading: false,
       }));
     } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
       throw error;
     }
   }, []);
@@ -153,14 +265,21 @@ export function useAuth(): AuthState & AuthActions {
       setState(prev => ({ ...prev, loading: true }));
       const result = await authService.verifyOTP({ identifier, otp, type });
       
+      const userRole = await fetchUserRole(result.user ?? null);
       setState(prev => ({
         ...prev,
         user: result.user,
         session: result.session,
+        userRole,
         loading: false,
+        isLoading: false,
       }));
     } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
       throw error;
     }
   }, []);
@@ -185,9 +304,17 @@ export function useAuth(): AuthState & AuthActions {
     try {
       setState(prev => ({ ...prev, loading: true }));
       await authService.resetPassword({ password, confirmPassword: password, token: '' });
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
     } catch (error) {
-      setState(prev => ({ ...prev, loading: false }));
+      setState(prev => ({ 
+        ...prev, 
+        loading: false,
+        isLoading: false
+      }));
       throw error;
     }
   }, []);

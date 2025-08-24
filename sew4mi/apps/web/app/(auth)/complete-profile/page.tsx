@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ProfileCompletionForm } from '@/components/features/auth/ProfileCompletionForm'
 import { useAuth } from '@/hooks/useAuth'
@@ -8,7 +8,6 @@ import { ProfileUpdateInput } from '@sew4mi/shared/schemas/auth.schema'
 
 function ProfileCompletionContent() {
   const { user, session, loading } = useAuth()
-  const [isUpdating, setIsUpdating] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -20,7 +19,6 @@ function ProfileCompletionContent() {
   const handleProfileComplete = async (data: ProfileUpdateInput) => {
     if (!user) return
 
-    setIsUpdating(true)
     try {
       // Create a simple user repository client-side call
       // In a real app, this would be an API route
@@ -41,8 +39,6 @@ function ProfileCompletionContent() {
     } catch (error) {
       console.error('Profile update failed:', error)
       throw error
-    } finally {
-      setIsUpdating(false)
     }
   }
 

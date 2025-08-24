@@ -7,11 +7,7 @@ export const ORDER_STATUSES = {
   DISPUTED: 'disputed',
 } as const;
 
-export const USER_ROLES = {
-  CUSTOMER: 'customer',
-  TAILOR: 'tailor',
-  ADMIN: 'admin',
-} as const;
+// USER_ROLES moved to roles.ts to match database schema
 
 export const PAYMENT_PROVIDERS = {
   MTN_MOMO: 'mtn_momo',
@@ -19,3 +15,12 @@ export const PAYMENT_PROVIDERS = {
   AIRTEL_MONEY: 'airtel_money',
   HUBTEL: 'hubtel',
 } as const;
+
+export * from './payment'
+export * from './escrow'
+export * from './roles'
+export * from './milestone'
+export * from './dispute'
+export * from './tailors'
+export * from './search'
+export * from './garment-types'

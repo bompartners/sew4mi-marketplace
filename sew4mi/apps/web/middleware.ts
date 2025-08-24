@@ -1,17 +1,26 @@
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { USER_ROLES, ROLE_ROUTE_MAPPING, canAccessRoute } from '@sew4mi/shared'
 
 export async function middleware(request: NextRequest) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req: request, res })
 
+  // Rate limiting protection: Skip auth for static assets and API routes that don't need it
+  const { pathname } = request.nextUrl
+  if (pathname.startsWith('/_next/') || 
+      pathname.startsWith('/favicon') || 
+      pathname.startsWith('/api/health') ||
+      pathname.match(/\.(jpg|jpeg|png|gif|ico|svg|css|js|woff|woff2)$/)) {
+    return res
+  }
+
   // Refresh session if expired - required for Server Components
+  // Note: This is the main source of API calls in middleware
   const {
     data: { session },
   } = await supabase.auth.getSession()
-
-  const { pathname } = request.nextUrl
 
   // Public routes that don't require authentication
   const publicRoutes = [
@@ -20,7 +29,8 @@ export async function middleware(request: NextRequest) {
     '/register',
     '/forgot-password',
     '/reset-password',
-    '/verify-otp'
+    '/verify-otp',
+    '/apply-tailor'
   ]
 
   // Auth routes - redirect to dashboard if already authenticated
@@ -32,32 +42,20 @@ export async function middleware(request: NextRequest) {
     '/verify-otp'
   ]
 
-  // Protected routes that require authentication
+  // Routes that always require authentication but allow any role
   const protectedRoutes = [
     '/dashboard',
     '/profile',
     '/settings'
   ]
 
-  // Customer-only routes
-  const customerRoutes = [
-    '/orders',
-    '/browse-tailors',
-    '/favorites'
-  ]
+  // Check if current path is a route that always requires authentication (any role)
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
-  // Tailor-only routes
-  const tailorRoutes = [
-    '/portfolio',
-    '/clients',
-    '/earnings',
-    '/availability'
-  ]
-
-  // Check if current path is a protected route
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route)) ||
-                          customerRoutes.some(route => pathname.startsWith(route)) ||
-                          tailorRoutes.some(route => pathname.startsWith(route))
+  // Check if current path is a role-specific route (from ROLE_ROUTE_MAPPING)
+  const isRoleSpecificRoute = Object.keys(ROLE_ROUTE_MAPPING).some(route => 
+    pathname.startsWith(route) && route !== '/dashboard' && route !== '/profile' && route !== '/settings'
+  )
 
   // Check if current path is an auth route
   const isAuthRoute = authRoutes.some(route => pathname === route)
@@ -65,34 +63,78 @@ export async function middleware(request: NextRequest) {
   // Check if current path is public
   const isPublicRoute = publicRoutes.some(route => pathname === route)
 
-  // If user is not authenticated and trying to access protected route
-  if (!session && isProtectedRoute) {
+  // If user is not authenticated and trying to access protected or role-specific route
+  if (!session && (isProtectedRoute || isRoleSpecificRoute)) {
     const redirectUrl = new URL('/login', request.url)
     redirectUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If user is authenticated and trying to access auth routes, redirect to dashboard
+  // If user is authenticated and trying to access auth routes, redirect to appropriate dashboard
   if (session && isAuthRoute) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Role-based access control
-  if (session && session.user) {
-    const userRole = session.user.user_metadata?.role || session.user.app_metadata?.role
-
-    // Check customer-only routes
-    if (customerRoutes.some(route => pathname.startsWith(route))) {
-      if (userRole !== 'customer') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
+    // Get user role to redirect to appropriate dashboard
+    let userRole = USER_ROLES.CUSTOMER; // default
+    
+    if (session.user) {
+      // Try to get role from user metadata or fetch from database
+      const metadataRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+      if (metadataRole) {
+        userRole = metadataRole.toUpperCase();
+      } else {
+        // Fetch role from database if not in metadata
+        try {
+          const { data: userData } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (userData?.role) {
+            userRole = userData.role;
+          }
+        } catch (error) {
+          console.error('Failed to fetch user role:', error);
+        }
       }
     }
 
-    // Check tailor-only routes
-    if (tailorRoutes.some(route => pathname.startsWith(route))) {
-      if (userRole !== 'tailor') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url))
+    // Redirect to appropriate dashboard based on role
+    const defaultRoute = userRole === USER_ROLES.ADMIN ? '/admin/dashboard' : '/dashboard';
+    return NextResponse.redirect(new URL(defaultRoute, request.url));
+  }
+
+  // Enhanced role-based access control
+  if (session && session.user && (isRoleSpecificRoute || isProtectedRoute)) {
+    let userRole = USER_ROLES.CUSTOMER; // default
+    
+    // Get user role from metadata or database
+    const metadataRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+    if (metadataRole) {
+      userRole = metadataRole.toUpperCase();
+    } else {
+      // Fetch role from database if not in metadata
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (userData?.role) {
+          userRole = userData.role;
+        }
+      } catch (error) {
+        console.error('Failed to fetch user role:', error);
       }
+    }
+
+    // Check role-based route access using the utility function
+    if (!canAccessRoute(userRole as any, pathname)) {
+      const redirectUrl = new URL('/unauthorized', request.url);
+      redirectUrl.searchParams.set('reason', 'insufficient_permissions');
+      redirectUrl.searchParams.set('required_role', 'unknown');
+      redirectUrl.searchParams.set('user_role', userRole);
+      return NextResponse.redirect(redirectUrl);
     }
   }
 

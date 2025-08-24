@@ -1,0 +1,26 @@
+{
+  "name": "sew4mi-dev",
+  "version": "1.0.0",
+  "description": "[![CI](https://github.com/sew4mi/sew4mi/workflows/CI/badge.svg)](https://github.com/sew4mi/sew4mi/actions) [![Security Scan](https://github.com/sew4mi/sew4mi/workflows/Security%20Scan/badge.svg)](https://github.com/sew4mi/sew4mi/actions) [![Performance](https://github.com/sew4mi/sew4mi/workflows/Performance%20Monitoring/badge.svg)](https://github.com/sew4mi/sew4mi/actions)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bompartners/sew4mi-marketplace.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bompartners/sew4mi-marketplace/issues"
+  },
+  "homepage": "https://github.com/bompartners/sew4mi-marketplace#readme",
+  "devDependencies": {
+    "playwright": "^1.54.2"
+  }
+}

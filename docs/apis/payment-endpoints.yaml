@@ -1,0 +1,458 @@
+openapi: 3.0.3
+info:
+  title: Sew4Mi Payment API
+  description: |
+    Payment processing API for Sew4Mi marketplace using Hubtel payment gateway.
+    Supports Ghana mobile money payments (MTN, Vodafone, AirtelTigo) and card payments.
+  version: 1.0.0
+  contact:
+    name: Sew4Mi Development Team
+    url: https://sew4mi.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.sew4mi.com
+    description: Production server
+  - url: https://dev-api.sew4mi.com  
+    description: Development server
+
+paths:
+  /api/payments/initiate:
+    post:
+      summary: Initiate Payment
+      description: |
+        Initiates a payment using Hubtel payment gateway for Ghana mobile money or card payments.
+        Supports all major Ghana networks: MTN Mobile Money, Vodafone Cash, and AirtelTigo Money.
+      tags:
+        - Payment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentInitiationRequest'
+            examples:
+              mtn_payment:
+                summary: MTN Mobile Money Payment
+                value:
+                  orderId: "550e8400-e29b-41d4-a716-446655440000"
+                  amount: 150.00
+                  customerPhoneNumber: "0241234567"
+                  paymentMethod: "MTN"
+                  description: "Payment for custom dress order"
+              vodafone_payment:
+                summary: Vodafone Cash Payment
+                value:
+                  orderId: "550e8400-e29b-41d4-a716-446655440000"
+                  amount: 75.50
+                  customerPhoneNumber: "+233201234567"
+                  paymentMethod: "VODAFONE"
+      responses:
+        '200':
+          description: Payment initiation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentInitiationResponse'
+              examples:
+                success:
+                  summary: Successful payment initiation
+                  value:
+                    success: true
+                    data:
+                      transactionId: "tx_abc123def456"
+                      hubtelTransactionId: "hub_xyz789"
+                      paymentUrl: "https://checkout.hubtel.com/checkout/xyz789"
+                      status: "PENDING"
+                      message: "Payment initiated successfully"
+                      amount: "GH₵150.00"
+        '400':
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_phone:
+                  summary: Invalid phone number
+                  value:
+                    success: false
+                    message: "Invalid phone number format: 123456789"
+                invalid_amount:
+                  summary: Invalid amount
+                  value:
+                    success: false
+                    message: "Minimum amount is GH₵0.01"
+        '401':
+          description: Unauthorized - Invalid or missing authentication token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                rate_limit:
+                  summary: Rate limit exceeded
+                  value:
+                    success: false
+                    message: "Rate limit exceeded. Maximum 10 payment requests per minute."
+
+    get:
+      summary: Get Payment Configuration
+      description: Returns supported payment methods and configuration details
+      tags:
+        - Payment
+      responses:
+        '200':
+          description: Payment configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      supportedMethods:
+                        type: array
+                        items:
+                          type: string
+                          enum: [MTN, VODAFONE, AIRTELTIGO, CARD]
+                        example: ["MTN", "VODAFONE", "AIRTELTIGO", "CARD"]
+                      currency:
+                        type: string
+                        example: "GHS"
+                      minAmount:
+                        type: number
+                        example: 0.01
+                      maxAmount:
+                        type: number
+                        example: 100000
+                      rateLimit:
+                        type: object
+                        properties:
+                          requestsPerMinute:
+                            type: integer
+                            example: 10
+
+  /api/payments/status/{transactionId}:
+    get:
+      summary: Get Payment Status
+      description: Retrieves the current status of a payment transaction
+      tags:
+        - Payment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          description: The unique transaction ID
+          schema:
+            type: string
+            format: uuid
+            example: "tx_abc123def456"
+      responses:
+        '200':
+          description: Payment status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatusResponse'
+        '404':
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/webhooks/hubtel:
+    post:
+      summary: Hubtel Webhook Handler
+      description: |
+        Handles payment status callbacks from Hubtel payment gateway.
+        This endpoint is called by Hubtel when payment status changes.
+        
+        **Security**: Webhook payload signature is verified using HMAC-SHA256.
+      tags:
+        - Webhooks
+      parameters:
+        - name: x-hubtel-signature
+          in: header
+          required: true
+          description: HMAC-SHA256 signature of the request payload
+          schema:
+            type: string
+            example: "sha256=abc123def456..."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HubtelWebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Webhook processed successfully"
+                  transactionId:
+                    type: string
+                    example: "tx_abc123def456"
+        '400':
+          description: Invalid webhook payload or signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Webhook processing failed (triggers Hubtel retry)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Webhook Health Check
+      description: Health check endpoint for the Hubtel webhook handler
+      tags:
+        - Webhooks
+      responses:
+        '200':
+          description: Webhook endpoint is active
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Hubtel webhook endpoint is active"
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-08-21T12:00:00.000Z"
+                  processedWebhooks:
+                    type: integer
+                    description: Number of webhooks currently in cache
+                    example: 5
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtained from Supabase authentication.
+        Include in Authorization header as: `Bearer <token>`
+
+  schemas:
+    PaymentInitiationRequest:
+      type: object
+      required:
+        - orderId
+        - amount  
+        - customerPhoneNumber
+        - paymentMethod
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: Unique identifier for the order
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        amount:
+          type: number
+          minimum: 0.01
+          maximum: 100000
+          description: Payment amount in Ghana Cedis (GHS)
+          example: 150.00
+        customerPhoneNumber:
+          type: string
+          pattern: "^(\\+233|0)(2[0-9]|5[0-9])\\d{7}$"
+          description: |
+            Ghana phone number in any of these formats:
+            - +233241234567
+            - 0241234567
+            - 241234567
+          example: "0241234567"
+        paymentMethod:
+          type: string
+          enum: [MTN, VODAFONE, AIRTELTIGO, CARD]
+          description: Payment method/network
+          example: "MTN"
+        description:
+          type: string
+          maxLength: 255
+          description: Optional payment description
+          example: "Payment for custom dress order"
+
+    PaymentInitiationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            transactionId:
+              type: string
+              description: Unique transaction identifier from Sew4Mi
+              example: "tx_abc123def456"
+            hubtelTransactionId:
+              type: string
+              description: Transaction identifier from Hubtel
+              example: "hub_xyz789"
+            paymentUrl:
+              type: string
+              format: uri
+              description: Checkout URL for completing payment
+              example: "https://checkout.hubtel.com/checkout/xyz789"
+            status:
+              type: string
+              enum: [PENDING, SUCCESS, FAILED, CANCELLED]
+              description: Current payment status
+              example: "PENDING"
+            message:
+              type: string
+              description: Human-readable status message
+              example: "Payment initiated successfully"
+            amount:
+              type: string
+              description: Formatted amount with currency symbol
+              example: "GH₵150.00"
+
+    PaymentStatusResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            transactionId:
+              type: string
+              example: "tx_abc123def456"
+            status:
+              type: string
+              enum: [PENDING, SUCCESS, FAILED, CANCELLED]
+              example: "SUCCESS"
+            amount:
+              type: number
+              example: 150.00
+            provider:
+              type: string
+              enum: [HUBTEL_MTN, HUBTEL_VODAFONE, HUBTEL_AIRTELTIGO, HUBTEL_CARD]
+              example: "HUBTEL_MTN"
+            createdAt:
+              type: string
+              format: date-time
+              example: "2024-08-21T10:00:00.000Z"
+            updatedAt:
+              type: string
+              format: date-time
+              example: "2024-08-21T10:05:30.000Z"
+
+    HubtelWebhookPayload:
+      type: object
+      required:
+        - transactionId
+        - hubtelTransactionId
+        - status
+        - amount
+        - customerPhoneNumber
+        - paymentMethod
+        - timestamp
+        - signature
+      properties:
+        transactionId:
+          type: string
+          description: Sew4Mi transaction ID
+          example: "tx_abc123def456"
+        hubtelTransactionId:
+          type: string
+          description: Hubtel transaction ID
+          example: "hub_xyz789"
+        status:
+          type: string
+          description: Payment status from Hubtel
+          example: "success"
+        amount:
+          type: number
+          description: Payment amount
+          example: 150.00
+        customerPhoneNumber:
+          type: string
+          description: Customer's phone number
+          example: "+233241234567"
+        paymentMethod:
+          type: string
+          description: Payment method used
+          example: "mtn-gh"
+        timestamp:
+          type: string
+          format: date-time
+          description: When the status change occurred
+          example: "2024-08-21T10:05:30.000Z"
+        signature:
+          type: string
+          description: HMAC-SHA256 signature for payload verification
+          example: "abc123def456..."
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          description: Error message
+          example: "Invalid phone number format"
+        errors:
+          type: array
+          description: Detailed validation errors (when applicable)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: "customerPhoneNumber"
+              message:
+                type: string
+                example: "Invalid Ghana phone number format"
+
+tags:
+  - name: Payment
+    description: Payment processing operations
+  - name: Webhooks
+    description: Webhook handlers for payment status updates
+
+externalDocs:
+  description: Hubtel Payment Gateway Documentation
+  url: https://developers.hubtel.com/

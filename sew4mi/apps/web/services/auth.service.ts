@@ -1,5 +1,5 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { RegistrationInput, LoginInput, OTPInput, ForgotPasswordInput, ResetPasswordInput } from '@sew4mi/shared/schemas';
+import type { RegistrationInput, LoginInput, OTPInput, ForgotPasswordInput, ResetPasswordInput } from '@sew4mi/shared';
 import { ENV_CONFIG } from '@/lib/config/env';
 
 export class AuthService {

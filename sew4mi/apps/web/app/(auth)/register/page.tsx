@@ -1,26 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RegistrationForm } from '@/components/features/auth/RegistrationForm';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { USER_ROLES } from '@sew4mi/shared';
+import type { RegistrationInput } from '@sew4mi/shared';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [showOTP, setShowOTP] = useState(false);
-  const [otpIdentifier, setOtpIdentifier] = useState<{
-    identifier: string;
-    type: 'email' | 'phone';
-  } | null>(null);
+  const searchParams = useSearchParams();
+  
+  // Get role from URL parameter (default to CUSTOMER if not provided or invalid)
+  const roleParam = searchParams.get('role');
+  const initialRole = (roleParam === 'tailor') ? USER_ROLES.TAILOR : USER_ROLES.CUSTOMER;
 
-  const handleRegistrationSuccess = () => {
-    // Registration successful, OTP will be handled
+  const handleRegistrationSuccess = (data: RegistrationInput, user: any) => {
+    // Check if user registered as tailor and redirect to application
+    if (data.role === USER_ROLES.TAILOR && user) {
+      const params = new URLSearchParams({
+        userId: user.id,
+        userName: user.user_metadata?.full_name || user.email || 'Tailor'
+      });
+      router.push(`/apply-tailor?${params.toString()}`);
+      return;
+    }
+    
+    // For customers, proceed with normal flow
+    if (user) {
+      router.push('/dashboard?welcome=true');
+    }
   };
 
   const handleOTPRequired = (identifier: string, type: 'email' | 'phone') => {
-    setOtpIdentifier({ identifier, type });
-    setShowOTP(true);
-    // TODO: Navigate to OTP verification page or show OTP component
+    // Store OTP data in localStorage for the verify page
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('otp-verification', JSON.stringify({ identifier, type }));
+    }
+    // Navigate to OTP verification page
     router.push('/verify-otp');
   };
 
@@ -37,6 +53,7 @@ export default function RegisterPage() {
         </CardHeader>
         <CardContent>
           <RegistrationForm
+            initialRole={initialRole}
             onSuccess={handleRegistrationSuccess}
             onOTPRequired={handleOTPRequired}
           />

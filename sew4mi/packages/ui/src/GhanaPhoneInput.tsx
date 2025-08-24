@@ -4,12 +4,12 @@ import * as React from 'react';
 import { cn } from './utils';
 
 export interface GhanaPhoneInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
+  extends Omit<React.InputHTMLAttributes<React.ElementRef<'input'>>, 'type' | 'onChange'> {
   onChange?: (value: string) => void;
   error?: string;
 }
 
-const GhanaPhoneInput = React.forwardRef<HTMLInputElement, GhanaPhoneInputProps>(
+const GhanaPhoneInput = React.forwardRef<React.ElementRef<'input'>, GhanaPhoneInputProps>(
   ({ className, onChange, error, ...props }, ref) => {
     const [displayValue, setDisplayValue] = React.useState('');
     
@@ -45,7 +45,7 @@ const GhanaPhoneInput = React.forwardRef<HTMLInputElement, GhanaPhoneInputProps>
       return numbers;
     };
     
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<React.ElementRef<'input'>>) => {
       const rawValue = e.target.value;
       const formatted = formatPhoneNumber(rawValue);
       setDisplayValue(formatted);

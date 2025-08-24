@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { registerableRoleSchema } from './role.schema';
 
 // Ghana phone number validation
 const ghanaPhoneRegex = /^(\+233|0)(2[0345678]|5[0456789]|3[0123]|28)\d{7}$/;
@@ -34,7 +35,7 @@ export const registrationSchema = z.object({
   identifierType: z.enum(['email', 'phone']),
   password: passwordSchema,
   confirmPassword: z.string(),
-  role: z.enum(['customer', 'tailor']).default('customer'),
+  role: registerableRoleSchema.default('CUSTOMER'),
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',
   }),

@@ -7,6 +7,9 @@ import { errorLogger, useErrorLogging as useErrorLoggingBase } from './errorLogg
  * Client-only error logging hook that's safe for SSR
  */
 export function useErrorLogging() {
+  // Always call the hook unconditionally
+  const hookResult = useErrorLoggingBase();
+  
   if (typeof window === 'undefined') {
     // Return no-op functions for SSR
     return {
@@ -21,7 +24,7 @@ export function useErrorLogging() {
     };
   }
   
-  return useErrorLoggingBase();
+  return hookResult;
 }
 
 export { errorLogger };

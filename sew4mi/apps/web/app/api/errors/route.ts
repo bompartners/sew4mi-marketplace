@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
 
     // Parse error data
-    const errorData = await request.json()
+    const errorData = await _request.json()
 
     // Validate required fields
     if (!errorData.message || !errorData.type || !errorData.level) {
@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
       ...errorData,
       userId: session?.user?.id || null,
       serverTimestamp: new Date().toISOString(),
-      ip: request.ip || 'unknown',
+      ip: _request.headers.get('x-forwarded-for') || _request.headers.get('x-real-ip') || 'unknown',
       headers: {
-        userAgent: request.headers.get('user-agent'),
-        referer: request.headers.get('referer'),
-        origin: request.headers.get('origin')
+        userAgent: _request.headers.get('user-agent'),
+        referer: _request.headers.get('referer'),
+        origin: _request.headers.get('origin')
       }
     }
 
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     // For now, store in database (you could create an errors table)
     // This is optional - you might prefer external services
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('error_logs')  // You'd need to create this table
         .insert({
           error_id: enhancedErrorData.id,
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient({ cookies })
     

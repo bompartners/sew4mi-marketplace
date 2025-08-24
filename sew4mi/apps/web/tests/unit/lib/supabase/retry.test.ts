@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { withRetry, CircuitBreaker, DEFAULT_RETRY_OPTIONS } from '../../../../lib/supabase/retry'
+import { withRetry, CircuitBreaker } from '../../../../lib/supabase/retry'
 import { DatabaseError } from '../../../../lib/supabase/errors'
 
 describe('Retry Mechanism', () => {

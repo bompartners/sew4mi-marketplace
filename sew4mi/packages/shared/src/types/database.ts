@@ -333,50 +333,79 @@ export type Database = {
         Row: {
           id: string
           order_id: string
-          milestone_type: string
-          milestone_status: 'pending' | 'in_progress' | 'completed' | 'skipped' | null
-          started_at: string | null
-          completed_at: string | null
-          completed_by: string | null
-          photo_urls: string[]
-          video_url: string | null
-          notes: string | null
-          customer_approved: boolean
-          customer_approved_at: string | null
+          milestone: 'FABRIC_SELECTED' | 'CUTTING_STARTED' | 'INITIAL_ASSEMBLY' | 
+                    'FITTING_READY' | 'ADJUSTMENTS_COMPLETE' | 'FINAL_PRESSING' | 'READY_FOR_DELIVERY'
+          photo_url: string
+          notes: string
+          verified_at: string
+          verified_by: string
+          approval_status: 'PENDING' | 'APPROVED' | 'REJECTED'
+          customer_reviewed_at: string | null
+          auto_approval_deadline: string
+          rejection_reason: string | null
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           order_id: string
-          milestone_type: string
-          milestone_status?: 'pending' | 'in_progress' | 'completed' | 'skipped' | null
-          started_at?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          photo_urls?: string[]
-          video_url?: string | null
-          notes?: string | null
-          customer_approved?: boolean
-          customer_approved_at?: string | null
+          milestone: 'FABRIC_SELECTED' | 'CUTTING_STARTED' | 'INITIAL_ASSEMBLY' | 
+                    'FITTING_READY' | 'ADJUSTMENTS_COMPLETE' | 'FINAL_PRESSING' | 'READY_FOR_DELIVERY'
+          photo_url: string
+          notes?: string
+          verified_at?: string
+          verified_by: string
+          approval_status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+          customer_reviewed_at?: string | null
+          auto_approval_deadline?: string
+          rejection_reason?: string | null
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           order_id?: string
-          milestone_type?: string
-          milestone_status?: 'pending' | 'in_progress' | 'completed' | 'skipped' | null
-          started_at?: string | null
-          completed_at?: string | null
-          completed_by?: string | null
-          photo_urls?: string[]
-          video_url?: string | null
-          notes?: string | null
-          customer_approved?: boolean
-          customer_approved_at?: string | null
+          milestone?: 'FABRIC_SELECTED' | 'CUTTING_STARTED' | 'INITIAL_ASSEMBLY' | 
+                     'FITTING_READY' | 'ADJUSTMENTS_COMPLETE' | 'FINAL_PRESSING' | 'READY_FOR_DELIVERY'
+          photo_url?: string
+          notes?: string
+          verified_at?: string
+          verified_by?: string
+          approval_status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+          customer_reviewed_at?: string | null
+          auto_approval_deadline?: string
+          rejection_reason?: string | null
           created_at?: string
           updated_at?: string
+        }
+      }
+      milestone_approvals: {
+        Row: {
+          id: string
+          milestone_id: string
+          order_id: string
+          customer_id: string
+          action: 'APPROVED' | 'REJECTED' | 'AUTO_APPROVED'
+          comment: string | null
+          reviewed_at: string
+        }
+        Insert: {
+          id?: string
+          milestone_id: string
+          order_id: string
+          customer_id: string
+          action: 'APPROVED' | 'REJECTED' | 'AUTO_APPROVED'
+          comment?: string | null
+          reviewed_at?: string
+        }
+        Update: {
+          id?: string
+          milestone_id?: string
+          order_id?: string
+          customer_id?: string
+          action?: 'APPROVED' | 'REJECTED' | 'AUTO_APPROVED'
+          comment?: string | null
+          reviewed_at?: string
         }
       }
       payment_transactions: {
@@ -627,8 +656,187 @@ export type Database = {
           updated_at?: string
         }
       }
+      payment_statistics: {
+        Row: {
+          id: string
+          tailor_id: string
+          period: string
+          total_earnings: number
+          gross_payments: number
+          platform_commission: number
+          net_earnings: number
+          pending_amount: number
+          completed_amount: number
+          disputed_amount: number
+          refunded_amount: number
+          total_orders: number
+          completed_orders: number
+          average_order_value: number
+          commission_rate: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tailor_id: string
+          period: string
+          total_earnings?: number
+          gross_payments?: number
+          platform_commission?: number
+          net_earnings?: number
+          pending_amount?: number
+          completed_amount?: number
+          disputed_amount?: number
+          refunded_amount?: number
+          total_orders?: number
+          completed_orders?: number
+          average_order_value?: number
+          commission_rate?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tailor_id?: string
+          period?: string
+          total_earnings?: number
+          gross_payments?: number
+          platform_commission?: number
+          net_earnings?: number
+          pending_amount?: number
+          completed_amount?: number
+          disputed_amount?: number
+          refunded_amount?: number
+          total_orders?: number
+          completed_orders?: number
+          average_order_value?: number
+          commission_rate?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tailor_commission_records: {
+        Row: {
+          id: string
+          tailor_id: string
+          order_id: string
+          payment_transaction_id: string | null
+          order_amount: number
+          commission_rate: number
+          commission_amount: number
+          net_payment: number
+          processed_at: string | null
+          status: 'PENDING' | 'PROCESSED' | 'DISPUTED'
+          invoice_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tailor_id: string
+          order_id: string
+          payment_transaction_id?: string | null
+          order_amount: number
+          commission_rate?: number
+          commission_amount: number
+          net_payment: number
+          processed_at?: string | null
+          status?: 'PENDING' | 'PROCESSED' | 'DISPUTED'
+          invoice_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tailor_id?: string
+          order_id?: string
+          payment_transaction_id?: string | null
+          order_amount?: number
+          commission_rate?: number
+          commission_amount?: number
+          net_payment?: number
+          processed_at?: string | null
+          status?: 'PENDING' | 'PROCESSED' | 'DISPUTED'
+          invoice_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      tax_invoices: {
+        Row: {
+          id: string
+          invoice_number: string
+          tailor_id: string
+          order_id: string
+          commission_record_id: string | null
+          issue_date: string
+          gross_amount: number
+          commission_amount: number
+          net_amount: number
+          ghana_vat_number: string | null
+          pdf_url: string | null
+          status: 'DRAFT' | 'ISSUED' | 'CANCELLED'
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invoice_number?: string
+          tailor_id: string
+          order_id: string
+          commission_record_id?: string | null
+          issue_date?: string
+          gross_amount: number
+          commission_amount: number
+          net_amount: number
+          ghana_vat_number?: string | null
+          pdf_url?: string | null
+          status?: 'DRAFT' | 'ISSUED' | 'CANCELLED'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invoice_number?: string
+          tailor_id?: string
+          order_id?: string
+          commission_record_id?: string | null
+          issue_date?: string
+          gross_amount?: number
+          commission_amount?: number
+          net_amount?: number
+          ghana_vat_number?: string | null
+          pdf_url?: string | null
+          status?: 'DRAFT' | 'ISSUED' | 'CANCELLED'
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
-    Views: Record<string, never>
+    Views: {
+      tailor_payment_summary: {
+        Row: {
+          tailor_id: string
+          period: string
+          total_earnings: number
+          gross_payments: number
+          platform_commission: number
+          net_earnings: number
+          pending_amount: number
+          completed_amount: number
+          disputed_amount: number
+          refunded_amount: number
+          total_orders: number
+          completed_orders: number
+          average_order_value: number
+          commission_rate: number
+          last_updated: string
+        }
+      }
+    }
     Functions: {
       is_admin: {
         Args: Record<string, never>
@@ -658,6 +866,12 @@ export type Database = {
       payment_provider: 'MTN_MOMO' | 'VODAFONE_CASH' | 'BANK_TRANSFER' | 'CASH'
       payment_status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'REFUNDED'
       dispute_status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED' | 'ESCALATED' | 'CLOSED'
+      milestone_stage: 'FABRIC_SELECTED' | 'CUTTING_STARTED' | 'INITIAL_ASSEMBLY' | 
+                      'FITTING_READY' | 'ADJUSTMENTS_COMPLETE' | 'FINAL_PRESSING' | 'READY_FOR_DELIVERY'
+      milestone_approval_status: 'PENDING' | 'APPROVED' | 'REJECTED'
+      milestone_approval_action: 'APPROVED' | 'REJECTED' | 'AUTO_APPROVED'
+      commission_status: 'PENDING' | 'PROCESSED' | 'DISPUTED'
+      invoice_status: 'DRAFT' | 'ISSUED' | 'CANCELLED'
     }
   }
 }

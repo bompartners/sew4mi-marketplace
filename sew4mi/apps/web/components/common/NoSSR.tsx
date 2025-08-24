@@ -11,7 +11,7 @@ interface NoSSRProps {
 /**
  * Component that only renders on the client side to avoid SSR hydration issues
  */
-function NoSSRComponent({ children, fallback = null }: NoSSRProps) {
+function NoSSRComponent({ children, fallback: _fallback = null }: NoSSRProps) {
   return <>{children}</>;
 }
 
