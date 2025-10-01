@@ -49,19 +49,23 @@ const mockTailors: TailorSearchItem[] = [
     totalReviews: 25,
     averageResponseHours: 2,
     completedOrders: 150,
-    onTimeDeliveryRate: 0.95,
     verificationStatus: 'VERIFIED',
     location: { lat: 5.6037, lng: -0.1870 },
-    distance: 2.5,
-    minPrice: 50,
     profilePhoto: 'https://example.com/profile1.jpg',
     portfolioImages: ['https://example.com/portfolio1.jpg'],
     bio: 'Expert in traditional Ghanaian wear',
     yearsOfExperience: 8,
-    rushOrderFeePercentage: 25,
-    user: {
-      whatsappNumber: '+233501234567'
-    }
+    userId: 'user-1',
+    locationName: 'Accra',
+    region: 'Greater Accra',
+    deliveryRadiusKm: 10,
+    completionRate: 0.95,
+    averageDeliveryDays: 5,
+    onTimeDeliveryRate: 0.95,
+    capacity: 10,
+    vacationMode: false,
+    acceptsRushOrders: true,
+    rushOrderFeePercentage: 25
   },
   {
     id: '2',
@@ -72,30 +76,33 @@ const mockTailors: TailorSearchItem[] = [
     totalReviews: 18,
     averageResponseHours: 4,
     completedOrders: 89,
-    onTimeDeliveryRate: 0.92,
     verificationStatus: 'VERIFIED',
     location: { lat: 6.6885, lng: -1.6244 },
-    distance: 1.8,
-    minPrice: 35,
     profilePhoto: 'https://example.com/profile2.jpg',
     portfolioImages: ['https://example.com/portfolio2.jpg'],
     bio: 'Modern designs with traditional touch',
     yearsOfExperience: 5,
-    rushOrderFeePercentage: 20,
-    user: {
-      whatsappNumber: '+233209876543'
-    }
+    userId: 'user-2',
+    locationName: 'Kumasi',
+    region: 'Ashanti',
+    deliveryRadiusKm: 8,
+    completionRate: 0.92,
+    averageDeliveryDays: 4,
+    onTimeDeliveryRate: 0.92,
+    capacity: 8,
+    vacationMode: false,
+    acceptsRushOrders: true,
+    rushOrderFeePercentage: 20
   }
 ];
 
 const mockResults: TailorSearchResult = {
   tailors: mockTailors,
-  totalCount: 2,
+  total: 2,
   hasMore: false,
-  nextCursor: null,
+  nextCursor: undefined,
   searchMeta: {
     searchTime: 150,
-    totalResults: 2,
     appliedFilters: ['city:Accra']
   }
 };
@@ -245,7 +252,6 @@ describe('TailorSearchResults', () => {
     });
 
     it('should handle tailor selection from map', () => {
-      const onTailorSelect = vi.fn();
       render(
         <TailorSearchResults
           {...defaultProps}
@@ -300,7 +306,7 @@ describe('TailorSearchResults', () => {
       const mockObserve = vi.fn();
       const mockDisconnect = vi.fn();
       
-      mockIntersectionObserver.mockImplementation((callback) => ({
+      mockIntersectionObserver.mockImplementation((_callback) => ({
         observe: mockObserve,
         disconnect: mockDisconnect,
         unobserve: vi.fn(),

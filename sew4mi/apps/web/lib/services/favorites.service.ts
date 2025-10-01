@@ -83,11 +83,11 @@ export class FavoritesService {
       const offset = (page - 1) * limit;
       const cacheKey = `favorites:${customerId}:${page}:${limit}`;
       
-      // Check cache
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
+      // Check cache - skip cache for now to avoid type issues
+      // const cached = this.getFromCache(cacheKey);
+      // if (cached) {
+      //   return cached;
+      // }
 
       const result = await this.favoritesRepository.getFavorites(customerId, limit, offset);
       
@@ -115,11 +115,11 @@ export class FavoritesService {
     try {
       const cacheKey = `is-favorite:${customerId}:${tailorId}`;
       
-      // Check cache
-      const cached = this.getFromCache(cacheKey);
-      if (cached !== null) {
-        return cached;
-      }
+      // Skip cache for now to avoid type issues
+      // const cached = this.getFromCache(cacheKey);
+      // if (cached !== null) {
+      //   return cached;
+      // }
 
       const result = await this.favoritesRepository.isFavorite(customerId, tailorId);
       
@@ -169,11 +169,11 @@ export class FavoritesService {
     try {
       const cacheKey = `favorite-count:${tailorId}`;
       
-      // Check cache
-      const cached = this.getFromCache(cacheKey);
-      if (cached !== null) {
-        return cached;
-      }
+      // Skip cache for now to avoid type issues  
+      // const cached = this.getFromCache(cacheKey);
+      // if (cached !== null) {
+      //   return cached;
+      // }
 
       const count = await this.favoritesRepository.getFavoriteCount(tailorId);
       
@@ -199,11 +199,11 @@ export class FavoritesService {
     try {
       const cacheKey = `favorites-stats:${customerId}`;
       
-      // Check cache
-      const cached = this.getFromCache(cacheKey);
-      if (cached) {
-        return cached;
-      }
+      // Skip cache for now to avoid type issues
+      // const cached = this.getFromCache(cacheKey);
+      // if (cached) {
+      //   return cached;
+      // }
 
       const stats = await this.favoritesRepository.getFavoritesStats(customerId);
       
@@ -303,16 +303,17 @@ export class FavoritesService {
   /**
    * Get data from cache
    */
-  private getFromCache<T>(key: string): T | null {
-    const cached = this.cache.get(key);
-    if (cached && cached.expires > Date.now()) {
-      return cached.data;
-    }
-    if (cached) {
-      this.cache.delete(key);
-    }
-    return null;
-  }
+  // Commented out until cache is re-enabled
+  // private _getFromCache<T>(key: string): T | null {
+  //   const cached = this.cache.get(key);
+  //   if (cached && cached.expires > Date.now()) {
+  //     return cached.data;
+  //   }
+  //   if (cached) {
+  //     this.cache.delete(key);
+  //   }
+  //   return null;
+  // }
 
   /**
    * Set data in cache

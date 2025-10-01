@@ -82,9 +82,7 @@ export function useFavorites(): UseFavoritesResult {
         id: data.favorite.id,
         customerId: data.favorite.customerId,
         tailorId: tailor.id,
-        notes: data.favorite.notes,
         createdAt: new Date().toISOString(),
-        tailor: tailor,
       };
 
       setFavorites(prev => [...prev, newFavorite]);

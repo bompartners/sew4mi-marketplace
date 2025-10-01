@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { FeaturedTailors } from '@/components/features/tailors/FeaturedTailors';
 import { FeaturedTailor } from '@sew4mi/shared';
 
@@ -21,14 +21,10 @@ describe('FeaturedTailors', () => {
   const mockFeaturedTailors: FeaturedTailor[] = [
     {
       id: 'featured-1',
-      tailorId: 'tailor-1',
       featuredReason: 'HIGH_RATING',
-      priority: 1,
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
+      featuredUntil: '2024-12-31',
       promotionalBadge: 'Top Rated',
-      createdAt: '2024-01-01T00:00:00Z',
-      tailor: {
+            tailor: {
         id: 'tailor-1',
         userId: 'user-1',
         businessName: 'Elite Kente Masters',
@@ -64,14 +60,10 @@ describe('FeaturedTailors', () => {
     },
     {
       id: 'featured-2',
-      tailorId: 'tailor-2',
       featuredReason: 'FAST_RESPONSE',
-      priority: 2,
-      startDate: '2024-01-01',
-      endDate: '2024-12-31',
+      featuredUntil: '2024-12-31',
       promotionalBadge: 'Quick Response',
-      createdAt: '2024-01-01T00:00:00Z',
-      tailor: {
+            tailor: {
         id: 'tailor-2',
         userId: 'user-2',
         businessName: 'Modern Designs Studio',
@@ -212,12 +204,6 @@ describe('FeaturedTailors', () => {
       const manyTailors = Array.from({ length: 10 }, (_, i) => ({
         ...mockFeaturedTailors[0],
         id: `featured-${i}`,
-        tailorId: `tailor-${i}`,
-        tailor: {
-          ...mockFeaturedTailors[0].tailor,
-          id: `tailor-${i}`,
-          businessName: `Tailor ${i}`,
-        },
       }));
 
       mockFetch.mockResolvedValue({

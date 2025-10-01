@@ -9,7 +9,7 @@ vi.mock('@/lib/services/tailor-search.service');
 vi.mock('@/lib/supabase/server');
 
 describe('/api/tailors/search', () => {
-  let mockSearchService: jest.Mocked<TailorSearchService>;
+  let mockSearchService: any;
   let mockSupabase: any;
 
   beforeEach(() => {

@@ -5,7 +5,7 @@
  * to minimize database queries and auth API calls.
  */
 
-import type { User, Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import type { UserRole } from '@sew4mi/shared';
 
 interface CachedUserData {

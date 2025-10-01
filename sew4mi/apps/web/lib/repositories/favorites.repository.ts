@@ -96,9 +96,9 @@ export class FavoritesRepository {
     }
 
     // Process favorites
-    const favorites = favoritesData
-      .filter(favorite => favorite.tailor && favorite.tailor.verification_status === 'VERIFIED')
-      .map(favorite => {
+    const favorites = (favoritesData as any[])
+      .filter((favorite: any) => favorite.tailor && favorite.tailor.verification_status === 'VERIFIED')
+      .map((favorite: any) => {
         const tailor = favorite.tailor;
         return {
           id: tailor.id,
@@ -222,12 +222,12 @@ export class FavoritesRepository {
       throw new Error(`Failed to get favorites stats: ${error.message}`);
     }
 
-    const tailors = data.filter(item => item.tailor).map(item => item.tailor);
+    const tailors = (data as any[]).filter((item: any) => item.tailor).map((item: any) => item.tailor);
     const total = tailors.length;
 
     // Calculate specializations
     const specializationCounts: Record<string, number> = {};
-    tailors.forEach(tailor => {
+    tailors.forEach((tailor: any) => {
       tailor.specializations?.forEach((spec: string) => {
         specializationCounts[spec] = (specializationCounts[spec] || 0) + 1;
       });
@@ -235,14 +235,14 @@ export class FavoritesRepository {
 
     // Calculate locations
     const locationCounts: Record<string, number> = {};
-    tailors.forEach(tailor => {
+    tailors.forEach((tailor: any) => {
       if (tailor.city) {
         locationCounts[tailor.city] = (locationCounts[tailor.city] || 0) + 1;
       }
     });
 
     // Calculate average rating
-    const totalRating = tailors.reduce((sum, tailor) => sum + (tailor.rating || 0), 0);
+    const totalRating = tailors.reduce((sum: number, tailor: any) => sum + (tailor.rating || 0), 0);
     const averageRating = total > 0 ? totalRating / total : 0;
 
     return {

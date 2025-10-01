@@ -55,7 +55,7 @@ describe('Tailor Profile API', () => {
       vi.mocked(tailorProfileService.getCompleteProfile).mockResolvedValue(mockTailorProfile as any);
 
       const request = new NextRequest('http://localhost:3000/api/tailors/tailor-1/profile');
-      const params = { id: 'tailor-1' };
+      const params = Promise.resolve({ id: 'tailor-1' });
 
       const response = await GET(request, { params });
       const data = await response.json();
@@ -79,7 +79,7 @@ describe('Tailor Profile API', () => {
       vi.mocked(tailorProfileService.getCompleteProfile).mockResolvedValue(mockTailorProfile as any);
 
       const request = new NextRequest('http://localhost:3000/api/tailors/tailor-1/profile');
-      const params = { id: 'tailor-1' };
+      const params = Promise.resolve({ id: 'tailor-1' });
 
       const response = await GET(request, { params });
       const data = await response.json();
@@ -102,7 +102,7 @@ describe('Tailor Profile API', () => {
       vi.mocked(tailorProfileService.getCompleteProfile).mockResolvedValue(null);
 
       const request = new NextRequest('http://localhost:3000/api/tailors/non-existent/profile');
-      const params = { id: 'non-existent' };
+      const params = Promise.resolve({ id: 'non-existent' });
 
       const response = await GET(request, { params });
       const data = await response.json();
@@ -136,7 +136,7 @@ describe('Tailor Profile API', () => {
         body: JSON.stringify(updates),
         headers: { 'Content-Type': 'application/json' }
       });
-      const params = { id: 'tailor-1' };
+      const params = Promise.resolve({ id: 'tailor-1' });
 
       const response = await PUT(request, { params });
       const data = await response.json();
@@ -162,7 +162,7 @@ describe('Tailor Profile API', () => {
         body: JSON.stringify({ businessName: 'Updated Name' }),
         headers: { 'Content-Type': 'application/json' }
       });
-      const params = { id: 'tailor-1' };
+      const params = Promise.resolve({ id: 'tailor-1' });
 
       const response = await PUT(request, { params });
       const data = await response.json();
@@ -187,7 +187,7 @@ describe('Tailor Profile API', () => {
         body: JSON.stringify({ businessName: 'Updated Name' }),
         headers: { 'Content-Type': 'application/json' }
       });
-      const params = { id: 'tailor-1' };
+      const params = Promise.resolve({ id: 'tailor-1' });
 
       const response = await PUT(request, { params });
       const data = await response.json();

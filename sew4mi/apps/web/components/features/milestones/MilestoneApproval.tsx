@@ -16,8 +16,6 @@ import {
   XCircle,
   Loader2,
   ZoomIn,
-  ChevronLeft,
-  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -45,6 +43,10 @@ type ApprovalStatus = 'idle' | 'approving' | 'rejecting' | 'success' | 'error';
 interface MilestoneApprovalProps {
   /** Milestone data to review */
   milestone: OrderMilestone;
+  /** Whether modal is open */
+  isOpen?: boolean;
+  /** Callback to close modal */
+  onClose?: () => void;
   /** Callback when approval is successful */
   onApprovalComplete?: (action: MilestoneApprovalAction, comment?: string) => void;
   /** Callback when approval fails */
@@ -175,7 +177,7 @@ export function MilestoneApproval({
         throw new Error(errorData.error || 'Approval failed');
       }
 
-      const result = await response.json();
+      await response.json();
       
       setApprovalStatus('success');
       setComment('');

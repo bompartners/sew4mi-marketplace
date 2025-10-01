@@ -129,7 +129,7 @@ export function PaymentStatusGrid({
           Payment Distribution
         </p>
         <div className="flex rounded-full overflow-hidden h-2">
-          {statusItems.map((item, index) => {
+          {statusItems.map((item, _index) => {
             const width = total > 0 ? (item.amount / total) * 100 : 0;
             
             if (width === 0) return null;

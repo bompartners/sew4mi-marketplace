@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { HubtelService } from '@/lib/services/hubtel.service';
-import { ENV_CONFIG } from '@/lib/config/env';
+// import { ENV_CONFIG } from '@/lib/config/env'; // Removed unused import
 import { validateGhanaPhoneNumber } from '@sew4mi/shared';
 
 // Mock environment configuration

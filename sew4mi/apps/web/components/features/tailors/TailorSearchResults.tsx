@@ -12,8 +12,6 @@ import {
   MapPin, 
   Star, 
   Clock, 
-  Heart, 
-  Phone, 
   MessageCircle,
   ExternalLink,
   AlertCircle 
@@ -293,18 +291,15 @@ interface TailorListItemProps {
 
 function TailorListItem({
   tailor,
-  userLocation,
   isSelected,
   onSelect,
 }: TailorListItemProps) {
   const handleContact = useCallback(() => {
-    // In a real app, integrate with WhatsApp or contact system
-    if (tailor.user?.whatsappNumber) {
-      const message = `Hello! I found your profile on Sew4Mi and I'm interested in your tailoring services.`;
-      const whatsappUrl = `https://wa.me/${tailor.user.whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    }
-  }, [tailor.user?.whatsappNumber]);
+    // TODO: TailorSearchItem doesn't include user.whatsappNumber
+    // Redirect to tailor profile where full contact info is available
+    console.log('Contact tailor:', tailor.id);
+    window.open(`/tailors/${tailor.id}`, '_blank');
+  }, [tailor.id]);
 
   const handleViewProfile = useCallback(() => {
     window.open(`/tailors/${tailor.id}`, '_blank');

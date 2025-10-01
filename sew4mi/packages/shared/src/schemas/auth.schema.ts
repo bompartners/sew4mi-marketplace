@@ -35,7 +35,7 @@ export const registrationSchema = z.object({
   identifierType: z.enum(['email', 'phone']),
   password: passwordSchema,
   confirmPassword: z.string(),
-  role: registerableRoleSchema.default('CUSTOMER'),
+  role: registerableRoleSchema,
   acceptTerms: z.boolean().refine((val) => val === true, {
     message: 'You must accept the terms and conditions',
   }),

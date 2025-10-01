@@ -257,11 +257,20 @@ describe('createCacheService', () => {
   });
 
   it('should create InMemoryCacheService by default', () => {
-    process.env = { ...originalEnv };
-    delete process.env.NODE_ENV;
-    delete process.env.USE_REDIS;
+    // Temporarily modify process.env without delete
+    const originalEnv = process.env;
+    const testEnv = { ...originalEnv };
+    testEnv.NODE_ENV = 'test';
+    testEnv.USE_REDIS = undefined;
+    
+    // @ts-ignore - temporarily bypass readonly
+    process.env = testEnv;
 
     const cache = createCacheService();
+    
+    // Restore original environment
+    // @ts-ignore - temporarily bypass readonly  
+    process.env = originalEnv;
     
     expect(cache).toBeInstanceOf(InMemoryCacheService);
   });

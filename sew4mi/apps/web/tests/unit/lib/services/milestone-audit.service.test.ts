@@ -469,7 +469,7 @@ describe('MilestoneAuditService', () => {
         { timeRange: 'last_year', expectedDays: 365 }
       ];
 
-      testCases.forEach(({ timeRange, expectedDays }) => {
+      testCases.forEach(({ timeRange }) => {
         const filter = (service as any).buildTimeRangeFilter({ timeRange });
         expect(filter).toContain('om.verified_at >=');
         expect(filter).toContain('om.verified_at <=');

@@ -8,6 +8,28 @@ vi.mock('@/lib/services/payment.service');
 
 const mockPaymentService = vi.mocked(paymentService);
 
+// Test data shared across describe blocks
+const validWebhookPayload = {
+  transactionId: 'tx_123',
+  hubtelTransactionId: 'hubtel_tx_123',
+  status: 'success',
+  amount: 100.50,
+  customerPhoneNumber: '+233241234567',
+  paymentMethod: 'MTN',
+  timestamp: '2024-08-21T11:00:00Z',
+  signature: 'valid_signature'
+};
+
+const createMockRequest = (body: any, headers: Record<string, string> = {}) => {
+  const payloadString = JSON.stringify(body);
+  return {
+    text: vi.fn().mockResolvedValue(payloadString),
+    headers: {
+      get: vi.fn((key: string) => headers[key] || null)
+    }
+  } as any as NextRequest;
+};
+
 describe('/api/webhooks/hubtel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -18,26 +40,6 @@ describe('/api/webhooks/hubtel', () => {
   });
 
   describe('POST', () => {
-    const validWebhookPayload = {
-      transactionId: 'tx_123',
-      hubtelTransactionId: 'hubtel_tx_123',
-      status: 'success',
-      amount: 100.50,
-      customerPhoneNumber: '+233241234567',
-      paymentMethod: 'MTN',
-      timestamp: '2024-08-21T11:00:00Z',
-      signature: 'valid_signature'
-    };
-
-    const createMockRequest = (body: any, headers: Record<string, string> = {}) => {
-      const payloadString = JSON.stringify(body);
-      return {
-        text: vi.fn().mockResolvedValue(payloadString),
-        headers: {
-          get: vi.fn((key: string) => headers[key] || null)
-        }
-      } as any as NextRequest;
-    };
 
     it('should successfully process valid webhook', async () => {
       const request = createMockRequest(validWebhookPayload, {

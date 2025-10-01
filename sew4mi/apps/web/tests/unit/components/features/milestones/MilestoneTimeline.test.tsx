@@ -7,7 +7,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MilestoneTimeline } from '@/components/features/milestones/MilestoneTimeline';
-import { OrderMilestone, MilestoneType } from '@sew4mi/shared';
+import { OrderMilestone, MilestoneType, MilestoneStage, MilestoneApprovalStatus } from '@sew4mi/shared';
 
 // Mock Next.js Image component
 vi.mock('next/image', () => ({
@@ -19,7 +19,7 @@ vi.mock('next/image', () => ({
 // Mock data
 const createMockMilestone = (
   milestone: MilestoneType,
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING',
+  approvalStatus: MilestoneApprovalStatus = MilestoneApprovalStatus.PENDING,
   verifiedAt?: Date,
   withPhoto: boolean = true
 ): OrderMilestone => ({
@@ -28,12 +28,14 @@ const createMockMilestone = (
   milestone,
   photoUrl: withPhoto && verifiedAt ? 'https://example.com/photo.jpg' : '',
   notes: 'Test notes for milestone',
-  verifiedAt: verifiedAt || null,
+  verifiedAt: verifiedAt || new Date(),
   verifiedBy: verifiedAt ? 'tailor-123' : '',
   approvalStatus,
-  customerReviewedAt: approvalStatus !== 'PENDING' ? new Date('2024-08-21T10:00:00Z') : null,
+  customerReviewedAt: approvalStatus !== MilestoneApprovalStatus.PENDING ? new Date('2024-08-21T10:00:00Z') : undefined,
   autoApprovalDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
-  rejectionReason: approvalStatus === 'REJECTED' ? 'Quality needs improvement' : null
+  rejectionReason: approvalStatus === MilestoneApprovalStatus.REJECTED ? 'Quality needs improvement' : undefined,
+  createdAt: new Date(),
+  updatedAt: new Date()
 });
 
 describe('MilestoneTimeline Component', () => {
@@ -62,7 +64,7 @@ describe('MilestoneTimeline Component', () => {
       'Ready for Delivery'
     ];
 
-    milestoneLabels.forEach((label, index) => {
+    milestoneLabels.forEach((label) => {
       const element = screen.getByText(label);
       expect(element).toBeInTheDocument();
     });
@@ -70,7 +72,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('shows completed milestone with approved badge and check icon', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'APPROVED', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.APPROVED, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -82,7 +84,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('shows pending milestone with pending approval badge', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -93,7 +95,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('shows rejected milestone with rejection reason', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'REJECTED', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.REJECTED, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -111,7 +113,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('shows view photo button when photo is available', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'), true)
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'), true)
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -121,7 +123,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('shows review & approve button for customer on pending milestones', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(
@@ -137,7 +139,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('does not show review button for tailor users', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(
@@ -153,7 +155,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('opens photo preview dialog when view photo is clicked', async () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'), true)
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'), true)
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -169,7 +171,7 @@ describe('MilestoneTimeline Component', () => {
   it('calls onViewPhotos callback when view photo is clicked', () => {
     const onViewPhotos = vi.fn();
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'), true)
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'), true)
     ];
 
     render(
@@ -189,7 +191,7 @@ describe('MilestoneTimeline Component', () => {
   it('calls onViewApproval callback when review button is clicked', () => {
     const onViewApproval = vi.fn();
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(
@@ -209,7 +211,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('displays milestone notes when available', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'APPROVED', new Date('2024-08-20T10:00:00Z'))
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.APPROVED, new Date('2024-08-20T10:00:00Z'))
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -221,7 +223,7 @@ describe('MilestoneTimeline Component', () => {
     const futureDeadline = new Date(Date.now() + 5 * 60 * 60 * 1000); // 5 hours from now
     const milestones = [
       {
-        ...createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z')),
+        ...createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z')),
         autoApprovalDeadline: futureDeadline
       }
     ];
@@ -233,9 +235,9 @@ describe('MilestoneTimeline Component', () => {
 
   it('applies correct status colors for different milestone states', () => {
     const milestones = [
-      createMockMilestone('FABRIC_SELECTED', 'APPROVED', new Date()),
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date()),
-      createMockMilestone('INITIAL_ASSEMBLY', 'REJECTED', new Date())
+      createMockMilestone(MilestoneStage.FABRIC_SELECTED, MilestoneApprovalStatus.APPROVED, new Date()),
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date()),
+      createMockMilestone(MilestoneStage.INITIAL_ASSEMBLY, MilestoneApprovalStatus.REJECTED, new Date())
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -255,7 +257,7 @@ describe('MilestoneTimeline Component', () => {
 
   it('closes photo preview dialog when close is triggered', async () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date('2024-08-20T10:00:00Z'), true)
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date('2024-08-20T10:00:00Z'), true)
     ];
 
     render(<MilestoneTimeline {...defaultProps} milestones={milestones} />);
@@ -297,7 +299,7 @@ describe('MilestoneTimeline Component', () => {
     const urgentDeadline = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours from now
     const milestones = [
       {
-        ...createMockMilestone('CUTTING_STARTED', 'PENDING', new Date()),
+        ...createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date()),
         autoApprovalDeadline: urgentDeadline
       }
     ];

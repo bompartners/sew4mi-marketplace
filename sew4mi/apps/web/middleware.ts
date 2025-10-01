@@ -23,19 +23,19 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getSession()
 
   // Public routes that don't require authentication
-  const publicRoutes = [
-    '/',
-    '/login',
-    '/register',
-    '/forgot-password',
-    '/reset-password',
-    '/verify-otp',
-    '/apply-tailor'
-  ]
-
-  // Auth routes - redirect to dashboard if already authenticated
-  const authRoutes = [
-    '/login',
+  // const publicRoutes = [ // TODO: Use when needed
+  //     '/',
+  //     '/login',
+  //     '/register',
+  //     '/forgot-password',
+  //     '/reset-password',
+  //     '/verify-otp',
+  //     '/apply-tailor'
+  //   ]
+  // 
+    // Auth routes - redirect to dashboard if already authenticated
+    const authRoutes = [
+      '/login',
     '/register',
     '/forgot-password',
     '/reset-password',
@@ -61,7 +61,7 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = authRoutes.some(route => pathname === route)
 
   // Check if current path is public
-  const isPublicRoute = publicRoutes.some(route => pathname === route)
+  // const _isPublicRoute = publicRoutes.some(route => pathname === route) // TODO: Use when needed
 
   // If user is not authenticated and trying to access protected or role-specific route
   if (!session && (isProtectedRoute || isRoleSpecificRoute)) {
@@ -73,13 +73,13 @@ export async function middleware(request: NextRequest) {
   // If user is authenticated and trying to access auth routes, redirect to appropriate dashboard
   if (session && isAuthRoute) {
     // Get user role to redirect to appropriate dashboard
-    let userRole = USER_ROLES.CUSTOMER; // default
+    let userRole: typeof USER_ROLES[keyof typeof USER_ROLES] = USER_ROLES.CUSTOMER; // default
     
     if (session.user) {
       // Try to get role from user metadata or fetch from database
       const metadataRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
       if (metadataRole) {
-        userRole = metadataRole.toUpperCase();
+        userRole = metadataRole.toUpperCase() as typeof USER_ROLES[keyof typeof USER_ROLES];
       } else {
         // Fetch role from database if not in metadata
         try {
@@ -90,7 +90,7 @@ export async function middleware(request: NextRequest) {
             .single();
           
           if (userData?.role) {
-            userRole = userData.role;
+            userRole = userData.role as typeof USER_ROLES[keyof typeof USER_ROLES];
           }
         } catch (error) {
           console.error('Failed to fetch user role:', error);
@@ -105,7 +105,7 @@ export async function middleware(request: NextRequest) {
 
   // Enhanced role-based access control
   if (session && session.user && (isRoleSpecificRoute || isProtectedRoute)) {
-    let userRole = USER_ROLES.CUSTOMER; // default
+    let userRole: typeof USER_ROLES[keyof typeof USER_ROLES] = USER_ROLES.CUSTOMER; // default
     
     // Get user role from metadata or database
     const metadataRole = session.user.user_metadata?.role || session.user.app_metadata?.role;

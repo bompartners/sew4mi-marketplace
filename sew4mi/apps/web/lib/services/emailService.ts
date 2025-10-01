@@ -102,7 +102,6 @@ export class EmailService {
    * Get welcome email HTML template
    */
   private getWelcomeEmailHTML(data: WelcomeEmailData): string {
-    const content = this.getWelcomeEmailContent(data)
     
     return `
       <!DOCTYPE html>

@@ -61,7 +61,7 @@ export function DisputeCreationForm({
     description: ''
   });
 
-  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
+  const [evidenceFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 

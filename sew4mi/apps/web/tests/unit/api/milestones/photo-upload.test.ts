@@ -66,7 +66,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -90,7 +90,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: 'invalid-id' };
+      const params = Promise.resolve({ id: 'invalid-id' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -110,7 +110,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -136,7 +136,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(invalidRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -159,7 +159,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(invalidFormatBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -182,7 +182,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -205,7 +205,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -235,7 +235,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -260,7 +260,7 @@ describe('Milestone Photo Upload API', () => {
         })
       );
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       
       // Mock successful uploads for the first 10 requests
       mockStorageService.uploadMilestonePhoto.mockResolvedValue({
@@ -295,7 +295,7 @@ describe('Milestone Photo Upload API', () => {
   describe('GET /api/milestones/[id]/photos/upload', () => {
     test('should return upload configuration', async () => {
       const request = new NextRequest('http://localhost/api/milestones/test-id/photos/upload');
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       
       const response = await GET(request, { params });
       const responseData = await response.json();
@@ -318,7 +318,7 @@ describe('Milestone Photo Upload API', () => {
 
     test('should reject invalid milestone ID in GET request', async () => {
       const request = new NextRequest('http://localhost/api/milestones/invalid-id/photos/upload');
-      const params = { id: 'invalid-id' };
+      const params = Promise.resolve({ id: 'invalid-id' });
       
       const response = await GET(request, { params });
       const responseData = await response.json();
@@ -331,6 +331,13 @@ describe('Milestone Photo Upload API', () => {
   });
 
   describe('Error Handling', () => {
+    const validRequestBody = {
+      imageData: 'data:image/jpeg;base64,SGVsbG8gV29ybGQ=',
+      filename: 'test.jpg',
+      mimeType: 'image/jpeg',
+      notes: 'Test milestone photo'
+    };
+
     test('should handle internal server errors gracefully', async () => {
       // Mock storage service to throw an error
       mockStorageService.uploadMilestonePhoto.mockRejectedValue(new Error('Unexpected error'));
@@ -344,7 +351,7 @@ describe('Milestone Photo Upload API', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 
@@ -364,7 +371,7 @@ describe('Milestone Photo Upload API', () => {
         body: 'invalid json'
       });
 
-      const params = { id: '123e4567-e89b-12d3-a456-426614174000' };
+      const params = Promise.resolve({ id: '123e4567-e89b-12d3-a456-426614174000' });
       const response = await POST(request, { params });
       const responseData = await response.json();
 

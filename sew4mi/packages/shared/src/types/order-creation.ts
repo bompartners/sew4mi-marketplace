@@ -1,6 +1,6 @@
 /**
- * Order creation types for the Sew4Mi platform
- * Used across frontend and backend for order creation workflow
+ * Order creation and progress tracking types for the Sew4Mi platform
+ * Used across frontend and backend for order creation workflow and progress tracking
  */
 
 export interface CreateOrderInput {
@@ -180,4 +180,160 @@ export interface OrderCreationValidation {
   specialInstructions?: string;
   urgencyLevel?: string;
   estimatedDelivery?: string;
+}
+
+// Order Progress Tracking Extensions
+export interface OrderWithProgress {
+  id: string;
+  milestones: import('./milestone').OrderMilestone[];
+  progressPercentage: number;
+  nextMilestone?: import('./milestone').MilestoneStage;
+  estimatedDaysRemaining?: number;
+  chatMessages?: OrderMessage[];
+  currentStatus: OrderStatus;
+  estimatedCompletion?: Date;
+}
+
+export interface OrderMessage {
+  id: string;
+  orderId: string;
+  senderId: string;
+  senderType: OrderParticipantRole;
+  senderName: string;
+  message: string;
+  messageType: OrderMessageType;
+  mediaUrl?: string;
+  isInternal: boolean;
+  readBy: string[];
+  sentAt: Date;
+  readAt?: Date;
+  deliveredAt?: Date;
+}
+
+export interface OrderNotificationPreferences {
+  userId: string;
+  sms: boolean;
+  email: boolean;
+  whatsapp: boolean;
+  orderStatusUpdates: boolean;
+  milestoneUpdates: boolean;
+  paymentReminders: boolean;
+  deliveryNotifications: boolean;
+  inAppNotifications: boolean;
+  pushNotifications: boolean;
+}
+
+export interface OrderProgressCalculation {
+  orderId: string;
+  currentStatus: OrderStatus;
+  progressPercentage: number;
+  completedMilestones: number;
+  totalMilestones: number;
+  nextMilestone?: import('./milestone').MilestoneStage;
+  estimatedCompletion?: Date;
+  daysRemaining?: number;
+}
+
+// Progress tracking enums
+export enum OrderStatus {
+  CREATED = 'CREATED',
+  DEPOSIT_PAID = 'DEPOSIT_PAID',
+  IN_PRODUCTION = 'IN_PRODUCTION',
+  FITTING_READY = 'FITTING_READY',
+  ADJUSTMENTS_IN_PROGRESS = 'ADJUSTMENTS_IN_PROGRESS',
+  READY_FOR_DELIVERY = 'READY_FOR_DELIVERY',
+  DELIVERED = 'DELIVERED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+  DISPUTED = 'DISPUTED'
+}
+
+export enum OrderParticipantRole {
+  CUSTOMER = 'CUSTOMER',
+  TAILOR = 'TAILOR',
+  ADMIN = 'ADMIN'
+}
+
+export enum OrderMessageType {
+  TEXT = 'TEXT',
+  IMAGE = 'IMAGE',
+  VOICE = 'VOICE',
+  SYSTEM = 'SYSTEM'
+}
+
+// API types for order progress
+export interface OrderTimelineRequest {
+  orderId: string;
+  includeMessages?: boolean;
+  includePhotos?: boolean;
+}
+
+export interface OrderTimelineResponse {
+  orderId: string;
+  currentStatus: OrderStatus;
+  progressPercentage: number;
+  estimatedCompletion?: Date;
+  milestones: import('./milestone').OrderMilestone[];
+  nextMilestone?: {
+    type: import('./milestone').MilestoneStage;
+    estimatedDate?: Date;
+    description: string;
+  };
+  daysRemaining?: number;
+}
+
+export interface SendOrderMessageRequest {
+  orderId: string;
+  message: string;
+  messageType: OrderMessageType;
+  mediaUrl?: string;
+}
+
+export interface SendOrderMessageResponse {
+  messageId: string;
+  sentAt: Date;
+  deliveredAt?: Date;
+}
+
+export interface OrderHistoryRequest {
+  customerId?: string;
+  tailorId?: string;
+  status?: OrderStatus[];
+  limit?: number;
+  offset?: number;
+  sortBy?: 'createdAt' | 'updatedAt' | 'estimatedCompletion';
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface OrderHistoryResponse {
+  orders: OrderHistoryItem[];
+  totalCount: number;
+  hasMore: boolean;
+}
+
+export interface OrderHistoryItem {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  tailorName: string;
+  garmentType: string;
+  status: OrderStatus;
+  progressPercentage: number;
+  totalAmount: number;
+  createdAt: Date;
+  estimatedCompletion?: Date;
+  thumbnailUrl?: string;
+}
+
+// Notification types
+export interface OrderNotificationRequest {
+  userId: string;
+  preferences: OrderNotificationPreferences;
+}
+
+export interface RegisterPushDeviceRequest {
+  userId: string;
+  deviceToken: string;
+  platform: 'ios' | 'android' | 'web';
+  enabled: boolean;
 }

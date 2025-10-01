@@ -1,17 +1,30 @@
 import { GHANA_PHONE_PREFIXES } from '../constants/payment';
 import { GhanaPhoneValidation } from '../types/payment';
+import { GHANA_ERROR_MESSAGES } from './error-context';
 
 /**
- * Validates and formats Ghana phone numbers
+ * Validates and formats Ghana phone numbers with enhanced error messages
  * Supports formats: +233XXXXXXXX, 0XXXXXXXX, XXXXXXXX
  */
 export function validateGhanaPhoneNumber(phoneNumber: string): GhanaPhoneValidation {
   if (!phoneNumber || typeof phoneNumber !== 'string') {
-    return { isValid: false };
+    return { 
+      isValid: false,
+      error: GHANA_ERROR_MESSAGES.VALIDATION.REQUIRED_FIELD('Phone number')
+    };
   }
 
   // Remove all non-digits and normalize
   const cleaned = phoneNumber.replace(/\D/g, '');
+  
+  // Check for international format that's not Ghana
+  if (phoneNumber.startsWith('+') && !phoneNumber.startsWith('+233')) {
+    return {
+      isValid: false,
+      error: 'Only Ghana phone numbers (+233) are supported',
+      suggestion: GHANA_ERROR_MESSAGES.PHONE.INTERNATIONAL_FORMAT_HINT
+    };
+  }
   
   // Handle different formats: +233XXXXXXXX, 0XXXXXXXX, XXXXXXXX
   let normalized: string;
@@ -22,12 +35,30 @@ export function validateGhanaPhoneNumber(phoneNumber: string): GhanaPhoneValidat
   } else if (cleaned.length === 9 && !cleaned.startsWith('0')) {
     normalized = `233${cleaned}`;
   } else {
-    return { isValid: false };
+    if (cleaned.length < 9) {
+      return { 
+        isValid: false,
+        error: GHANA_ERROR_MESSAGES.PHONE.TOO_SHORT
+      };
+    }
+    if (cleaned.length > 12) {
+      return { 
+        isValid: false,
+        error: GHANA_ERROR_MESSAGES.PHONE.TOO_LONG
+      };
+    }
+    return { 
+      isValid: false,
+      error: GHANA_ERROR_MESSAGES.PHONE.INVALID_FORMAT
+    };
   }
 
   // Validate length (233 + 9 digits = 12 total)
   if (normalized.length !== 12) {
-    return { isValid: false };
+    return { 
+      isValid: false,
+      error: GHANA_ERROR_MESSAGES.PHONE.INVALID_FORMAT
+    };
   }
 
   // Extract prefix (first 2 digits after country code)
@@ -44,7 +75,11 @@ export function validateGhanaPhoneNumber(phoneNumber: string): GhanaPhoneValidat
   }
 
   if (!network) {
-    return { isValid: false };
+    return { 
+      isValid: false,
+      error: GHANA_ERROR_MESSAGES.PHONE.INVALID_PREFIX(prefix),
+      suggestion: 'Valid prefixes: MTN (024,025,053-055,059), Vodafone (020,050), AirtelTigo (026,027,056,057)'
+    };
   }
 
   return {

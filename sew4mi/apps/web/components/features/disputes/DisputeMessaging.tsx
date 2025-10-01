@@ -243,6 +243,7 @@ export function DisputeMessaging({
       const timer = setTimeout(markMessagesAsRead, 1000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isExpanded, markMessagesAsRead]);
 
   // Calculate unread count

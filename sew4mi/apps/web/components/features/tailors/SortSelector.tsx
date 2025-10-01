@@ -19,7 +19,6 @@ export function SortSelector({
   onSortChange,
   className,
 }: SortSelectorProps) {
-  const currentOption = SORT_OPTIONS.find(option => option.value === sortBy);
   
   const handleSortChange = (value: string) => {
     const option = SORT_OPTIONS.find(opt => opt.value === value);

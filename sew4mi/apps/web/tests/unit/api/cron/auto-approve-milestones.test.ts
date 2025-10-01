@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from '@/app/api/cron/auto-approve-milestones/route';
-import { MilestoneApprovalStatus, MilestoneApprovalAction } from '@sew4mi/shared/types';
+import { MilestoneApprovalAction } from '@sew4mi/shared/types';
 
 // Mock Supabase service role client
 const mockSupabaseRpc = vi.fn();
@@ -25,7 +25,6 @@ vi.mock('@/lib/supabase', () => ({
 global.fetch = vi.fn();
 
 // Mock console methods
-const mockConsoleLog = vi.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('/api/cron/auto-approve-milestones', () => {
@@ -393,7 +392,7 @@ describe('/api/cron/auto-approve-milestones', () => {
   describe('POST endpoint (development only)', () => {
     it('blocks POST requests in production', async () => {
       const originalEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+      Object.assign(process.env, { NODE_ENV: 'production' });
 
       const request = new NextRequest('http://localhost/api/cron/auto-approve-milestones', {
         method: 'POST',
@@ -408,11 +407,11 @@ describe('/api/cron/auto-approve-milestones', () => {
       expect(response.status).toBe(403);
       expect(data.error).toBe('Manual trigger not allowed in production');
 
-      process.env.NODE_ENV = originalEnv;
+      Object.assign(process.env, { NODE_ENV: originalEnv });
     });
 
     it('allows POST requests in development', async () => {
-      process.env.NODE_ENV = 'development';
+      Object.assign(process.env, { NODE_ENV: 'development' });
 
       mockSupabaseSelect.mockReturnValue({
         eq: vi.fn().mockReturnValue({

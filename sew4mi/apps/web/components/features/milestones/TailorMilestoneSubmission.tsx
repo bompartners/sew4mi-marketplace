@@ -158,7 +158,7 @@ const SUBMISSION_CONFIG: Record<MilestoneType, {
  * Main TailorMilestoneSubmission component
  */
 export function TailorMilestoneSubmission({
-  orderId,
+  orderId: _orderId,
   currentMilestone,
   isSubmitted = false,
   submittedAt,

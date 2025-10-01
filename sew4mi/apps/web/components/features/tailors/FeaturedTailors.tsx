@@ -109,10 +109,6 @@ export function FeaturedTailors({
     setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
-  const getCurrentTailors = () => {
-    const startIndex = currentSlide * itemsPerSlide;
-    return featuredTailors.slice(startIndex, startIndex + itemsPerSlide);
-  };
 
   // Error state
   if (error) {

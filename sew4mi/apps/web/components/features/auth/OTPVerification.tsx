@@ -39,6 +39,7 @@ export function OTPVerification({
     } else if (resendTimer === 0) {
       setCanResend(true);
     }
+    return undefined;
   }, [resendTimer, canResend]);
 
   // Auto-focus first input
@@ -190,7 +191,7 @@ export function OTPVerification({
           {otp.map((digit, index) => (
             <input
               key={index}
-              ref={el => inputRefs.current[index] = el}
+              ref={el => { inputRefs.current[index] = el; }}
               type="text"
               inputMode="numeric"
               maxLength={1}

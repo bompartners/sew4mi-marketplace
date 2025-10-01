@@ -1,17 +1,17 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@sew4mi/shared/types/database'
 import { DatabaseError, mapSupabaseError } from './errors'
-import { withRetry, DEFAULT_RETRY_OPTIONS } from './retry'
+// import { withRetry, DEFAULT_RETRY_OPTIONS } from './retry' // TODO: Use when implementing retry logic
 
 // For API routes - creates a client with environment variables
-export async function createClient() {
+export function createClient() {
   return createServerSupabaseClient();
 }
 
 // Export raw client creation function for explicit usage
 export { createSupabaseClient }
 
-export async function createServerSupabaseClient(): Promise<ReturnType<typeof createSupabaseClient<Database>>> {
+export function createServerSupabaseClient(): ReturnType<typeof createSupabaseClient<Database>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -25,11 +25,10 @@ export async function createServerSupabaseClient(): Promise<ReturnType<typeof cr
   }
 
   try {
-    return await withRetry(
-      () => createSupabaseClient<Database>(
-        supabaseUrl,
-        supabaseAnonKey,
-        {
+    return createSupabaseClient<Database>(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
           global: {
             fetch: async (url, options = {}) => {
               const controller = new AbortController()
@@ -75,15 +74,13 @@ export async function createServerSupabaseClient(): Promise<ReturnType<typeof cr
             }
           }
         }
-      ),
-      { maxAttempts: 2, baseDelayMs: 500 }
-    )
+      )
   } catch (error) {
     throw mapSupabaseError(error)
   }
 }
 
-export async function createServiceRoleClient(): Promise<ReturnType<typeof createSupabaseClient<Database>>> {
+export function createServiceRoleClient(): ReturnType<typeof createSupabaseClient<Database>> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
@@ -97,11 +94,10 @@ export async function createServiceRoleClient(): Promise<ReturnType<typeof creat
   }
 
   try {
-    return await withRetry(
-      () => createSupabaseClient<Database>(
-        supabaseUrl,
-        supabaseServiceKey,
-        {
+    return createSupabaseClient<Database>(
+      supabaseUrl,
+      supabaseServiceKey,
+      {
           auth: {
             autoRefreshToken: false,
             persistSession: false,
@@ -147,9 +143,7 @@ export async function createServiceRoleClient(): Promise<ReturnType<typeof creat
             }
           }
         }
-      ),
-      { maxAttempts: 3, baseDelayMs: 1000 }
-    )
+      )
   } catch (error) {
     throw mapSupabaseError(error)
   }

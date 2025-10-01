@@ -4,7 +4,6 @@ import { useState, useCallback } from 'react';
 import { 
   OrderCreationState, 
   OrderCreationStep, 
-  OrderCreationValidation,
   CreateOrderInput,
   CreateOrderResponse,
   CalculatePricingRequest,

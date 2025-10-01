@@ -7,7 +7,6 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -330,7 +329,7 @@ export function FilterPanel({
               <Checkbox
                 checked={filters.verified || false}
                 onCheckedChange={(checked) =>
-                  onFiltersChange({ verified: checked || undefined })
+                  onFiltersChange({ verified: checked === true ? true : undefined })
                 }
               />
               <span className="text-sm">Verified tailors only</span>
@@ -340,7 +339,7 @@ export function FilterPanel({
               <Checkbox
                 checked={filters.acceptsRushOrders || false}
                 onCheckedChange={(checked) =>
-                  onFiltersChange({ acceptsRushOrders: checked || undefined })
+                  onFiltersChange({ acceptsRushOrders: checked === true ? true : undefined })
                 }
               />
               <span className="text-sm">Accepts rush orders</span>

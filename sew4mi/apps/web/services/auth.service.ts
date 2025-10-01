@@ -1,6 +1,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import type { RegistrationInput, LoginInput, OTPInput, ForgotPasswordInput, ResetPasswordInput } from '@sew4mi/shared';
-import { ENV_CONFIG } from '@/lib/config/env';
+import type { RegistrationInput, ForgotPasswordInput, ResetPasswordInput } from '@sew4mi/shared';
+// import type { LoginInput, OTPInput } from '@sew4mi/shared'; // TODO: Use when needed
+// import { ENV_CONFIG } from '@/lib/config/env'; // TODO: Use when needed
 
 export class AuthService {
   private _supabase: ReturnType<typeof createClientComponentClient> | null = null;
@@ -408,6 +409,7 @@ export class AuthService {
       console.error('createUserProfile failed:', error);
       // Don't throw here as auth user is already created
     }
+      return null;
   }
 }
 

@@ -13,17 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Download, 
-  Calendar, 
   FileText, 
   Calculator,
   AlertTriangle,
@@ -219,7 +211,7 @@ export function PaymentExportDialog({
               <Checkbox
                 id="custom-columns"
                 checked={useCustomColumns}
-                onCheckedChange={setUseCustomColumns}
+                onCheckedChange={(checked) => setUseCustomColumns(checked === true)}
               />
               <Label htmlFor="custom-columns" className="text-base font-medium">
                 Customize Columns

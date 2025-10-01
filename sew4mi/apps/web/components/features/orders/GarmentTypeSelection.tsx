@@ -6,11 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { 
   GarmentTypeOption, 
-  GarmentCategory,
-  OrderCreationValidation 
+  GarmentCategory
 } from '@sew4mi/shared/types';
 import { GARMENT_TYPES, GARMENT_CATEGORIES } from '@sew4mi/shared/constants';
 

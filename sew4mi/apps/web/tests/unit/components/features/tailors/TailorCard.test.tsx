@@ -20,14 +20,21 @@ const originalWindowOpen = window.open;
 // Sample test data
 const mockTailor: TailorSearchItem = {
   id: 'tailor-1',
+  userId: 'user-1',
   businessName: 'Kente Designs Ltd',
   specializations: ['Traditional Wear', 'Suits', 'Dresses', 'Casual Wear'],
   city: 'Accra',
+  locationName: 'Accra Central',
+  region: 'Greater Accra',
+  deliveryRadiusKm: 25,
   rating: 4.8,
   totalReviews: 25,
   averageResponseHours: 2,
   completedOrders: 150,
   onTimeDeliveryRate: 0.95,
+  completionRate: 0.98,
+  averageDeliveryDays: 5,
+  acceptsRushOrders: true,
   verificationStatus: 'VERIFIED',
   location: { lat: 5.6037, lng: -0.1870 },
   distance: 2.5,
@@ -42,9 +49,8 @@ const mockTailor: TailorSearchItem = {
   bio: 'Expert in traditional Ghanaian wear with modern touches. Over 8 years of experience.',
   yearsOfExperience: 8,
   rushOrderFeePercentage: 25,
-  user: {
-    whatsappNumber: '+233501234567'
-  },
+  capacity: 5,
+  vacationMode: false,
   isFavorite: false
 };
 

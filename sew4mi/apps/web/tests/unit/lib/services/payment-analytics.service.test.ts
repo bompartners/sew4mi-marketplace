@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { PaymentAnalyticsService } from '@/lib/services/payment-analytics.service';
 
 // Create a comprehensive mock for Supabase query builder
-const createMockQuery = (data: any, error: any = null, count: number | null = null) => ({
+const createMockQuery = (data: any, error: any = null) => ({
   select: vi.fn().mockReturnThis(),
   eq: vi.fn().mockReturnThis(),
   gte: vi.fn().mockReturnThis(),
@@ -117,7 +117,7 @@ describe('PaymentAnalyticsService', () => {
 
       // Mock payment history count query
       mockSupabaseClient.from.mockReturnValueOnce({
-        ...createMockQuery(null, null, 1),
+        ...createMockQuery(null, null),
         select: vi.fn().mockResolvedValue({ count: 1, error: null })
       });
 
@@ -199,7 +199,7 @@ describe('PaymentAnalyticsService', () => {
 
       // Mock empty transaction count
       mockSupabaseClient.from.mockReturnValueOnce({
-        ...createMockQuery(null, null, 0),
+        ...createMockQuery(null, null),
         select: vi.fn().mockResolvedValue({ count: 0, error: null })
       });
 
@@ -269,7 +269,7 @@ describe('PaymentAnalyticsService', () => {
 
       // Mock count query
       mockSupabaseClient.from.mockReturnValueOnce({
-        ...createMockQuery(null, null, 1),
+        ...createMockQuery(null, null),
         select: vi.fn().mockResolvedValue({ count: 1, error: null })
       });
 

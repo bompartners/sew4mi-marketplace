@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, X, Image as ImageIcon, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { Upload, X, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -17,7 +17,6 @@ import { Label } from '@/components/ui/label';
 import { 
   MAX_PHOTO_SIZE_BYTES, 
   SUPPORTED_IMAGE_FORMATS,
-  IMAGE_COMPRESSION_SETTINGS 
 } from '@sew4mi/shared/constants';
 import { formatFileSize } from '@/lib/utils/image-compression';
 
@@ -46,7 +45,15 @@ interface UploadState {
  */
 interface PhotoUploadProps {
   /** Milestone ID for upload */
-  milestoneId: string;
+  milestoneId?: string;
+  /** Callback when photos are selected */
+  onPhotosSelected?: (photos: File[]) => void;
+  /** Maximum number of photos allowed */
+  maxPhotos?: number;
+  /** Accepted file types */
+  acceptedTypes?: string[];
+  /** Maximum file size in bytes */
+  maxFileSize?: number;
   /** Callback when upload completes successfully */
   onUploadComplete?: (result: UploadState['result']) => void;
   /** Callback when upload fails */

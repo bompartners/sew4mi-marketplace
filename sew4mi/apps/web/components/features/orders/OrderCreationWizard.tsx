@@ -8,9 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { 
   OrderCreationStep, 
-  OrderCreationState, 
   CreateOrderInput,
-  OrderCreationValidation 
+  UrgencyLevel
 } from '@sew4mi/shared/types';
 import { useOrderCreation } from '@/hooks/useOrderCreation';
 import { useAuth } from '@/hooks/useAuth';
@@ -135,7 +134,7 @@ export function OrderCreationWizard({
         const pricing = await calculatePricing({
           garmentTypeId: state.garmentType.id,
           fabricChoice: state.fabricChoice!,
-          urgencyLevel: state.urgencyLevel || 'STANDARD',
+          urgencyLevel: state.urgencyLevel || UrgencyLevel.STANDARD,
           tailorId: state.tailorId
         });
         

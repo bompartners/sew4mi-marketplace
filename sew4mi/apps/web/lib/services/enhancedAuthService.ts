@@ -78,7 +78,6 @@ export class EnhancedAuthService {
       if (result.success) {
         errorLogger.logAuthError(`Sign in successful`, { operationId }, 'info')
       } else {
-        const enhancedError = this.enhanceAuthError(new Error(result.error || 'Sign in failed'), 'signin')
         errorLogger.logAuthError(`Sign in failed: ${result.error}`, { operationId })
       }
 

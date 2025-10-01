@@ -9,7 +9,7 @@ import { TailorSearchResults } from './TailorSearchResults';
 import { FeaturedTailors } from './FeaturedTailors';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MapPin, Grid3X3, List, Map } from 'lucide-react';
 import { useTailorSearch } from '@/hooks/useTailorSearch';
 import { useGeolocation } from '@/hooks/useGeolocation';

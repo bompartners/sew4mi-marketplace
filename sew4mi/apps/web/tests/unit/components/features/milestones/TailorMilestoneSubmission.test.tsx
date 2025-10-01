@@ -6,8 +6,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TailorMilestoneSubmission } from '@/components/features/milestones/TailorMilestoneSubmission';
+import { MilestoneStage } from '@sew4mi/shared/types';
 
 // Mock PhotoUpload component
 vi.mock('@/components/features/milestones/PhotoUpload', () => ({
@@ -31,7 +32,7 @@ vi.mock('@/components/features/milestones/PhotoUpload', () => ({
 describe('TailorMilestoneSubmission Component', () => {
   const defaultProps = {
     orderId: 'order-123',
-    currentMilestone: 'CUTTING_STARTED' as const,
+    currentMilestone: MilestoneStage.CUTTING_STARTED,
     onSubmit: vi.fn()
   };
 
@@ -73,7 +74,7 @@ describe('TailorMilestoneSubmission Component', () => {
     render(
       <TailorMilestoneSubmission 
         {...defaultProps}
-        currentMilestone="FABRIC_SELECTED"
+        currentMilestone={MilestoneStage.FABRIC_SELECTED}
       />
     );
 
@@ -196,7 +197,7 @@ describe('TailorMilestoneSubmission Component', () => {
 
   it('shows loading state during submission', async () => {
     const user = userEvent.setup();
-    const mockOnSubmit = vi.fn(() => new Promise(resolve => setTimeout(resolve, 1000)));
+    const mockOnSubmit = vi.fn(() => new Promise<void>(resolve => setTimeout(resolve, 1000)));
     
     render(
       <TailorMilestoneSubmission 

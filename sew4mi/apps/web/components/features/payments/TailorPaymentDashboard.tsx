@@ -15,7 +15,6 @@ import type { PaymentDashboardData } from '@sew4mi/shared';
 import { 
   DollarSign, 
   TrendingUp, 
-  TrendingDown,
   Download,
   AlertTriangle,
   RefreshCw,
@@ -30,7 +29,7 @@ interface TailorPaymentDashboardProps {
 }
 
 export function TailorPaymentDashboard({ className }: TailorPaymentDashboardProps) {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [dashboardData, setDashboardData] = useState<PaymentDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,11 +72,12 @@ export function TailorPaymentDashboard({ className }: TailorPaymentDashboardProp
     return ((current - previous) / previous) * 100;
   };
 
-  const getGrowthColor = (growth: number) => 
-    growth > 0 ? 'text-green-600' : growth < 0 ? 'text-red-600' : 'text-gray-600';
-
-  const getGrowthIcon = (growth: number) => 
-    growth > 0 ? TrendingUp : growth < 0 ? TrendingDown : TrendingUp;
+  // Helper functions for potential future use
+  // const _getGrowthColor = (growth: number) => 
+  //   growth > 0 ? 'text-green-600' : growth < 0 ? 'text-red-600' : 'text-gray-600';
+  //
+  // const _getGrowthIcon = (growth: number) => 
+  //   growth > 0 ? TrendingUp : growth < 0 ? TrendingDown : TrendingUp;
 
   if (loading) {
     return (

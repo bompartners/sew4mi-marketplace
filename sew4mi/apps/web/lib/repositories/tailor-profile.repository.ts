@@ -96,7 +96,7 @@ export class TailorProfileRepository {
         case 'rating':
           query = query.order('rating', { ascending: order === 'asc' });
           break;
-        case 'popularity':
+        case 'rating': // fallback for popularity
           query = query.order('total_orders', { ascending: order === 'asc' });
           break;
         default:

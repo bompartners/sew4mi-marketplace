@@ -2,8 +2,8 @@ import { ENV_CONFIG, validateHubtelEnvironment } from '../config/env';
 import { networkService } from './networkService';
 import { 
   HubtelPaymentRequest, 
-  HubtelPaymentResponse,
-  HubtelWebhookPayload 
+  HubtelPaymentResponse
+  // HubtelWebhookPayload - TODO: Used for webhook processing
 } from '@sew4mi/shared/types';
 import { NETWORK_TIMEOUTS, HUBTEL_ENDPOINTS, HUBTEL_CHANNELS } from '@sew4mi/shared/constants';
 import { validateGhanaPhoneNumber } from '@sew4mi/shared';

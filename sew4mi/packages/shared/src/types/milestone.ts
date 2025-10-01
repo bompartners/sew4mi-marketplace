@@ -17,6 +17,12 @@ export enum MilestoneStage {
 }
 
 /**
+ * Type alias for backward compatibility
+ * @deprecated Use MilestoneStage instead
+ */
+export type MilestoneType = MilestoneStage;
+
+/**
  * Approval status for milestone completion
  */
 export enum MilestoneApprovalStatus {

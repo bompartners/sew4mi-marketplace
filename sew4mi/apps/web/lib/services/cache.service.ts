@@ -60,21 +60,13 @@ export class RedisCacheService implements CacheService {
 
   constructor(redisUrl?: string) {
     if (redisUrl) {
-      this.redis = new Redis(redisUrl, {
-        retryDelayOnFailover: 100,
-        enableReadyCheck: false,
-        maxRetriesPerRequest: null,
-      });
+      this.redis = new Redis(redisUrl);
     } else {
       // Fallback configuration
       this.redis = new Redis({
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379'),
         password: process.env.REDIS_PASSWORD,
-        db: parseInt(process.env.REDIS_DB || '0'),
-        retryDelayOnFailover: 100,
-        enableReadyCheck: false,
-        maxRetriesPerRequest: null,
       });
     }
 

@@ -3,17 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '@sew4mi/shared/types/database'
 import { UserRepository } from '../../lib/repositories/userRepository'
 import { TailorRepository } from '../../lib/repositories/tailorRepository'
-import { OrderRepository } from '../../lib/repositories/orderRepository'
 
 describe('Database Integration Tests', () => {
   let supabaseClient: ReturnType<typeof createClient<Database>> | null = null
   let userRepository: UserRepository
   let tailorRepository: TailorRepository
-  let orderRepository: OrderRepository
 
   const testUserId = `test-user-${Date.now()}`
-  const testTailorId = `test-tailor-${Date.now()}`
-  const testOrderId = `test-order-${Date.now()}`
 
   beforeAll(async () => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -27,7 +23,6 @@ describe('Database Integration Tests', () => {
     supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey)
     userRepository = new UserRepository(supabaseClient)
     tailorRepository = new TailorRepository(supabaseClient)
-    orderRepository = new OrderRepository(supabaseClient)
 
     // Verify connection
     const { error } = await supabaseClient.from('users').select('count').limit(1)
@@ -269,7 +264,7 @@ describe('Database Integration Tests', () => {
         business_name: 'Invalid Tailor',
         city: 'Accra',
         region: 'Greater Accra',
-        experience_years: 5,
+        years_of_experience: 5,
         verification_status: 'PENDING' as const,
         vacation_mode: false,
         rating: 0,

@@ -2,7 +2,7 @@
 // Story 2.4: Test dispute creation interface
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DisputeCreationForm } from '@/components/features/disputes/DisputeCreationForm';
 import { DisputeCategory, DISPUTE_CONSTANTS } from '@sew4mi/shared';
@@ -96,7 +96,7 @@ vi.mock('@sew4mi/ui/badge', () => ({
 
 // Mock the evidence upload component
 vi.mock('@/components/features/disputes/DisputeEvidenceUpload', () => ({
-  DisputeEvidenceUpload: ({ onUploadComplete, onUploadError, maxFiles, maxFileSize }: any) => (
+  DisputeEvidenceUpload: ({ maxFiles, maxFileSize }: any) => (
     <div data-testid="evidence-upload">
       <span>Evidence Upload Component</span>
       <span data-testid="max-files">{maxFiles}</span>
@@ -336,7 +336,7 @@ describe('DisputeCreationForm', () => {
 
     it('should show loading state during submission', async () => {
       const user = userEvent.setup();
-      const slowOnSubmit = vi.fn(() => new Promise(resolve => setTimeout(resolve, 100)));
+      const slowOnSubmit = vi.fn(() => new Promise<void>(resolve => setTimeout(resolve, 100)));
       
       render(<DisputeCreationForm {...defaultProps} onSubmit={slowOnSubmit} />);
       

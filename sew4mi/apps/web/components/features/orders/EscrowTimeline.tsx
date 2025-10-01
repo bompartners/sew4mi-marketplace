@@ -1,7 +1,7 @@
 'use client';
 
 import { EscrowStage, EscrowStageTransition } from '@sew4mi/shared';
-import { Card, CardContent, CardHeader, CardTitle } from '@sew4mi/ui';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, Circle, Clock, DollarSign } from 'lucide-react';
 
 interface EscrowTimelineProps {

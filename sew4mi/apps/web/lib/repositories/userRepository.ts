@@ -1,6 +1,5 @@
 import { Repository, DbClient } from '@sew4mi/shared/types'
-import { Database } from '@sew4mi/shared/types'
-import { User, UserInsert, UserUpdate, TailorProfile, TailorProfileInsert, ProfileCompletionStatus, ProfileUpdateData, TailorProfileData, UserWithProfileStatus } from '@sew4mi/shared/types/repository'
+import { User, UserInsert, UserUpdate, TailorProfileRow, TailorProfileInsert, ProfileCompletionStatus, ProfileUpdateData, TailorProfileData, UserWithProfileStatus } from '@sew4mi/shared/types/repository'
 import { withRetry } from '../supabase/retry'
 import { mapSupabaseError } from '../supabase/errors'
 
@@ -142,7 +141,7 @@ export class UserRepository extends Repository<User> {
    */
   async updateProfile(userId: string, data: ProfileUpdateData): Promise<User> {
     const updateData: UserUpdate = {
-      ...data,
+      ...(data as any),
       updated_at: new Date().toISOString()
     }
 
@@ -182,7 +181,7 @@ export class UserRepository extends Repository<User> {
       nextStep = `Complete your ${missingRequired[0].replace('_', ' ')}`
     } else if (user.role === 'TAILOR') {
       // Check if tailor profile exists
-      const tailorProfile = await this.getTailorProfile(user.id)
+      const tailorProfile = await this.getTailorProfileRow(user.id)
       if (!tailorProfile) {
         nextStep = 'Set up your tailor business profile'
       }
@@ -205,9 +204,9 @@ export class UserRepository extends Repository<User> {
 
     const profileStatus = await this.getProfileCompletionStatus(user)
     
-    let tailorProfile: TailorProfile | undefined
+    let tailorProfile: TailorProfileRow | undefined
     if (user.role === 'TAILOR') {
-      tailorProfile = await this.getTailorProfile(userId) || undefined
+      tailorProfile = await this.getTailorProfileRow(userId) || undefined
     }
 
     return {
@@ -220,7 +219,7 @@ export class UserRepository extends Repository<User> {
   /**
    * Create tailor profile
    */
-  async createTailorProfile(userId: string, data: TailorProfileData): Promise<TailorProfile> {
+  async createTailorProfileRow(userId: string, data: TailorProfileData): Promise<any> {
     try {
       const tailorData: TailorProfileInsert = {
         user_id: userId,
@@ -254,9 +253,9 @@ export class UserRepository extends Repository<User> {
         .single()
 
       if (error) throw error
-      return created as TailorProfile
+      return created as TailorProfileRow
     } catch (error) {
-      console.error('createTailorProfile failed:', error)
+      console.error('createTailorProfileRow failed:', error)
       throw error
     }
   }
@@ -264,7 +263,7 @@ export class UserRepository extends Repository<User> {
   /**
    * Get tailor profile
    */
-  async getTailorProfile(userId: string): Promise<TailorProfile | null> {
+  async getTailorProfileRow(userId: string): Promise<TailorProfileRow | null> {
     try {
       const { data, error } = await this.client
         .from('tailor_profiles')
@@ -273,9 +272,9 @@ export class UserRepository extends Repository<User> {
         .maybeSingle()
 
       if (error) throw error
-      return data as TailorProfile | null
+      return data as TailorProfileRow | null
     } catch (error) {
-      console.error('getTailorProfile failed:', error)
+      console.error('getTailorProfileRow failed:', error)
       throw error
     }
   }
@@ -283,7 +282,7 @@ export class UserRepository extends Repository<User> {
   /**
    * Update tailor profile
    */
-  async updateTailorProfile(userId: string, data: Partial<TailorProfileData>): Promise<TailorProfile> {
+  async updateTailorProfileRow(userId: string, data: Partial<TailorProfileData>): Promise<any> {
     try {
       const updateData = {
         ...data,
@@ -298,9 +297,9 @@ export class UserRepository extends Repository<User> {
         .single()
 
       if (error) throw error
-      return updated as TailorProfile
+      return updated as TailorProfileRow
     } catch (error) {
-      console.error('updateTailorProfile failed:', error)
+      console.error('updateTailorProfileRow failed:', error)
       throw error
     }
   }
@@ -313,6 +312,6 @@ export class UserRepository extends Repository<User> {
     if (!user) return true
 
     const status = await this.getProfileCompletionStatus(user)
-    return !status.isComplete || (user.role === 'TAILOR' && !await this.getTailorProfile(userId))
+    return !status.isComplete || (user.role === 'TAILOR' && !await this.getTailorProfileRow(userId))
   }
 }

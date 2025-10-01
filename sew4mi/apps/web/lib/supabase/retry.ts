@@ -70,7 +70,7 @@ export class CircuitBreaker {
   constructor(
     private readonly failureThreshold: number = 5,
     private readonly timeoutMs: number = 60000,
-    private readonly monitoringPeriodMs: number = 10000
+    // private readonly _monitoringPeriodMs: number = 10000 // TODO: Use when implementing monitoring
   ) {}
 
   async execute<T>(operation: () => Promise<T>): Promise<T> {

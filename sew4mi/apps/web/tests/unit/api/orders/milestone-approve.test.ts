@@ -88,7 +88,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -145,7 +145,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -174,7 +174,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -208,7 +208,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -242,7 +242,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -265,7 +265,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -305,7 +305,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       });
 
       // Execute
-      const response = await POST(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await POST(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -350,7 +350,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       const request = new NextRequest('http://localhost/api/orders/550e8400-e29b-41d4-a716-446655440000/milestone/approve');
 
       // Execute
-      const response = await GET(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await GET(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify
@@ -392,7 +392,7 @@ describe('/api/orders/[id]/milestone/approve', () => {
       const request = new NextRequest('http://localhost/api/orders/550e8400-e29b-41d4-a716-446655440000/milestone/approve');
 
       // Execute
-      const response = await GET(request, { params: { id: '550e8400-e29b-41d4-a716-446655440000' } });
+      const response = await GET(request, { params: Promise.resolve({ id: '550e8400-e29b-41d4-a716-446655440000' }) });
       const responseData = await response.json();
 
       // Verify

@@ -10,8 +10,7 @@ export * from './constants/roles';
 export * from './utils/roles';
 export * from './schemas/role.schema';
 
-// Payment-specific exports
-export * from './utils/phone-validation';
+// Payment-specific exports (phone validation is already exported via schemas)
 
 // Utils barrel export
 export * as utils from './utils';

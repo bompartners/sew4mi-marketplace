@@ -9,12 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
-import { User, Plus, Edit, Calendar, Play, Info, Ruler } from 'lucide-react';
+import { User, Plus, Play, Info, Ruler } from 'lucide-react';
 import { 
   GarmentTypeOption, 
   OrderMeasurementProfile,
-  Gender,
-  OrderCreationValidation 
+  Gender
 } from '@sew4mi/shared/types';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -153,13 +152,18 @@ function NewMeasurementProfileForm({
 
   const handleMeasurementChange = (key: string, value: string) => {
     const numValue = parseFloat(value);
-    setFormData(prev => ({
-      ...prev,
-      measurements: {
-        ...prev.measurements,
-        [key]: isNaN(numValue) ? undefined : numValue
+    setFormData(prev => {
+      const updatedMeasurements = { ...prev.measurements };
+      if (isNaN(numValue)) {
+        delete updatedMeasurements[key];
+      } else {
+        updatedMeasurements[key] = numValue;
       }
-    }));
+      return {
+        ...prev,
+        measurements: updatedMeasurements
+      };
+    });
   };
 
   const handleSave = () => {

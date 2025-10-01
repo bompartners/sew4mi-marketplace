@@ -9,9 +9,7 @@ import {
   Star, 
   MapPin, 
   Clock, 
-  Heart, 
   MessageCircle, 
-  Phone,
   ExternalLink,
   CheckCircle 
 } from 'lucide-react';
@@ -23,7 +21,6 @@ interface TailorCardProps {
   showDistance?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
-  onFavoriteToggle?: (tailorId: string, isFavorited: boolean) => void;
   className?: string;
 }
 
@@ -32,7 +29,6 @@ export function TailorCard({
   showDistance = false,
   isSelected = false,
   onSelect,
-  onFavoriteToggle,
   className,
 }: TailorCardProps) {
   const handleViewProfile = useCallback((e: React.MouseEvent) => {
@@ -43,21 +39,13 @@ export function TailorCard({
   const handleContact = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     
-    // WhatsApp integration
-    if (tailor.user?.whatsappNumber) {
-      const message = `Hello! I found your profile on Sew4Mi and I'm interested in your tailoring services.`;
-      const whatsappUrl = `https://wa.me/${tailor.user.whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    } else {
-      // Fallback to contact form or phone
-      console.log('Contact tailor:', tailor.id);
-    }
-  }, [tailor.user?.whatsappNumber, tailor.id]);
+    // TODO: TailorSearchItem doesn't include user.whatsappNumber
+    // Need to either fetch full profile or redirect to profile page for contact
+    console.log('Contact tailor:', tailor.id);
+    // Redirect to tailor profile where full contact info is available
+    window.open(`/tailors/${tailor.id}`, '_blank');
+  }, [tailor.id]);
 
-  const handleFavoriteToggle = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    onFavoriteToggle?.(tailor.id, !tailor.isFavorite);
-  }, [tailor.id, tailor.isFavorite, onFavoriteToggle]);
 
   const handleCardClick = useCallback(() => {
     onSelect?.();

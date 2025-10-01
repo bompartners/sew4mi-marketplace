@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { TailorSearchResults } from '@/components/features/tailors/TailorSearchResults';
 import { TailorSearchResult, TailorSearchItem, DISPLAY_MODES } from '@sew4mi/shared';
 
@@ -49,22 +49,16 @@ describe('TailorSearchResults - Infinite Scroll', () => {
     vacationMode: false,
     acceptsRushOrders: true,
     rushOrderFeePercentage: 15,
-    user: {
-      id: 'user-1',
-      fullName: 'Test User',
-      phoneNumber: '+233123456789',
-      whatsappNumber: '+233123456789',
-    },
   };
 
   const mockResults: TailorSearchResult = {
     tailors: [mockTailor],
-    totalCount: 50,
+    total: 50,
     hasMore: true,
     nextCursor: 'next-cursor',
     searchMeta: {
       searchTime: 150,
-      totalResults: 50,
+      appliedFilters: []
     },
   };
 
@@ -74,7 +68,7 @@ describe('TailorSearchResults - Infinite Scroll', () => {
     mockOnLoadMore = vi.fn();
     
     // Mock IntersectionObserver
-    global.IntersectionObserver = vi.fn().mockImplementation((callback) => ({
+    global.IntersectionObserver = vi.fn().mockImplementation((_callback) => ({
       observe: vi.fn(),
       unobserve: vi.fn(),
       disconnect: vi.fn(),
@@ -316,12 +310,12 @@ describe('TailorSearchResults - Infinite Scroll', () => {
     it('should handle empty results gracefully', () => {
       const emptyResults: TailorSearchResult = {
         tailors: [],
-        totalCount: 0,
+        total: 0,
         hasMore: false,
-        nextCursor: null,
+        nextCursor: undefined,
         searchMeta: {
           searchTime: 50,
-          totalResults: 0,
+          appliedFilters: []
         },
       };
 

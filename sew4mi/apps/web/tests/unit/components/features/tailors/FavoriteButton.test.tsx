@@ -42,12 +42,6 @@ describe('FavoriteButton', () => {
     vacationMode: false,
     acceptsRushOrders: true,
     rushOrderFeePercentage: 15,
-    user: {
-      id: 'user-1',
-      fullName: 'Test User',
-      phoneNumber: '+233123456789',
-      whatsappNumber: '+233123456789',
-    },
   };
 
   beforeEach(() => {

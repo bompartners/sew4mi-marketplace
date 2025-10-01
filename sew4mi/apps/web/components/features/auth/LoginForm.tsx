@@ -14,8 +14,9 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { GhanaPhoneInput } from '@sew4mi/ui'
+import { GhanaPhoneInput } from '@/components/ui/GhanaPhoneInput'
 import { useAuth } from '@/hooks/useAuth'
+import { createContextualError, getUserFriendlyMessage, GHANA_ERROR_MESSAGES } from '@sew4mi/shared/utils'
 // Import toast system when implemented
 // import { useAuthToast } from '@/components/ui/toast'
 // import { useNetworkStatus } from '@/lib/services/networkService.client'
@@ -26,7 +27,7 @@ const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address').optional(),
   phone: z.string().regex(/^\+233[0-9]{9}$/, 'Please enter a valid Ghana phone number').optional(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  rememberMe: z.boolean().default(false)
+  rememberMe: z.boolean()
 }).refine(data => {
   if (data.loginType === 'email') {
     return data.email && data.email.length > 0
@@ -60,7 +61,7 @@ export function LoginForm() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      loginType: 'email',
+      loginType: 'email' as const,
       rememberMe: false
     }
   })
@@ -86,18 +87,27 @@ export function LoginForm() {
         // toast.success('Signed in successfully!', 'Welcome back to Sew4Mi')
         router.push('/dashboard')
       } else {
-        const errorMessage = result.error || 'Login failed. Please try again.'
-        setError(errorMessage)
+        const contextualError = createContextualError(
+          result.error || 'Login failed. Please try again.',
+          {
+            operation: 'login',
+            field: data.loginType,
+            resource: 'user'
+          }
+        );
+        
+        const userFriendlyMessage = getUserFriendlyMessage(contextualError.message, contextualError.context);
+        setError(userFriendlyMessage);
         
         // Log authentication error - implement when service is available
         // logAuthError('Login failed', {
         //   credentialType: data.loginType,
-        //   errorMessage: errorMessage,
+        //   errorMessage: userFriendlyMessage,
         //   networkStatus: networkStatus.isOnline ? 'online' : 'offline'
         // })
 
         // Show appropriate toast - implement when toast system is available
-        // if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('connection')) {
+        // if (userFriendlyMessage.toLowerCase().includes('network') || userFriendlyMessage.toLowerCase().includes('connection')) {
         //   toast.networkError()
         // } else {
         //   toast.error('Sign in failed', errorMessage)
@@ -155,18 +165,20 @@ export function LoginForm() {
             }}
             className="flex space-x-6"
           >
-            <div className="flex items-center space-x-2">
+            <Label 
+              htmlFor="email-option" 
+              className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors text-sm font-medium select-none"
+            >
               <RadioGroupItem value="email" id="email-option" />
-              <Label htmlFor="email-option" className="text-sm font-medium">
-                Email Address
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
+              Email Address
+            </Label>
+            <Label 
+              htmlFor="phone-option" 
+              className="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors text-sm font-medium select-none"
+            >
               <RadioGroupItem value="phone" id="phone-option" />
-              <Label htmlFor="phone-option" className="text-sm font-medium">
-                Phone Number
-              </Label>
-            </div>
+              Phone Number
+            </Label>
           </RadioGroup>
         </div>
 
@@ -180,6 +192,7 @@ export function LoginForm() {
               id="email"
               type="email"
               placeholder="Enter your email address"
+              autoComplete="email"
               {...register('email')}
               className={errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-amber-500'}
               disabled={isLoading}
@@ -198,10 +211,11 @@ export function LoginForm() {
             </Label>
             <GhanaPhoneInput
               value={watch('phone') || ''}
-              onChange={handlePhoneChange}
+              onChange={(value) => setValue('phone', value)}
               placeholder="Enter your phone number"
               disabled={isLoading}
               error={errors.phone?.message}
+              showNetworkInfo={true}
             />
           </div>
         )}
@@ -216,6 +230,7 @@ export function LoginForm() {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="Enter your password"
+              autoComplete="current-password"
               {...register('password')}
               className={errors.password ? 'border-red-500 focus:border-red-500 pr-10' : 'border-gray-300 focus:border-amber-500 pr-10'}
               disabled={isLoading}

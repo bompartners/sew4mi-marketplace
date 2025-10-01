@@ -21,8 +21,8 @@ interface UseSearchAnalyticsOptions {
 export function useSearchAnalytics(options: UseSearchAnalyticsOptions = {}) {
   const { enabled = true, debounceMs = 1000 } = options;
   const analyticsQueue = useRef<SearchAnalyticsData[]>([]);
-  const flushTimeoutRef = useRef<NodeJS.Timeout>();
-  const sessionIdRef = useRef<string>();
+  const flushTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const sessionIdRef = useRef<string | undefined>(undefined);
 
   // Get or create session ID
   const getSessionId = useCallback(() => {
@@ -108,7 +108,7 @@ export function useSearchAnalytics(options: UseSearchAnalyticsOptions = {}) {
       userAction: 'search',
       metadata: {
         hasLocation: !!filters.location,
-        totalResults: results?.totalCount || 0,
+        totalResults: results?.tailors.length || 0,
         hasMore: results?.hasMore || false,
       },
     });

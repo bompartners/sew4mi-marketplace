@@ -182,7 +182,7 @@ export function useAuth(): AuthState & AuthActions {
         }));
       }
       
-      return { success: result.success, error: result.error };
+      return { success: result.success, error: result.error || undefined };
     } catch (error) {
       setState(prev => ({ 
         ...prev, 
@@ -216,10 +216,11 @@ export function useAuth(): AuthState & AuthActions {
         setState(prev => ({
           ...prev,
           user: result.user,
-          session: result.session,
+          session: result.session || null,
           userRole,
           loading: false,
           isLoading: false,
+          initialized: true,
         }));
         return { requiresVerification: false };
       }

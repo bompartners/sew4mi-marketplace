@@ -80,7 +80,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -127,7 +127,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -149,7 +149,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
 
     expect(response.status).toBe(401);
   });
@@ -174,7 +174,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
 
     expect(response.status).toBe(403);
   });
@@ -197,7 +197,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
 
     expect(response.status).toBe(400);
   });
@@ -222,7 +222,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
 
     expect(response.status).toBe(400);
   });
@@ -253,7 +253,7 @@ describe('/api/disputes/[id]/resolve', () => {
 
     const request = createRequest('dispute-123', requestBody);
 
-    const response = await POST(request, { params: { id: 'dispute-123' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-123' }) });
 
     expect(response.status).toBe(400);
   });

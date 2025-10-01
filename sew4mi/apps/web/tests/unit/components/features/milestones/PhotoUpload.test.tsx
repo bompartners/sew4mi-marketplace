@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PhotoUpload } from '@/components/features/milestones/PhotoUpload';
 
@@ -36,7 +36,7 @@ class MockFileReader {
     setTimeout(() => {
       this.result = `data:${file.type};base64,fake-base64-data`;
       if (this.onload) {
-        this.onload({} as ProgressEvent<FileReader>);
+        this.onload.call(this as any, {} as ProgressEvent<FileReader>);
       }
     }, 0);
   }

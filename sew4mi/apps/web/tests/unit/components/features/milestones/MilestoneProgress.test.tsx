@@ -7,12 +7,12 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import { MilestoneProgress } from '@/components/features/milestones/MilestoneProgress';
-import { OrderMilestone, MilestoneType } from '@sew4mi/shared';
+import { OrderMilestone, MilestoneType, MilestoneApprovalStatus, MilestoneStage } from '@sew4mi/shared';
 
 // Mock data
 const createMockMilestone = (
   milestone: MilestoneType,
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' = 'PENDING',
+  approvalStatus: MilestoneApprovalStatus = MilestoneApprovalStatus.PENDING,
   verifiedAt?: Date
 ): OrderMilestone => ({
   id: `milestone-${milestone}`,
@@ -20,12 +20,14 @@ const createMockMilestone = (
   milestone,
   photoUrl: verifiedAt ? 'https://example.com/photo.jpg' : '',
   notes: 'Test notes',
-  verifiedAt: verifiedAt || null,
+  verifiedAt: verifiedAt || new Date(),
   verifiedBy: verifiedAt ? 'tailor-123' : '',
   approvalStatus,
-  customerReviewedAt: approvalStatus !== 'PENDING' ? new Date() : null,
+  customerReviewedAt: approvalStatus !== MilestoneApprovalStatus.PENDING ? new Date() : undefined,
   autoApprovalDeadline: new Date(Date.now() + 48 * 60 * 60 * 1000),
-  rejectionReason: approvalStatus === 'REJECTED' ? 'Needs improvement' : null
+  rejectionReason: approvalStatus === MilestoneApprovalStatus.REJECTED ? 'Needs improvement' : undefined,
+  createdAt: new Date(),
+  updatedAt: new Date()
 });
 
 describe('MilestoneProgress Component', () => {
@@ -35,7 +37,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -45,15 +47,15 @@ describe('MilestoneProgress Component', () => {
 
   it('displays correct progress percentage with completed milestones', () => {
     const milestones = [
-      createMockMilestone('FABRIC_SELECTED', 'APPROVED', new Date()),
-      createMockMilestone('CUTTING_STARTED', 'APPROVED', new Date()),
-      createMockMilestone('INITIAL_ASSEMBLY', 'PENDING', new Date())
+      createMockMilestone(MilestoneStage.FABRIC_SELECTED, MilestoneApprovalStatus.APPROVED, new Date()),
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.APPROVED, new Date()),
+      createMockMilestone(MilestoneStage.INITIAL_ASSEMBLY, MilestoneApprovalStatus.PENDING, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="INITIAL_ASSEMBLY"
+        currentMilestone={MilestoneStage.INITIAL_ASSEMBLY}
       />
     );
 
@@ -63,13 +65,13 @@ describe('MilestoneProgress Component', () => {
 
   it('highlights current milestone correctly', () => {
     const milestones = [
-      createMockMilestone('FABRIC_SELECTED', 'APPROVED', new Date())
+      createMockMilestone(MilestoneStage.FABRIC_SELECTED, MilestoneApprovalStatus.APPROVED, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -79,13 +81,13 @@ describe('MilestoneProgress Component', () => {
 
   it('shows completed milestone with check icon', () => {
     const milestones = [
-      createMockMilestone('FABRIC_SELECTED', 'APPROVED', new Date())
+      createMockMilestone(MilestoneStage.FABRIC_SELECTED, MilestoneApprovalStatus.APPROVED, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -96,13 +98,13 @@ describe('MilestoneProgress Component', () => {
 
   it('shows pending milestone with awaiting approval badge', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'PENDING', new Date())
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.PENDING, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -113,13 +115,13 @@ describe('MilestoneProgress Component', () => {
 
   it('shows rejected milestone with rejected badge', () => {
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'REJECTED', new Date())
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.REJECTED, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -131,13 +133,13 @@ describe('MilestoneProgress Component', () => {
   it('displays milestone submission dates when available', () => {
     const submissionDate = new Date('2024-08-20T10:00:00Z');
     const milestones = [
-      createMockMilestone('CUTTING_STARTED', 'APPROVED', submissionDate)
+      createMockMilestone(MilestoneStage.CUTTING_STARTED, MilestoneApprovalStatus.APPROVED, submissionDate)
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -150,7 +152,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -164,7 +166,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="READY_FOR_DELIVERY"
+        currentMilestone={MilestoneStage.READY_FOR_DELIVERY}
         totalMilestones={7}
       />
     );
@@ -174,13 +176,13 @@ describe('MilestoneProgress Component', () => {
 
   it('handles custom total milestones count', () => {
     const milestones = [
-      createMockMilestone('FABRIC_SELECTED', 'APPROVED', new Date())
+      createMockMilestone(MilestoneStage.FABRIC_SELECTED, MilestoneApprovalStatus.APPROVED, new Date())
     ];
 
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
         totalMilestones={5}
       />
     );
@@ -195,7 +197,7 @@ describe('MilestoneProgress Component', () => {
     const { container } = render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
         className="custom-class"
       />
     );
@@ -209,7 +211,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -235,7 +237,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 
@@ -250,7 +252,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="FABRIC_SELECTED"
+        currentMilestone={MilestoneStage.FABRIC_SELECTED}
       />
     );
 
@@ -265,7 +267,7 @@ describe('MilestoneProgress Component', () => {
     render(
       <MilestoneProgress
         milestones={milestones}
-        currentMilestone="CUTTING_STARTED"
+        currentMilestone={MilestoneStage.CUTTING_STARTED}
       />
     );
 

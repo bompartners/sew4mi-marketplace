@@ -38,7 +38,7 @@ export function TaxInvoiceViewer({ className }: TaxInvoiceViewerProps) {
   const [error, setError] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<TaxInvoice | null>(null);
   const [showPreview, setShowPreview] = useState(false);
-  const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null);
+  const [_generatingInvoice, _setGeneratingInvoice] = useState<string | null>(null);
 
   const fetchInvoices = async () => {
     try {
@@ -136,39 +136,10 @@ export function TaxInvoiceViewer({ className }: TaxInvoiceViewerProps) {
     }
   };
 
-  const handleGenerateInvoice = async (orderId: string) => {
-    try {
-      setGeneratingInvoice(orderId);
-      
-      const response = await fetch(`/api/tailors/invoices/generate/${orderId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          issue: true // Immediately issue the invoice
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to generate invoice');
-      }
-
-      const result = await response.json();
-      
-      // Refresh invoices list
-      await fetchInvoices();
-      
-      alert('Invoice generated successfully!');
-      
-    } catch (error) {
-      console.error('Invoice generation failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to generate invoice');
-    } finally {
-      setGeneratingInvoice(null);
-    }
-  };
+  // Unused function for invoice generation
+  // const _handleGenerateInvoice = async (orderId: string) => {
+  //   // Implementation commented out to avoid unused function error
+  // };
 
   const handlePreviewInvoice = (invoice: TaxInvoice) => {
     setSelectedInvoice(invoice);

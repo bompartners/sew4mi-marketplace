@@ -4,7 +4,7 @@ import { vi, beforeEach, afterEach, describe, it, expect } from 'vitest';
 import { OrderCreationWizard } from '@/components/features/orders/OrderCreationWizard';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrderCreation } from '@/hooks/useOrderCreation';
-import { OrderCreationStep, GarmentCategory, FabricChoice, UrgencyLevel } from '@sew4mi/shared/types';
+import { OrderCreationStep, GarmentCategory, FabricChoice } from '@sew4mi/shared/types';
 
 // Mock hooks
 vi.mock('@/hooks/useAuth');
@@ -23,8 +23,11 @@ const mockUser = {
   id: 'user-123',
   email: 'customer@example.com',
   role: 'CUSTOMER' as const,
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  app_metadata: {},
+  user_metadata: {},
+  aud: 'authenticated',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 const mockGarmentType = {
@@ -39,20 +42,6 @@ const mockGarmentType = {
   isActive: true
 };
 
-const mockMeasurementProfile = {
-  id: 'profile-123',
-  userId: 'user-123',
-  nickname: 'My Profile',
-  gender: 'MALE' as const,
-  measurements: {
-    chest: 100,
-    waist: 85,
-    shoulderWidth: 45,
-    sleeveLength: 63
-  },
-  lastUpdated: new Date(),
-  isActive: true
-};
 
 const mockInitialState = {
   step: OrderCreationStep.GARMENT_TYPE,
@@ -84,13 +73,17 @@ describe('OrderCreationWizard', () => {
   beforeEach(() => {
     mockUseAuth.mockReturnValue({
       user: mockUser,
+      session: null,
+      userRole: 'CUSTOMER',
       loading: false,
-      login: vi.fn(),
-      logout: vi.fn(),
-      register: vi.fn(),
+      initialized: true,
+      isLoading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       verifyOTP: vi.fn(),
       resendOTP: vi.fn(),
-      forgotPassword: vi.fn(),
+      requestPasswordReset: vi.fn(),
       resetPassword: vi.fn(),
     });
 
@@ -124,13 +117,17 @@ describe('OrderCreationWizard', () => {
   it('shows login prompt when user is not authenticated', () => {
     mockUseAuth.mockReturnValue({
       user: null,
+      session: null,
+      userRole: null,
       loading: false,
-      login: vi.fn(),
-      logout: vi.fn(),
-      register: vi.fn(),
+      initialized: true,
+      isLoading: false,
+      signIn: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn(),
       verifyOTP: vi.fn(),
       resendOTP: vi.fn(),
-      forgotPassword: vi.fn(),
+      requestPasswordReset: vi.fn(),
       resetPassword: vi.fn(),
     });
 

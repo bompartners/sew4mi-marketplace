@@ -1,6 +1,6 @@
 import { Repository, DbClient } from '@sew4mi/shared/types'
 import { Database } from '@sew4mi/shared/types'
-import { MilestoneStage, MilestoneApprovalStatus, OrderMilestone } from '@sew4mi/shared/types'
+import { MilestoneStage, MilestoneApprovalStatus } from '@sew4mi/shared/types'
 
 type MilestoneRow = Database['public']['Tables']['order_milestones']['Row']
 type MilestoneInsert = Database['public']['Tables']['order_milestones']['Insert']

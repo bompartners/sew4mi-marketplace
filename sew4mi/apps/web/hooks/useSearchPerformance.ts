@@ -22,7 +22,7 @@ interface UseSearchPerformanceOptions {
 export function useSearchPerformance(options: UseSearchPerformanceOptions = {}) {
   const { enabled = true, logMetrics = false, reportThreshold = 2000 } = options;
   const metricsRef = useRef<Partial<PerformanceMetrics>>({});
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const requestCacheRef = useRef<Map<string, { data: any; timestamp: number }>>(new Map());
 
   // Generate cache key for search filters

@@ -1,10 +1,25 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+
+// TODO: Replace with proper @types/google.maps when available
+declare global {
+  interface Window {
+    google: any;
+    tailorMapActions?: {
+      viewProfile: (tailorId: string) => void;
+      contactViaWhatsApp: (tailorId: string) => void;
+      contact: (tailorId: string) => void;
+      zoomToCluster: (lat: number, lng: number) => void;
+      showIndividualMarkers: () => void;
+    };
+  }
+  const google: any;
+}
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, Maximize2, Star, Phone, MessageCircle } from 'lucide-react';
+import { MapPin, Navigation, Star, Phone, MessageCircle } from 'lucide-react';
 import { TailorSearchItem } from '@sew4mi/shared';
 import { cn } from '@/lib/utils';
 
@@ -21,15 +36,15 @@ interface MapViewProps {
 interface GoogleMapMarker {
   position: { lat: number; lng: number };
   tailorId: string;
-  marker?: google.maps.Marker;
-  infoWindow?: google.maps.InfoWindow;
+  marker?: any; // google.maps.Marker - TODO: Add @types/google.maps
+  infoWindow?: any; // google.maps.InfoWindow - TODO: Add @types/google.maps
 }
 
 interface MarkerCluster {
   position: { lat: number; lng: number };
   tailors: TailorSearchItem[];
-  marker?: google.maps.Marker;
-  infoWindow?: google.maps.InfoWindow;
+  marker?: any; // google.maps.Marker - TODO: Add @types/google.maps
+  infoWindow?: any; // google.maps.InfoWindow - TODO: Add @types/google.maps
 }
 
 export function MapView({
@@ -42,10 +57,10 @@ export function MapView({
   height = 500,
 }: MapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const mapInstanceRef = useRef<any | null>(null); // google.maps.Map - TODO: Add @types/google.maps
   const markersRef = useRef<GoogleMapMarker[]>([]);
   const clustersRef = useRef<MarkerCluster[]>([]);
-  const userMarkerRef = useRef<google.maps.Marker | null>(null);
+  const userMarkerRef = useRef<any | null>(null); // google.maps.Marker - TODO: Add @types/google.maps
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +84,7 @@ export function MapView({
   }, []);
 
   // Cluster nearby tailors
-  const clusterTailors = useCallback((tailors: TailorSearchItem[], map: google.maps.Map): MarkerCluster[] => {
+  const clusterTailors = useCallback((tailors: TailorSearchItem[], map: any): MarkerCluster[] => { // map: google.maps.Map - TODO: Add @types/google.maps
     const clusters: MarkerCluster[] = [];
     const processed = new Set<string>();
     const zoom = map.getZoom() || 10;
@@ -116,7 +131,7 @@ export function MapView({
   }, [calculateDistance]);
 
   // Create cluster marker
-  const createClusterMarker = useCallback((cluster: MarkerCluster, map: google.maps.Map) => {
+  const createClusterMarker = useCallback((cluster: MarkerCluster, map: any) => { // map: google.maps.Map - TODO: Add @types/google.maps
     const tailorCount = cluster.tailors.length;
     const avgRating = cluster.tailors.reduce((sum, t) => sum + t.rating, 0) / tailorCount;
     
@@ -287,7 +302,7 @@ export function MapView({
   }, [isGoogleMapsLoaded, userLocation]);
 
   // Create tailor marker
-  const createTailorMarker = useCallback((tailor: TailorSearchItem, map: google.maps.Map) => {
+  const createTailorMarker = useCallback((tailor: TailorSearchItem, map: any) => { // map: google.maps.Map - TODO: Add @types/google.maps
     if (!tailor.location) return null;
 
     const marker = new google.maps.Marker({
@@ -530,15 +545,24 @@ export function MapView({
           window.open(`/tailors/${tailorId}`, '_blank');
         }
       },
+      contactViaWhatsApp: (tailorId: string) => {
+        const tailor = tailors.find(t => t.id === tailorId);
+        if (tailor) {
+          console.log('Contact tailor via WhatsApp:', tailorId);
+          // TODO: TailorSearchItem doesn't include user.whatsappNumber
+          // Need to either fetch full profile or update search API to include contact info
+          console.log('WhatsApp contact not available in search results - redirecting to profile');
+          window.open(`/tailors/${tailorId}`, '_blank');
+        }
+      },
       contact: (tailorId: string) => {
         const tailor = tailors.find(t => t.id === tailorId);
         if (tailor) {
           console.log('Contact tailor:', tailorId);
-          if (tailor.user?.whatsappNumber) {
-            const message = `Hello! I found your profile on Sew4Mi and I'm interested in your tailoring services.`;
-            const whatsappUrl = `https://wa.me/${tailor.user.whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-            window.open(whatsappUrl, '_blank');
-          }
+          // TODO: TailorSearchItem doesn't include user.whatsappNumber
+          // Need to either fetch full profile or update search API to include contact info
+          console.log('WhatsApp contact not available in search results - redirecting to profile');
+          window.open(`/tailors/${tailorId}`, '_blank');
         }
       },
       zoomToCluster: (lat: number, lng: number) => {

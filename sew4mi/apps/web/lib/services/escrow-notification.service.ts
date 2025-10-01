@@ -300,13 +300,15 @@ export class EscrowNotificationService {
   private getMilestoneProgressMessage(stage: EscrowStage, recipient: 'customer' | 'tailor', orderDetails: any): string {
     const messages = {
       customer: {
-        'FITTING': `Great news! Your deposit for order #${orderDetails.orderNumber} is confirmed. Your tailor will now begin creating your garment.`,
-        'FINAL': `Fitting approved for order #${orderDetails.orderNumber}! GH₵ ${orderDetails.fittingAmount.toFixed(2)} released to tailor. Delivery coming soon.`,
+        'DEPOSIT': `Great news! Your deposit for order #${orderDetails.orderNumber} is confirmed. Your tailor will now begin creating your garment.`,
+        'FITTING': `Fitting stage approved for order #${orderDetails.orderNumber}! GH₵ ${orderDetails.fittingAmount.toFixed(2)} released to tailor. Delivery coming soon.`,
+        'FINAL': `Order #${orderDetails.orderNumber} ready for final approval! Please confirm delivery to release final payment.`,
         'RELEASED': `Order #${orderDetails.orderNumber} completed! Final payment released. Thank you for using Sew4Mi!`
       },
       tailor: {
-        'FITTING': `Payment received for order #${orderDetails.orderNumber}! You can now start production. Upload fitting photos when ready.`,
-        'FINAL': `Fitting approved for order #${orderDetails.orderNumber}! GH₵ ${orderDetails.fittingAmount.toFixed(2)} has been released to you. Please arrange delivery.`,
+        'DEPOSIT': `Payment received for order #${orderDetails.orderNumber}! You can now start production. Upload fitting photos when ready.`,
+        'FITTING': `Fitting approved for order #${orderDetails.orderNumber}! GH₵ ${orderDetails.fittingAmount.toFixed(2)} has been released to you. Please arrange delivery.`,
+        'FINAL': `Order #${orderDetails.orderNumber} is ready for delivery! Please arrange with customer to complete the order.`,
         'RELEASED': `Congratulations! Order #${orderDetails.orderNumber} completed. Final payment of GH₵ ${orderDetails.finalAmount.toFixed(2)} released.`
       }
     };
@@ -316,11 +318,13 @@ export class EscrowNotificationService {
 
   private getPaymentReleasedMessage(stage: EscrowStage, orderDetails: any): string {
     const amounts = {
+      'DEPOSIT': orderDetails.depositAmount,
       'FITTING': orderDetails.fittingAmount,
-      'FINAL': orderDetails.finalAmount
+      'FINAL': orderDetails.finalAmount,
+      'RELEASED': orderDetails.finalAmount
     };
 
-    const amount = amounts[stage as keyof typeof amounts] || 0;
+    const amount = amounts[stage] || 0;
     return `Payment released! GH₵ ${amount.toFixed(2)} for order #${orderDetails.orderNumber} has been transferred to your account.`;
   }
 
@@ -336,8 +340,10 @@ export class EscrowNotificationService {
 
   private getApprovalNeededMessage(stage: EscrowStage, orderDetails: any): string {
     const messages = {
+      'DEPOSIT': `Your order #${orderDetails.orderNumber} deposit is being processed. You'll receive confirmation shortly.`,
       'FITTING': `Your fitting photos for order #${orderDetails.orderNumber} are ready! Please review and approve to release payment to your tailor.`,
-      'FINAL': `Your garment for order #${orderDetails.orderNumber} is ready for delivery. Confirm receipt to complete your order.`
+      'FINAL': `Your garment for order #${orderDetails.orderNumber} is ready for delivery. Confirm receipt to complete your order.`,
+      'RELEASED': `Order #${orderDetails.orderNumber} has been completed. Thank you for using Sew4Mi!`
     };
 
     return messages[stage] || 'Your approval is needed for order progression.';

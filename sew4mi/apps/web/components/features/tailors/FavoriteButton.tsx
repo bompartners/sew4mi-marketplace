@@ -65,7 +65,7 @@ export function FavoriteButton({
     <div className="relative inline-block">
       <Button
         variant={variant}
-        size={size}
+        size={size === 'md' ? 'default' : size}
         onClick={handleToggleFavorite}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

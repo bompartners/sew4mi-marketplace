@@ -262,7 +262,7 @@ export class EscrowRepository {
    * Get orders by escrow stage for processing
    */
   async getOrdersByEscrowStage(stage: EscrowStage): Promise<any[]> {
-    const { data, error } = await this.supabase
+    const { data } = await this.supabase
       .from('orders')
       .select(`
         id,

@@ -19,6 +19,7 @@ export class TailorSearchRepository {
     userId?: string
   ): Promise<TailorSearchResult> {
     const startTime = Date.now();
+    const supabase = await getSupabaseClient();
     
     let query = supabase
       .from('tailor_profiles')
@@ -89,7 +90,7 @@ export class TailorSearchRepository {
                     .order('total_reviews', { ascending: false });
         break;
       case 'responseTime':
-        query = query.order('average_response_hours', { ascending: true, nullsLast: true });
+        query = query.order('average_response_hours', { ascending: true });
         break;
       case 'price':
         // Will need to handle price sorting in post-processing
@@ -180,6 +181,7 @@ export class TailorSearchRepository {
       return { suggestions: [], categories: { tailors: [], specializations: [], locations: [] } };
     }
 
+    const supabase = await getSupabaseClient();
     const { data, error } = await supabase.rpc('get_search_suggestions', {
       p_query: query,
       p_limit: limit
@@ -211,7 +213,8 @@ export class TailorSearchRepository {
   /**
    * Get featured tailors
    */
-  async getFeaturedTailors(filters: FeaturedTailorFilters = {}): Promise<FeaturedTailor[]> {
+  async getFeaturedTailors(filters: FeaturedTailorFilters = { limit: 10 }): Promise<FeaturedTailor[]> {
+    const supabase = await getSupabaseClient();
     let query = supabase
       .from('featured_tailors')
       .select(`
@@ -290,6 +293,7 @@ export class TailorSearchRepository {
     filters: TailorSearchFilters,
     userId?: string
   ): Promise<TailorSearchItem> {
+    const supabase = await getSupabaseClient();
     const searchItem = this.mapTailorToSearchItem(tailor);
 
     // Calculate distance if user location provided
@@ -376,6 +380,7 @@ export class TailorSearchRepository {
     userLat?: number,
     userLng?: number
   ): Promise<number> {
+    const supabase = await getSupabaseClient();
     const { data, error } = await supabase.rpc('calculate_search_score', {
       p_tailor_id: tailorId,
       p_query: query,

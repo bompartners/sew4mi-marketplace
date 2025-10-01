@@ -141,7 +141,7 @@ export class CommissionService {
     return this.mapDbRecordToCommissionRecord(data);
   }
 
-  async disputeCommissionRecord(recordId: string, reason?: string): Promise<TailorCommissionRecord> {
+  async disputeCommissionRecord(recordId: string, _reason?: string): Promise<TailorCommissionRecord> {
     const { data, error } = await this.supabase
       .from('tailor_commission_records')
       .update({

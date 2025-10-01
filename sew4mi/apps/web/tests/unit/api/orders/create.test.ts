@@ -1,26 +1,27 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { POST } from '@/app/api/orders/create/route';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { OrderStatus, UrgencyLevel, FabricChoice } from '@sew4mi/shared/types';
 
 // Mock Supabase client
-jest.mock('@supabase/auth-helpers-nextjs');
-jest.mock('next/headers', () => ({
-  cookies: jest.fn(),
+vi.mock('@supabase/auth-helpers-nextjs');
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(),
 }));
 
 const mockSupabaseClient = {
   auth: {
-    getUser: jest.fn(),
+    getUser: vi.fn(),
   },
-  from: jest.fn(() => mockSupabaseClient),
-  select: jest.fn(() => mockSupabaseClient),
-  insert: jest.fn(() => mockSupabaseClient),
-  eq: jest.fn(() => mockSupabaseClient),
-  single: jest.fn(),
+  from: vi.fn(() => mockSupabaseClient),
+  select: vi.fn(() => mockSupabaseClient),
+  insert: vi.fn(() => mockSupabaseClient),
+  eq: vi.fn(() => mockSupabaseClient),
+  single: vi.fn(),
 };
 
-const mockCreateRouteHandlerClient = createRouteHandlerClient as jest.MockedFunction<typeof createRouteHandlerClient>;
+const mockCreateRouteHandlerClient = createRouteHandlerClient as any;
 
 const mockUser = {
   id: 'user-123',
@@ -64,7 +65,7 @@ const validOrderData = {
 
 describe('/api/orders/create', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockCreateRouteHandlerClient.mockReturnValue(mockSupabaseClient as any);
   });
 
@@ -78,7 +79,7 @@ describe('/api/orders/create', () => {
     // Mock tailor profile lookup
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockTailorProfile,
         error: null
       })
@@ -87,7 +88,7 @@ describe('/api/orders/create', () => {
     // Mock measurement profile lookup
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockMeasurementProfile,
         error: null
       })
@@ -96,7 +97,7 @@ describe('/api/orders/create', () => {
     // Mock order creation
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: {
           id: 'order-123',
           order_number: 'ORD-1234567890-ABC123'
@@ -108,7 +109,7 @@ describe('/api/orders/create', () => {
     // Mock milestone creation
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      insert: jest.fn().mockResolvedValue({
+      insert: vi.fn().mockResolvedValue({
         data: null,
         error: null
       })
@@ -222,7 +223,7 @@ describe('/api/orders/create', () => {
     // Mock tailor not found
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: null,
         error: new Error('Tailor not found')
       })
@@ -253,7 +254,7 @@ describe('/api/orders/create', () => {
     // Mock valid tailor
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockTailorProfile,
         error: null
       })
@@ -262,7 +263,7 @@ describe('/api/orders/create', () => {
     // Mock invalid measurement profile
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: null,
         error: new Error('Profile not found')
       })
@@ -292,7 +293,7 @@ describe('/api/orders/create', () => {
 
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockTailorProfile,
         error: null
       })
@@ -300,13 +301,13 @@ describe('/api/orders/create', () => {
 
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockMeasurementProfile,
         error: null
       })
     });
 
-    const mockInsert = jest.fn().mockResolvedValue({
+    const mockInsert = vi.fn().mockResolvedValue({
       data: {
         id: 'order-123',
         order_number: 'ORD-1234567890-ABC123'
@@ -316,7 +317,7 @@ describe('/api/orders/create', () => {
 
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockReturnValue({
+      single: vi.fn().mockReturnValue({
         data: {
           id: 'order-123',
           order_number: 'ORD-1234567890-ABC123'
@@ -324,8 +325,8 @@ describe('/api/orders/create', () => {
         error: null
       }),
       insert: mockInsert,
-      select: jest.fn().mockReturnValue({
-        single: jest.fn().mockResolvedValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
           data: {
             id: 'order-123',
             order_number: 'ORD-1234567890-ABC123'
@@ -338,7 +339,7 @@ describe('/api/orders/create', () => {
     // Mock milestone creation
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      insert: jest.fn().mockResolvedValue({
+      insert: vi.fn().mockResolvedValue({
         data: null,
         error: null
       })
@@ -374,7 +375,7 @@ describe('/api/orders/create', () => {
 
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockTailorProfile,
         error: null
       })
@@ -382,7 +383,7 @@ describe('/api/orders/create', () => {
 
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: mockMeasurementProfile,
         error: null
       })
@@ -391,7 +392,7 @@ describe('/api/orders/create', () => {
     // Mock database error on order creation
     mockSupabaseClient.from.mockReturnValueOnce({
       ...mockSupabaseClient,
-      single: jest.fn().mockResolvedValue({
+      single: vi.fn().mockResolvedValue({
         data: null,
         error: new Error('Database error')
       })

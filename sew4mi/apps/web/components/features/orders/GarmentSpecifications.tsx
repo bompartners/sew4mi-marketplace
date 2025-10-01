@@ -5,13 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Upload, Info, ShoppingBag, Scissors } from 'lucide-react';
 import { 
   GarmentTypeOption, 
-  FabricChoice,
-  FabricType,
-  OrderCreationValidation 
+  FabricChoice 
 } from '@sew4mi/shared/types';
 import { MAX_SPECIAL_INSTRUCTIONS_LENGTH } from '@sew4mi/shared/constants';
 
@@ -36,7 +33,7 @@ interface FabricChoiceCardProps {
 }
 
 function FabricChoiceCard({
-  choice,
+  choice: _choice,
   title,
   description,
   pros,

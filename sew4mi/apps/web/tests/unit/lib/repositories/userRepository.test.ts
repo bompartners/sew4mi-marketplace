@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { UserRepository } from '../../../../lib/repositories/userRepository'
-import { createClient } from '@supabase/supabase-js'
+// import { createClient } from '@supabase/supabase-js' // Removed unused import
 
 vi.mock('@supabase/supabase-js')
 

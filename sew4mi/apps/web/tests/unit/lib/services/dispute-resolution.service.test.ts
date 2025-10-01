@@ -62,7 +62,7 @@ describe.skip('DisputeResolutionService', () => {
     it('should resolve dispute without refund', async () => {
       const noRefundRequest = {
         disputeId: 'dispute-124',
-        resolutionType: DisputeResolutionType.MEDIATED_SOLUTION,
+        resolutionType: DisputeResolutionType.ORDER_COMPLETION,
         outcome: 'Tailor will rework the garment',
         reasonCode: 'CUSTOMER_SATISFACTION',
         adminNotes: 'Both parties agreed to rework solution'
@@ -71,7 +71,7 @@ describe.skip('DisputeResolutionService', () => {
       const mockResolution = {
         id: 'resolution-124',
         dispute_id: 'dispute-124',
-        resolution_type: DisputeResolutionType.MEDIATED_SOLUTION,
+        resolution_type: DisputeResolutionType.ORDER_COMPLETION,
         outcome: 'Tailor will rework the garment',
         refund_amount: null,
         resolved_at: new Date().toISOString(),
@@ -207,7 +207,7 @@ describe.skip('DisputeResolutionService', () => {
         customerId: 'customer-123',
         tailorId: 'tailor-123',
         resolution: 'Test resolution',
-        resolutionType: DisputeResolutionType.MEDIATED_SOLUTION
+        resolutionType: DisputeResolutionType.ORDER_COMPLETION
       });
 
       expect(result.error).toBeNull();
@@ -252,7 +252,7 @@ describe.skip('DisputeResolutionService', () => {
 
       const result = await mockResolutionService.createResolutionRecord({
         disputeId: 'dispute-123',
-        resolutionType: DisputeResolutionType.REJECTED,
+        resolutionType: DisputeResolutionType.NO_ACTION,
         outcome: 'Dispute rejected',
         adminId: 'admin-123'
       });

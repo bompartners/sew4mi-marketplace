@@ -146,7 +146,17 @@
       "Bash(timeout 20 pnpm typecheck --filter=web)",
       "Bash(timeout 10 pnpm test:*)",
       "Bash(timeout 30 pnpm lint --filter=shared)",
-      "Bash(timeout 30 pnpm lint --filter=@sew4mi/shared)"
+      "Bash(timeout 30 pnpm lint --filter=@sew4mi/shared)",
+      "Bash(timeout 30 pnpm exec tsc --noEmit)",
+      "Bash(timeout 30 pnpm exec tsc --noEmit --project apps/web)",
+      "Bash(timeout 30 npx tsc --noEmit)",
+      "Bash(timeout 60 npx tsc --build --noEmit)",
+      "Bash(timeout 30 pnpm run typecheck --filter=web)",
+      "Bash(timeout 30 npx tsc:*)",
+      "Bash(timeout 60 npx tsc:*)",
+      "Bash(timeout 10 pnpm typecheck --filter=web)",
+      "Bash(timeout 10 npx tsc --noEmit)",
+      "Bash(timeout 30 pnpm typecheck --filter=@sew4mi/shared)"
     ],
     "deny": []
   }

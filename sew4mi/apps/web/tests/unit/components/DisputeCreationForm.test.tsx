@@ -2,10 +2,9 @@
 // Story 2.4: Test dispute creation form functionality
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { DisputeCreationForm } from '@/components/features/disputes/DisputeCreationForm';
-import { DisputeCategory } from '@sew4mi/shared';
 
 // Mock the evidence upload component
 vi.mock('@/components/features/disputes/DisputeEvidenceUpload', () => ({

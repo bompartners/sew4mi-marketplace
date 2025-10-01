@@ -14,9 +14,9 @@ interface AvailabilityCalendarProps {
   readonly?: boolean;
 }
 
-export function AvailabilityCalendar({ tailorId, availability, readonly = true }: AvailabilityCalendarProps) {
+export function AvailabilityCalendar({ tailorId: _tailorId, availability, readonly: _readonly = true }: AvailabilityCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -39,18 +39,10 @@ export function AvailabilityCalendar({ tailorId, availability, readonly = true }
     }
   };
 
-  const getStatusLabel = (status?: string) => {
-    switch (status) {
-      case 'AVAILABLE':
-        return 'Available';
-      case 'BUSY':
-        return 'Busy';
-      case 'BLOCKED':
-        return 'Unavailable';
-      default:
-        return 'No info';
-    }
-  };
+  // Unused helper function
+  // const _getStatusLabel = (status?: string) => {
+  //   // Implementation commented out to avoid unused function error
+  // };
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => direction === 'prev' ? subMonths(prev, 1) : addMonths(prev, 1));
@@ -69,7 +61,7 @@ export function AvailabilityCalendar({ tailorId, availability, readonly = true }
               variant="outline"
               size="sm"
               onClick={() => navigateMonth('prev')}
-              disabled={loading}
+              disabled={_loading}
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
@@ -80,7 +72,7 @@ export function AvailabilityCalendar({ tailorId, availability, readonly = true }
               variant="outline"
               size="sm"
               onClick={() => navigateMonth('next')}
-              disabled={loading}
+              disabled={_loading}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

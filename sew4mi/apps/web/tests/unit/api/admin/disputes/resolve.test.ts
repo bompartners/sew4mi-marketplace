@@ -1,6 +1,7 @@
 // Unit tests for dispute resolution API
 // Story 2.4: Dispute Resolution Framework
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { POST } from '@/app/api/admin/disputes/[id]/resolve/route';
 import { NextRequest } from 'next/server';
 import { DisputeResolutionType } from '@sew4mi/shared';
@@ -8,35 +9,35 @@ import { DisputeResolutionType } from '@sew4mi/shared';
 // Mock Supabase client
 const mockSupabaseClient = {
   auth: {
-    getUser: jest.fn()
+    getUser: vi.fn()
   },
-  from: jest.fn(() => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn()
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn()
       }))
     })),
-    insert: jest.fn(() => ({
-      select: jest.fn(() => ({
-        single: jest.fn()
+    insert: vi.fn(() => ({
+      select: vi.fn(() => ({
+        single: vi.fn()
       }))
     }))
   })),
-  rpc: jest.fn()
+  rpc: vi.fn()
 };
 
-jest.mock('@/lib/supabase', () => ({
-  createClient: jest.fn(() => mockSupabaseClient)
+vi.mock('@/lib/supabase', () => ({
+  createClient: vi.fn(() => mockSupabaseClient)
 }));
 
-jest.mock('@/lib/supabase/server', () => ({
-  createServerSupabaseClient: jest.fn(() => mockSupabaseClient),
-  createServiceRoleClient: jest.fn(() => mockSupabaseClient)
+vi.mock('@/lib/supabase/server', () => ({
+  createServerSupabaseClient: vi.fn(() => mockSupabaseClient),
+  createServiceRoleClient: vi.fn(() => mockSupabaseClient)
 }));
 
 describe('Dispute Resolution API', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const mockAdminUser = {
@@ -75,12 +76,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -89,9 +90,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockDispute,
                 error: null
               })
@@ -100,7 +101,7 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'dispute_activities' || table === 'notifications') {
         return {
-          insert: jest.fn().mockResolvedValue({
+          insert: vi.fn().mockResolvedValue({
             error: null
           })
         };
@@ -127,7 +128,7 @@ describe('Dispute Resolution API', () => {
       adminNotes: 'Issue confirmed by quality review'
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(200);
@@ -152,12 +153,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -166,9 +167,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockDispute,
                 error: null
               })
@@ -177,7 +178,7 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'dispute_activities' || table === 'notifications') {
         return {
-          insert: jest.fn().mockResolvedValue({
+          insert: vi.fn().mockResolvedValue({
             error: null
           })
         };
@@ -203,7 +204,7 @@ describe('Dispute Resolution API', () => {
       reasonCode: 'SHARED_RESPONSIBILITY'
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(200);
@@ -219,12 +220,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -233,9 +234,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockDispute,
                 error: null
               })
@@ -244,7 +245,7 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'dispute_activities' || table === 'notifications') {
         return {
-          insert: jest.fn().mockResolvedValue({
+          insert: vi.fn().mockResolvedValue({
             error: null
           })
         };
@@ -269,7 +270,7 @@ describe('Dispute Resolution API', () => {
       reasonCode: 'CUSTOMER_EXPECTATION_CLARIFIED'
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(200);
@@ -290,7 +291,7 @@ describe('Dispute Resolution API', () => {
       refundAmount: 100
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(401);
@@ -303,12 +304,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: { role: 'customer' },
                 error: null
               })
@@ -325,7 +326,7 @@ describe('Dispute Resolution API', () => {
       refundAmount: 100
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(403);
@@ -338,12 +339,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -352,9 +353,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockDispute,
                 error: null
               })
@@ -371,7 +372,7 @@ describe('Dispute Resolution API', () => {
       refundAmount: -50 // Invalid negative amount
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(400);
@@ -385,12 +386,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -399,9 +400,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: null,
                 error: new Error('Dispute not found')
               })
@@ -418,7 +419,7 @@ describe('Dispute Resolution API', () => {
       refundAmount: 100
     });
 
-    const response = await POST(request, { params: { id: 'non-existent-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'non-existent-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(404);
@@ -436,12 +437,12 @@ describe('Dispute Resolution API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -450,9 +451,9 @@ describe('Dispute Resolution API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: resolvedDispute,
                 error: null
               })
@@ -469,7 +470,7 @@ describe('Dispute Resolution API', () => {
       refundAmount: 100
     });
 
-    const response = await POST(request, { params: { id: 'dispute-id' } });
+    const response = await POST(request, { params: Promise.resolve({ id: 'dispute-id' }) });
     const result = await response.json();
 
     expect(response.status).toBe(409);

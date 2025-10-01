@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { EscrowStage } from '@sew4mi/shared';
-import { Button } from '@sew4mi/ui';
-import { Card, CardContent, CardHeader, CardTitle } from '@sew4mi/ui';
+import { Button } from '../../ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { CheckCircle, AlertCircle, Loader2, DollarSign } from 'lucide-react';
 
 interface PaymentMilestoneProps {

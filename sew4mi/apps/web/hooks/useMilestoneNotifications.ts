@@ -57,7 +57,7 @@ export function useMilestoneNotifications({
   const createNotificationFromMilestone = useCallback((
     milestone: OrderMilestone,
     changeType: 'submitted' | 'approved' | 'rejected',
-    previousStatus?: string
+    _previousStatus?: string // Prefixed with underscore to indicate unused
   ): MilestoneNotification | null => {
     const milestoneLabel = milestone.milestone.replace(/_/g, ' ').toLowerCase();
     let message = '';

@@ -316,7 +316,7 @@ export class TaxInvoiceService {
     `;
   }
 
-  private async uploadInvoicePDF(htmlContent: string, invoiceNumber: string): Promise<string> {
+  private async uploadInvoicePDF(_htmlContent: string, invoiceNumber: string): Promise<string> {
     // In a real implementation, this would:
     // 1. Convert HTML to PDF using a service like Puppeteer
     // 2. Upload the PDF to cloud storage (e.g., Supabase Storage)

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GhanaPhoneInput } from '@sew4mi/ui';
+import { GhanaPhoneInput } from '@/components/ui/GhanaPhoneInput';
 import {
   registrationSchema,
   type RegistrationInput,
@@ -43,7 +43,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
     resolver: zodResolver(registrationSchema),
     defaultValues: {
       identifierType: 'email',
-      role: initialRole || USER_ROLES.CUSTOMER,
+      role: (initialRole as 'CUSTOMER' | 'TAILOR') || USER_ROLES.CUSTOMER,
       acceptTerms: false,
     },
   });
@@ -74,7 +74,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
       } else {
         // Registration completed without verification
         if (onSuccess) {
-          onSuccess(data, result.user);
+          onSuccess(data, (result as any).user);
         }
       }
     } catch (err) {
@@ -85,7 +85,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-6">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -179,6 +179,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
             id="identifier"
             type="email"
             placeholder="you@example.com"
+            autoComplete="email"
             {...register('identifier')}
             className={errors.identifier ? 'border-destructive' : ''}
           />
@@ -202,6 +203,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
             id="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="Enter your password"
+            autoComplete="new-password"
             {...register('password')}
             className={errors.password ? 'border-destructive' : ''}
           />
@@ -235,6 +237,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
             id="confirmPassword"
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder="Confirm your password"
+            autoComplete="new-password"
             {...register('confirmPassword')}
             className={errors.confirmPassword ? 'border-destructive' : ''}
           />

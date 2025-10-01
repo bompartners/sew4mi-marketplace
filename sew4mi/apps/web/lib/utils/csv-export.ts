@@ -172,7 +172,7 @@ export function exportPaymentHistoryCSV(
     dateRange?: { from: Date; to: Date };
   }
 ): Blob {
-  const filename = options?.filename || generateCSVFilename('payment_history');
+  // const _filename = options?.filename || generateCSVFilename('payment_history'); // TODO: Use when needed
   const columns = options?.columns || PAYMENT_HISTORY_COLUMNS;
 
   let data = paymentHistory;
@@ -389,7 +389,7 @@ export function validateCSVExportRequest(data: any[], maxRecords = 10000): {
 /**
  * Create download link for CSV blob
  */
-export function createDownloadLink(blob: Blob, filename: string): string {
+export function createDownloadLink(blob: Blob, _filename: string): string {
   return URL.createObjectURL(blob);
 }
 

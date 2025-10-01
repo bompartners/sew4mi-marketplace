@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PaymentRepository } from '@/lib/repositories/payment.repository';
-import { createClient } from '@supabase/supabase-js';
+// import { createClient } from '@supabase/supabase-js'; // Removed unused import
 
 // Mock Supabase client
 const mockSupabase = {
@@ -257,7 +257,7 @@ describe('PaymentRepository', () => {
         error: null
       });
 
-      const result = await paymentRepository.updateStatus('tx_123', partialUpdateData);
+      await paymentRepository.updateStatus('tx_123', partialUpdateData);
 
       expect(mockSupabase.update).toHaveBeenCalledWith({
         status: 'SUCCESS',

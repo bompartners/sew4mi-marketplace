@@ -128,7 +128,23 @@ describe('Admin Role Change API - Fixed', () => {
     adminRoleChangeSchema.safeParse.mockReturnValue({
       success: false,
       error: {
-        issues: [{ message: 'Invalid user ID' }]
+        issues: [{ 
+          code: 'custom',
+          message: 'Invalid user ID',
+          path: []
+        }],
+        errors: [{ 
+          code: 'custom',
+          message: 'Invalid user ID',
+          path: []
+        }],
+        format: vi.fn(),
+        message: 'Invalid user ID',
+        isEmpty: false,
+        addIssue: vi.fn(),
+        addIssues: vi.fn(),
+        flatten: vi.fn(),
+        formErrors: {}
       }
     });
 
@@ -147,7 +163,7 @@ describe('Admin Role Change API - Fixed', () => {
   it('should successfully change user role', async () => {
     // Mock successful database responses for a complete flow
     let callCount = 0;
-    mockSupabaseClient.from.mockImplementation(() => ({
+    (mockSupabaseClient.from as any).mockImplementation(() => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
           single: vi.fn().mockImplementation(() => {

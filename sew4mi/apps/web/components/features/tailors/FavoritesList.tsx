@@ -18,7 +18,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFavorites } from '@/hooks/useFavorites';
-import { CustomerFavorite } from '@sew4mi/shared';
+import { CustomerFavorite, TailorSearchItem } from '@sew4mi/shared';
+
+// Extended favorite type with populated tailor data
+interface CustomerFavoriteWithTailor extends CustomerFavorite {
+  tailor: TailorSearchItem;
+}
 
 interface FavoritesListProps {
   viewMode?: 'grid' | 'list';
@@ -176,10 +181,12 @@ export function FavoritesList({
       {/* Grid View */}
       {viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayFavorites.map((favorite) => (
+          {displayFavorites.map((favorite) => {
+            const favoriteWithTailor = favorite as CustomerFavoriteWithTailor;
+            return (
             <div key={favorite.id} className="relative">
               <TailorCard 
-                tailor={favorite.tailor} 
+                tailor={favoriteWithTailor.tailor} 
                 showDistance={false}
                 className="hover:shadow-lg transition-shadow"
               />
@@ -200,7 +207,8 @@ export function FavoritesList({
                 </div>
               )}
             </div>
-          ))}
+          );
+          })}
         </div>
       )}
 
@@ -208,7 +216,7 @@ export function FavoritesList({
       {viewMode === 'list' && (
         <div className="space-y-4">
           {displayFavorites.map((favorite) => (
-            <FavoriteListItem key={favorite.id} favorite={favorite} />
+            <FavoriteListItem key={favorite.id} favorite={favorite as CustomerFavoriteWithTailor} />
           ))}
         </div>
       )}
@@ -218,7 +226,7 @@ export function FavoritesList({
 
 // List item component for favorite tailors
 interface FavoriteListItemProps {
-  favorite: CustomerFavorite;
+  favorite: CustomerFavoriteWithTailor;
 }
 
 function FavoriteListItem({ favorite }: FavoriteListItemProps) {
@@ -229,11 +237,9 @@ function FavoriteListItem({ favorite }: FavoriteListItemProps) {
   };
 
   const handleContact = () => {
-    if (tailor.user?.whatsappNumber) {
-      const message = `Hello! I found your profile on Sew4Mi and I'm interested in your tailoring services.`;
-      const whatsappUrl = `https://wa.me/${tailor.user.whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-    }
+    // WhatsApp contact functionality would need additional API integration
+    // For now, redirect to the tailor's profile page
+    window.open(`/tailors/${tailor.id}`, '_blank');
   };
 
   return (
@@ -316,11 +322,8 @@ function FavoriteListItem({ favorite }: FavoriteListItemProps) {
             </div>
           )}
 
-          {/* Notes and date */}
+          {/* Date added */}
           <div className="text-sm text-gray-500 mb-3">
-            {favorite.notes && (
-              <p className="mb-1 italic">"{favorite.notes}"</p>
-            )}
             <p>Added on {new Date(favorite.createdAt).toLocaleDateString()}</p>
           </div>
         </div>

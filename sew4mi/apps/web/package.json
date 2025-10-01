@@ -29,6 +29,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slider": "^1.3.6",
     "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.2.6",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sew4mi/shared": "workspace:*",
@@ -51,11 +52,13 @@
     "sharp": "^0.34.3",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "twilio": "^5.8.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@axe-core/react": "^4.10.2",
     "@eslint/eslintrc": "^3",
     "@sew4mi/config": "workspace:*",
     "@testing-library/jest-dom": "^6.6.4",
@@ -66,14 +69,19 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^2.1.8",
     "autoprefixer": "^10.4.14",
+    "axe-core": "^4.10.3",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "jest-axe": "^10.0.0",
+    "jest-websocket-mock": "^2.5.0",
     "msw": "^2.10.5",
     "tailwindcss": "^3.4.0",
     "typescript": "^5",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "ws": "^8.18.3"
   }
 }

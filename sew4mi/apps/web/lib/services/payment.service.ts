@@ -1,15 +1,13 @@
 import { hubtelService } from './hubtel.service';
-import { networkService } from './networkService';
+// import { networkService } from './networkService'; // TODO: Implement network service
 import { paymentRepository } from '../repositories/payment.repository';
 import { 
   PaymentInitiationRequest, 
-  PaymentTransaction, 
   PaymentStatusResponse,
   HubtelWebhookPayload 
 } from '@sew4mi/shared/types';
 import { 
   PAYMENT_PROVIDERS, 
-  PAYMENT_STATUSES, 
   RETRY_CONFIG 
 } from '@sew4mi/shared/constants';
 import { validateGhanaPhoneNumber } from '@sew4mi/shared';
@@ -315,39 +313,33 @@ export class PaymentService {
    */
   private getPaymentProvider(
     paymentMethod: string, 
-    network: 'MTN' | 'VODAFONE' | 'AIRTELTIGO'
+    _network: 'MTN' | 'VODAFONE' | 'AIRTELTIGO'
   ): string {
     switch (paymentMethod.toLowerCase()) {
       case 'mtn':
-        return PAYMENT_PROVIDERS.HUBTEL_MTN;
       case 'vodafone':
-        return PAYMENT_PROVIDERS.HUBTEL_VODAFONE;
       case 'airteltigo':
-        return PAYMENT_PROVIDERS.HUBTEL_AIRTELTIGO;
       case 'card':
-        return PAYMENT_PROVIDERS.HUBTEL_CARD;
+        return PAYMENT_PROVIDERS.HUBTEL;
       default:
-        // Fallback to network-based provider
-        return network === 'MTN' 
-          ? PAYMENT_PROVIDERS.HUBTEL_MTN
-          : network === 'VODAFONE'
-          ? PAYMENT_PROVIDERS.HUBTEL_VODAFONE
-          : PAYMENT_PROVIDERS.HUBTEL_AIRTELTIGO;
+        // Fallback to Hubtel for all mobile money
+        return PAYMENT_PROVIDERS.HUBTEL;
     }
   }
 
   /**
    * Determine provider from phone number
    */
-  private determineProviderFromPhone(phoneNumber: string): string {
-    const validation = validateGhanaPhoneNumber(phoneNumber);
-    
-    if (!validation.isValid || !validation.network) {
-      return 'UNKNOWN';
-    }
-
-    return this.getPaymentProvider(validation.network.toLowerCase(), validation.network);
-  }
+  // TODO: Implement phone-based provider detection  
+  // private _determineProviderFromPhone(_phoneNumber: string): string {
+  //   const validation = validateGhanaPhoneNumber(phoneNumber);
+  //   
+  //   if (!validation.isValid || !validation.network) {
+  //     return 'UNKNOWN';
+  //   }
+  //
+  //   return this.getPaymentProvider(validation.network.toLowerCase(), validation.network);
+  // }
 
   /**
    * Create delay promise

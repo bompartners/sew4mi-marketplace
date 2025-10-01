@@ -211,7 +211,7 @@ function PhotoPreviewDialog({
  */
 export function MilestoneTimeline({ 
   milestones, 
-  orderId, 
+  orderId: _orderId, 
   userRole,
   onViewPhotos,
   onViewApproval,
@@ -258,7 +258,7 @@ export function MilestoneTimeline({
               {orderedMilestones.map((milestoneType, index) => {
                 const milestone = milestoneMap.get(milestoneType);
                 const config = TIMELINE_CONFIG[milestoneType];
-                const { status, substatus } = getTimelineStatus(milestone);
+                const { status, substatus: _substatus } = getTimelineStatus(milestone);
                 const colors = getStatusColors(status);
 
                 return (

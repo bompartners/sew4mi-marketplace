@@ -21,7 +21,7 @@ export function useTailorSearch(filters: TailorSearchFilters): UseTailorSearchRe
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Analytics and performance hooks
-  const { trackSearch, trackFilter } = useSearchAnalytics();
+  const { trackSearch } = useSearchAnalytics();
   const { 
     startSearch, 
     endSearch, 

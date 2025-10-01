@@ -73,7 +73,7 @@ describe('/api/milestones/[id]/approve', () => {
       });
 
       const request = new NextRequest('http://localhost/api/milestones/milestone-456/approve');
-      const response = await GET(request, { params: { id: mockMilestoneId } });
+      const response = await GET(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -89,7 +89,7 @@ describe('/api/milestones/[id]/approve', () => {
       });
 
       const request = new NextRequest('http://localhost/api/milestones/milestone-456/approve');
-      const response = await GET(request, { params: { id: mockMilestoneId } });
+      const response = await GET(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -107,7 +107,7 @@ describe('/api/milestones/[id]/approve', () => {
       });
 
       const request = new NextRequest('http://localhost/api/milestones/milestone-456/approve');
-      const response = await GET(request, { params: { id: mockMilestoneId } });
+      const response = await GET(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(404);
@@ -128,7 +128,7 @@ describe('/api/milestones/[id]/approve', () => {
       });
 
       const request = new NextRequest('http://localhost/api/milestones/milestone-456/approve');
-      const response = await GET(request, { params: { id: mockMilestoneId } });
+      const response = await GET(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(403);
@@ -193,7 +193,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -231,7 +231,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(rejectionRequest)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -259,7 +259,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(invalidRequest)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(400);
@@ -278,7 +278,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(401);
@@ -304,7 +304,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(409);
@@ -331,7 +331,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(409);
@@ -345,7 +345,7 @@ describe('/api/milestones/[id]/approve', () => {
           method: 'POST',
           body: JSON.stringify(validRequestBody)
         });
-        return POST(request, { params: { id: mockMilestoneId } });
+        return POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       });
 
       const responses = await Promise.all(promises);
@@ -366,7 +366,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       // Approval should still succeed even if escrow call fails
@@ -392,7 +392,7 @@ describe('/api/milestones/[id]/approve', () => {
         body: JSON.stringify(validRequestBody)
       });
 
-      const response = await POST(request, { params: { id: mockMilestoneId } });
+      const response = await POST(request, { params: Promise.resolve({ id: mockMilestoneId }) });
       const data = await response.json();
 
       expect(response.status).toBe(500);

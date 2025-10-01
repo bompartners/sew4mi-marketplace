@@ -1,41 +1,42 @@
 // Unit tests for dispute analytics API
 // Story 2.4: Dispute Resolution Framework - Analytics
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GET } from '@/app/api/admin/disputes/analytics/route';
 import { NextRequest } from 'next/server';
 
 // Mock Supabase client
 const mockSupabaseClient = {
   auth: {
-    getUser: jest.fn()
+    getUser: vi.fn()
   },
-  from: jest.fn(() => ({
-    select: jest.fn(() => ({
-      eq: jest.fn(() => ({
-        single: jest.fn()
+  from: vi.fn(() => ({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        single: vi.fn()
       })),
-      gte: jest.fn(() => ({
-        lte: jest.fn(() => ({
-          order: jest.fn()
+      gte: vi.fn(() => ({
+        lte: vi.fn(() => ({
+          order: vi.fn()
         }))
       })),
-      not: jest.fn(() => ({
-        gte: jest.fn(() => ({
-          lte: jest.fn()
+      not: vi.fn(() => ({
+        gte: vi.fn(() => ({
+          lte: vi.fn()
         }))
       }))
     }))
   })),
-  rpc: jest.fn()
+  rpc: vi.fn()
 };
 
-jest.mock('@/lib/supabase', () => ({
-  createClient: jest.fn(() => mockSupabaseClient)
+vi.mock('@/lib/supabase', () => ({
+  createClient: vi.fn(() => mockSupabaseClient)
 }));
 
 describe('Dispute Analytics API', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   const mockAdminUser = {
@@ -84,12 +85,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -98,10 +99,10 @@ describe('Dispute Analytics API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            gte: jest.fn(() => ({
-              lte: jest.fn(() => ({
-                order: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            gte: vi.fn(() => ({
+              lte: vi.fn(() => ({
+                order: vi.fn().mockResolvedValue({
                   data: mockCategoryData,
                   error: null
                 })
@@ -111,10 +112,10 @@ describe('Dispute Analytics API', () => {
         };
       } else if (table === 'orders') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              gte: jest.fn(() => ({
-                lte: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              gte: vi.fn(() => ({
+                lte: vi.fn().mockResolvedValue({
                   count: 10,
                   error: null
                 })
@@ -165,12 +166,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -179,10 +180,10 @@ describe('Dispute Analytics API', () => {
         };
       }
       return {
-        select: jest.fn(() => ({
-          gte: jest.fn(() => ({
-            lte: jest.fn(() => ({
-              order: jest.fn().mockResolvedValue({
+        select: vi.fn(() => ({
+          gte: vi.fn(() => ({
+            lte: vi.fn(() => ({
+              order: vi.fn().mockResolvedValue({
                 data: [],
                 error: null
               })
@@ -221,12 +222,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -235,10 +236,10 @@ describe('Dispute Analytics API', () => {
         };
       }
       return {
-        select: jest.fn(() => ({
-          gte: jest.fn(() => ({
-            lte: jest.fn(() => ({
-              order: jest.fn().mockResolvedValue({
+        select: vi.fn(() => ({
+          gte: vi.fn(() => ({
+            lte: vi.fn(() => ({
+              order: vi.fn().mockResolvedValue({
                 data: mockCategoryData,
                 error: null
               })
@@ -288,12 +289,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: { role: 'customer' },
                 error: null
               })
@@ -330,12 +331,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -344,10 +345,10 @@ describe('Dispute Analytics API', () => {
         };
       }
       return {
-        select: jest.fn(() => ({
-          gte: jest.fn(() => ({
-            lte: jest.fn(() => ({
-              order: jest.fn().mockResolvedValue({
+        select: vi.fn(() => ({
+          gte: vi.fn(() => ({
+            lte: vi.fn(() => ({
+              order: vi.fn().mockResolvedValue({
                 data: [],
                 error: null
               })
@@ -379,12 +380,12 @@ describe('Dispute Analytics API', () => {
       error: null
     });
 
-    mockSupabaseClient.from.mockImplementation((table: string) => {
+    (mockSupabaseClient.from as any).mockImplementation((table: string) => {
       if (table === 'profiles') {
         return {
-          select: jest.fn(() => ({
-            eq: jest.fn(() => ({
-              single: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn().mockResolvedValue({
                 data: mockAdminProfile,
                 error: null
               })
@@ -393,10 +394,10 @@ describe('Dispute Analytics API', () => {
         };
       } else if (table === 'disputes') {
         return {
-          select: jest.fn(() => ({
-            gte: jest.fn(() => ({
-              lte: jest.fn(() => ({
-                order: jest.fn().mockResolvedValue({
+          select: vi.fn(() => ({
+            gte: vi.fn(() => ({
+              lte: vi.fn(() => ({
+                order: vi.fn().mockResolvedValue({
                   data: mockCategoryData, // 3 QUALITY_ISSUE, 1 DELIVERY_DELAY, 1 PAYMENT_PROBLEM
                   error: null
                 })

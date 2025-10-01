@@ -10,7 +10,8 @@ import {
   MILESTONE_PHOTO_CACHE_DURATION,
   SUPPORTED_IMAGE_FORMATS 
 } from '@sew4mi/shared/constants';
-import { compressImage, CompressedImageResult } from '../utils/image-compression';
+import { compressImage } from '../utils/image-compression';
+// import { CompressedImageResult } from '../utils/image-compression'; // TODO: Use when needed
 
 /**
  * Storage upload result
@@ -64,7 +65,7 @@ export class StorageService {
     buffer: Buffer,
     orderId: string,
     milestoneId: string,
-    filename: string
+    _filename: string
   ): Promise<StorageUploadResult> {
     try {
       // Compress image for optimal bandwidth usage

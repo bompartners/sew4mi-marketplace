@@ -287,7 +287,7 @@ export class EscrowService {
     } catch (error) {
       return {
         isValid: false,
-        errors: [`Validation error: ${error.message}`]
+        errors: [`Validation error: ${error instanceof Error ? error.message : String(error)}`]
       };
     }
   }

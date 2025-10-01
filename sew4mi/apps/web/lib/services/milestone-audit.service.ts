@@ -9,7 +9,7 @@ import type {
   MilestoneApprovalHistory, 
   TailorPerformanceMetrics, 
   MilestoneRejectionPattern 
-} from '@sew4mi/shared/src/types/milestone';
+} from '@sew4mi/shared/types/milestone';
 
 export interface MilestoneAuditFilters {
   timeRange?: 'last_7_days' | 'last_30_days' | 'last_90_days' | 'last_year' | 'custom';
@@ -242,7 +242,7 @@ export class MilestoneAuditService {
    * Detect tailors with high rejection rates requiring alerts
    */
   async getHighRejectionAlerts(filters: MilestoneAuditFilters): Promise<HighRejectionAlert[]> {
-    const supabase = await this.getSupabase();
+    // const supabase = await this.getSupabase(); // TODO: Use for advanced analytics
     const performanceStats = await this.getTailorPerformanceStats(filters);
     
     const alerts: HighRejectionAlert[] = [];
@@ -303,6 +303,7 @@ export class MilestoneAuditService {
     }
 
     // Get milestone data
+    const supabase = await this.getSupabase();
     const { data: milestones, error: milestonesError } = await supabase
       .from('order_milestones')
       .select(`

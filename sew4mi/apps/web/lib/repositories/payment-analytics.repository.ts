@@ -202,10 +202,10 @@ export class PaymentAnalyticsRepository {
       refunded: 0
     };
 
-    (data || []).forEach(transaction => {
+    (data || []).forEach((transaction: any) => {
       const amount = transaction.amount;
       
-      if (transaction.orders.status === 'DISPUTED') {
+      if (transaction.orders?.status === 'DISPUTED') {
         breakdown.disputed += amount;
       } else {
         switch (transaction.status) {
@@ -273,7 +273,7 @@ export class PaymentAnalyticsRepository {
 
     return (data || []).map(row => ({
       tailorId: row.tailor_id,
-      businessName: row.tailor_profiles.business_name,
+      businessName: (row as any).tailor_profiles?.business_name,
       totalEarnings: row.total_earnings,
       totalOrders: row.total_orders
     }));

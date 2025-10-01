@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
-import { NextRequest } from 'next/server';
 
 // Mock environment variables for testing
 const mockEnv = {
@@ -24,7 +23,7 @@ vi.stubGlobal('process', {
 describe('Order Creation Integration Tests', () => {
   beforeAll(() => {
     // Setup test environment
-    vi.stubEnv(mockEnv);
+    Object.assign(process.env, mockEnv);
   });
 
   afterAll(() => {
@@ -33,13 +32,6 @@ describe('Order Creation Integration Tests', () => {
   });
 
   it('should calculate order pricing correctly', async () => {
-    // Mock request for pricing calculation
-    const mockPricingRequest = {
-      garmentTypeId: 'kente-shirt-123',
-      fabricChoice: 'TAILOR_SOURCED',
-      urgencyLevel: 'STANDARD',
-      tailorId: 'tailor-456'
-    };
 
     // Expected pricing breakdown
     const expectedPricing = {

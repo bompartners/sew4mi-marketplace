@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { render } from '@testing-library/react';
-import { vi, describe, it, expect, afterEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import { CacheStats } from '@/components/debug/CacheStats';
 
 // Mock the cache hooks to avoid actual cache operations in tests

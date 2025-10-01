@@ -16,8 +16,7 @@ const mockSupabase = {
         single: vi.fn()
       }))
     })),
-    insert: vi.fn(),
-    select: vi.fn()
+    insert: vi.fn()
   })),
   storage: {
     from: vi.fn(() => ({
@@ -90,6 +89,9 @@ describe('Evidence Upload API', () => {
               error: null
             })
           })
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({ data: [], error: null })
         })
       });
 
@@ -102,7 +104,7 @@ describe('Evidence Upload API', () => {
 
       // Mock database operations
       const mockInsert = vi.fn().mockResolvedValue({ error: null });
-      mockSupabase.from.mockImplementation((table) => {
+      (mockSupabase.from as any).mockImplementation((table: string) => {
         if (table === 'dispute_evidence' || table === 'dispute_activities') {
           return { insert: mockInsert };
         }
@@ -248,6 +250,9 @@ describe('Evidence Upload API', () => {
               error: null
             })
           })
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({ data: [], error: null })
         })
       });
 
@@ -279,6 +284,9 @@ describe('Evidence Upload API', () => {
               error: new Error('Not found')
             })
           })
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({ data: [], error: null })
         })
       });
 
@@ -310,6 +318,9 @@ describe('Evidence Upload API', () => {
               error: null
             })
           })
+        }),
+        insert: vi.fn().mockReturnValue({
+          select: vi.fn().mockResolvedValue({ data: [], error: null })
         })
       });
 

@@ -87,7 +87,7 @@ export function CommissionBreakdown({
         
         {/* Main breakdown */}
         <div className="space-y-3">
-          {breakdownItems.map((item, index) => {
+          {breakdownItems.map((item, _index) => {
             const Icon = item.icon;
             const isNegative = item.amount < 0;
             const displayAmount = Math.abs(item.amount);

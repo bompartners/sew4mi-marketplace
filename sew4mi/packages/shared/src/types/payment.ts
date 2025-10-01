@@ -64,6 +64,8 @@ export interface GhanaPhoneValidation {
   isValid: boolean;
   network?: 'MTN' | 'VODAFONE' | 'AIRTELTIGO';
   formattedNumber?: string;
+  error?: string;
+  suggestion?: string;
 }
 
 // Payment Analytics Types

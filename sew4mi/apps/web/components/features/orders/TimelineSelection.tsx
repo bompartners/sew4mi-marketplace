@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,8 +11,7 @@ import { Clock, Calendar as CalendarIcon, Zap, Truck, AlertTriangle, CheckCircle
 import { format, addDays, isBefore, isAfter, differenceInDays } from 'date-fns';
 import { 
   GarmentTypeOption, 
-  UrgencyLevel,
-  OrderCreationValidation 
+  UrgencyLevel
 } from '@sew4mi/shared/types';
 import { URGENCY_SURCHARGE_MULTIPLIER } from '@sew4mi/shared/constants';
 

@@ -203,7 +203,7 @@ export function MilestoneProgress({
             const config = MILESTONE_CONFIG[milestoneType];
             const status = milestone ? getMilestoneStatus(milestone) : 'not_started';
             const isCurrentMilestone = milestoneType === currentMilestone;
-            const isPastMilestone = config.order < currentMilestoneOrder;
+            // const _isPastMilestone = config.order < currentMilestoneOrder;
 
             return (
               <div

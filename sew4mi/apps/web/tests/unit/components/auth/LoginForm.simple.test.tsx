@@ -49,7 +49,7 @@ vi.mock('@/components/ui/alert', () => ({
 }))
 
 vi.mock('@/components/ui/radio-group', () => ({
-  RadioGroup: ({ children, value, onValueChange }: any) => (
+  RadioGroup: ({ children, onValueChange }: any) => (
     <div>
       {React.Children.map(children, (child) => 
         React.cloneElement(child, { onValueChange })

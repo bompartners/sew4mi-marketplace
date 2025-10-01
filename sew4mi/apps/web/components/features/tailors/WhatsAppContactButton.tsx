@@ -20,7 +20,7 @@ interface WhatsAppContactButtonProps {
 export function WhatsAppContactButton({ tailorId, tailorName, className }: WhatsAppContactButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState(WHATSAPP_MESSAGE_TEMPLATES.INITIAL_CONTACT);
+  const [message, setMessage] = useState<string>(WHATSAPP_MESSAGE_TEMPLATES.INITIAL_CONTACT);
   const [garmentType, setGarmentType] = useState('');
   const [budget, setBudget] = useState('');
   const [deliveryDate, setDeliveryDate] = useState('');
@@ -146,9 +146,9 @@ export function WhatsAppContactButton({ tailorId, tailorName, className }: Whats
                     <SelectValue placeholder="Select garment type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {GARMENT_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                    {Object.values(GARMENT_TYPES).map((type) => (
+                      <SelectItem key={type.id} value={type.name}>
+                        {type.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
