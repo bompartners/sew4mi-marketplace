@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/bompartners/sew4mi-marketplace#readme",
   "devDependencies": {
-    "playwright": "^1.54.2"
+    "playwright": "^1.55.1"
   }
 }
