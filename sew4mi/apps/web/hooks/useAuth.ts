@@ -82,7 +82,15 @@ export function useAuth(): AuthState & AuthActions {
         .single();
       
       if (error) {
-        console.error('❌ Failed to fetch user role:', error);
+        // PGRST116 means no rows found - this is expected for new users
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ User profile not found in database (new user), using default CUSTOMER role');
+        } else {
+          console.warn('⚠️ Failed to fetch user role:', {
+            message: error.message,
+            code: error.code
+          });
+        }
         return USER_ROLES.CUSTOMER; // Default fallback
       }
       
@@ -97,7 +105,7 @@ export function useAuth(): AuthState & AuthActions {
       console.log('✅ Cached role from database:', role, 'for user:', user.id);
       return role;
     } catch (error) {
-      console.error('❌ Error fetching user role:', error);
+      console.warn('⚠️ Error fetching user role:', error instanceof Error ? error.message : 'Unknown error');
       return USER_ROLES.CUSTOMER; // Default fallback
     }
   }, []);

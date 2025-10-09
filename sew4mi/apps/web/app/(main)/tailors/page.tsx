@@ -1,96 +1,78 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Star, MapPin, Heart, Eye, Filter } from 'lucide-react';
+import { Search, Star, MapPin, Heart, Eye, Filter, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock tailors data
-const mockTailors = [
-  {
-    id: '1',
-    name: 'Adwoa\'s Atelier',
-    specialty: 'Wedding Dresses',
-    rating: 4.9,
-    distance: '2.5 km',
-    image: '/api/placeholder/120/120',
-    location: 'East Legon, Accra',
-    priceRange: 'GHS 200-800',
-    completedOrders: 156,
-    responseTime: '< 2 hours',
-    featured: true
-  },
-  {
-    id: '2', 
-    name: 'Yaw\'s Traditional Wear',
-    specialty: 'Kente & Dashiki',
-    rating: 4.8,
-    distance: '1.2 km',
-    image: '/api/placeholder/120/120',
-    location: 'Osu, Accra',
-    priceRange: 'GHS 150-500',
-    completedOrders: 203,
-    responseTime: '< 1 hour',
-    featured: true
-  },
-  {
-    id: '3',
-    name: 'Akosua\'s Fashion',
-    specialty: 'Contemporary Designs',
-    rating: 4.7,
-    distance: '3.1 km',
-    image: '/api/placeholder/120/120',
-    location: 'Tema, Greater Accra',
-    priceRange: 'GHS 180-600',
-    completedOrders: 89,
-    responseTime: '< 3 hours',
-    featured: false
-  },
-  {
-    id: '4',
-    name: 'Kwame\'s Suits',
-    specialty: 'Men\'s Formal Wear',
-    rating: 4.6,
-    distance: '4.0 km',
-    image: '/api/placeholder/120/120',
-    location: 'Spintex, Accra',
-    priceRange: 'GHS 250-750',
-    completedOrders: 134,
-    responseTime: '< 4 hours',
-    featured: false
-  },
-  {
-    id: '5',
-    name: 'Ama\'s Couture',
-    specialty: 'Traditional & Modern',
-    rating: 4.5,
-    distance: '5.2 km',
-    image: '/api/placeholder/120/120',
-    location: 'Madina, Accra',
-    priceRange: 'GHS 120-450',
-    completedOrders: 67,
-    responseTime: '< 6 hours',
-    featured: false
-  }
-];
+interface Tailor {
+  id: string;
+  name: string;
+  specialty: string;
+  rating: number;
+  totalReviews: number;
+  location: string;
+  city?: string;
+  priceRange: string;
+  completedOrders: number;
+  responseTime: string;
+  acceptsRushOrders: boolean;
+  featured: boolean;
+  verified: boolean;
+}
 
 export default function TailorsPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [showFeatured, setShowFeatured] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [tailors, setTailors] = useState<Tailor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredTailors = mockTailors.filter(tailor => {
+  // Fetch tailors from API
+  useEffect(() => {
+    const fetchTailors = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/tailors');
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.warn('Failed to fetch tailors:', response.status, errorData);
+          throw new Error(errorData.error || 'Failed to fetch tailors');
+        }
+
+        const data = await response.json();
+        console.log('Fetched tailors:', data.tailors?.length || 0, 'tailors');
+        setTailors(data.tailors || []);
+      } catch (err) {
+        console.warn('Error fetching tailors:', err instanceof Error ? err.message : 'Unknown error');
+        setError('Failed to load tailors. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchTailors();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const filteredTailors = tailors.filter(tailor => {
     const matchesSearch = tailor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          tailor.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          tailor.location.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesFeatured = !showFeatured || tailor.featured;
-    
+
     return matchesSearch && matchesFeatured;
   });
 
@@ -122,6 +104,21 @@ export default function TailorsPage() {
           <h1 className="text-3xl font-bold text-gray-900">Browse Tailors</h1>
           <p className="mt-2 text-gray-600">Find the perfect tailor for your custom garment needs</p>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">{error}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
@@ -157,25 +154,33 @@ export default function TailorsPage() {
         </div>
 
         {/* Tailors Grid */}
-        {filteredTailors.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-[#CE1126]" />
+          </div>
+        ) : filteredTailors.length === 0 ? (
           <Card>
             <CardContent className="py-8">
               <div className="text-center">
                 <Search className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900">No tailors found</h3>
                 <p className="mt-2 text-gray-600">
-                  Try adjusting your search criteria or browse all available tailors.
+                  {tailors.length === 0
+                    ? 'No tailors are currently available. Please check back later.'
+                    : 'Try adjusting your search criteria or browse all available tailors.'}
                 </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setShowFeatured(false);
-                  }}
-                >
-                  Clear Filters
-                </Button>
+                {tailors.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setShowFeatured(false);
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -207,16 +212,18 @@ export default function TailorsPage() {
                     <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                       <div className="flex items-center">
                         <Star className="w-4 h-4 text-yellow-400 fill-current mr-1" />
-                        {tailor.rating}
+                        {tailor.rating.toFixed(1)} ({tailor.totalReviews || 0})
                       </div>
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
-                        {tailor.distance}
+                        {tailor.location}
                       </div>
                     </div>
-                    
-                    <p className="text-sm text-gray-600 mb-1">{tailor.location}</p>
-                    <p className="text-sm font-medium text-gray-900">{tailor.priceRange}</p>
+
+                    <p className="text-sm font-medium text-gray-900 mb-1">{tailor.priceRange}</p>
+                    {tailor.acceptsRushOrders && (
+                      <Badge variant="outline" className="text-xs">Rush Orders Available</Badge>
+                    )}
                   </div>
 
                   <div className="mb-4 space-y-2">
