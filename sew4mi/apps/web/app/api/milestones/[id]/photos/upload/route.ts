@@ -13,8 +13,7 @@ import {
 import { base64ToBuffer, validateImageSize } from '@/lib/utils/image-compression';
 import { createStorageService } from '@/lib/services/storage.service';
 import { MilestoneRepository } from '@/lib/repositories/milestone.repository';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * Rate limiting store (in production, use Redis)
@@ -83,7 +82,7 @@ export async function POST(
     const { id: milestoneId } = validationResult.data;
 
     // Get authenticated user from Supabase session
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

@@ -3,8 +3,8 @@
  * Handles in-app, WhatsApp, SMS, and email notifications
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { WhatsAppService } from './whatsapp-integration.service';
+import { createServerSupabaseClient } from '@/lib/supabase';
+import { WhatsAppIntegrationService } from './whatsapp-integration.service';
 
 export enum NotificationType {
   ORDER_UPDATE = 'order_update',
@@ -34,10 +34,10 @@ export interface NotificationPreferences {
 }
 
 export class NotificationService {
-  private whatsappService: WhatsAppService;
+  private whatsappService: WhatsAppIntegrationService;
 
   constructor() {
-    this.whatsappService = new WhatsAppService();
+    this.whatsappService = new WhatsAppIntegrationService();
   }
 
   /**
@@ -307,3 +307,6 @@ export class NotificationService {
     });
   }
 }
+
+// Export singleton instance
+export const notificationService = new NotificationService();

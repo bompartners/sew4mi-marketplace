@@ -228,6 +228,14 @@ export const uploadRateLimit = createRateLimiter({
   message: 'Upload rate limit exceeded. Please wait before uploading more images.'
 });
 
+// Loyalty redemption: 5 redemptions per hour (prevent abuse)
+export const loyaltyRedemptionRateLimit = createRateLimiter({
+  maxRequests: 5,
+  windowMs: 60 * 60 * 1000,
+  message: 'Too many redemption attempts. Please wait before redeeming more rewards.',
+  skipFailedRequests: true, // Don't count failed redemptions
+});
+
 /**
  * Apply rate limiting to route handler
  */

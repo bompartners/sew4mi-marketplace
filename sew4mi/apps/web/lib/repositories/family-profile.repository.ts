@@ -31,25 +31,29 @@ export class FamilyProfileRepository {
    * Create a new family measurement profile
    */
   async create(profileData: Omit<FamilyMeasurementProfile, 'id' | 'auditTrail'>): Promise<FamilyMeasurementProfile> {
-    const insertData: MeasurementProfileInsert = {
+    const insertData: any = {
       user_id: profileData.userId,
       profile_name: profileData.nickname,
       gender: profileData.gender.toLowerCase(),
-      relationship: profileData.relationship,
-      birth_date: profileData.birthDate?.toISOString().split('T')[0],
-      avatar_url: profileData.avatarUrl,
-      measurements: profileData.measurements as any,
-      voice_note_url: profileData.voiceNoteUrl,
       is_default: false,
-      is_active: profileData.isActive,
-      privacy_settings: profileData.privacySettings as any,
-      growth_tracking: profileData.growthTracking as any,
-      family_account_id: profileData.familyAccountId,
-      created_by: profileData.createdBy,
-      shared_with: profileData.sharedWith,
-      notes: '',
-      measurement_unit: 'cm'
+      measurement_unit: 'inches',
+      measurements: profileData.measurements
     };
+
+    // Add family-specific fields (from migration)
+    if (profileData.relationship) insertData.relationship = profileData.relationship;
+    if (profileData.birthDate) {
+      const date = profileData.birthDate instanceof Date ? profileData.birthDate : new Date(profileData.birthDate);
+      insertData.birth_date = date.toISOString().split('T')[0];
+    }
+    if (profileData.avatarUrl) insertData.avatar_url = profileData.avatarUrl;
+    if (profileData.voiceNoteUrl) insertData.voice_note_url = profileData.voiceNoteUrl;
+    if (!profileData.isActive) insertData.is_archived = true;
+    if (profileData.privacySettings) insertData.privacy_settings = profileData.privacySettings;
+    if (profileData.growthTracking) insertData.growth_tracking = profileData.growthTracking;
+    if (profileData.familyAccountId) insertData.family_account_id = profileData.familyAccountId;
+    if (profileData.createdBy) insertData.created_by = profileData.createdBy;
+    if (profileData.sharedWith && profileData.sharedWith.length > 0) insertData.shared_with = profileData.sharedWith;
 
     const { data, error } = await this.supabase
       .from('measurement_profiles')
@@ -75,7 +79,7 @@ export class FamilyProfileRepository {
 
     // Apply filters
     if (!filters.includeInactive) {
-      query = query.eq('is_active', true);
+      query = query.eq('is_archived', false);
     }
 
     if (filters.relationship) {
@@ -125,7 +129,7 @@ export class FamilyProfileRepository {
       .select('*')
       .eq('user_id', userId)
       .eq('profile_name', nickname)
-      .eq('is_active', true)
+      .eq('is_archived', false)
       .single();
 
     if (error) {
@@ -148,11 +152,14 @@ export class FamilyProfileRepository {
     if (updates.nickname) updateData.profile_name = updates.nickname;
     if (updates.gender) updateData.gender = updates.gender.toLowerCase();
     if (updates.relationship) updateData.relationship = updates.relationship;
-    if (updates.birthDate) updateData.birth_date = updates.birthDate.toISOString().split('T')[0];
+    if (updates.birthDate) {
+      const date = updates.birthDate instanceof Date ? updates.birthDate : new Date(updates.birthDate);
+      updateData.birth_date = date.toISOString().split('T')[0];
+    }
     if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl;
     if (updates.measurements) updateData.measurements = updates.measurements as any;
     if (updates.voiceNoteUrl !== undefined) updateData.voice_note_url = updates.voiceNoteUrl;
-    if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
+    if (updates.isActive !== undefined) updateData.is_archived = !updates.isActive;
     if (updates.privacySettings) updateData.privacy_settings = updates.privacySettings as any;
     if (updates.growthTracking) updateData.growth_tracking = updates.growthTracking as any;
     if (updates.familyAccountId !== undefined) updateData.family_account_id = updates.familyAccountId;
@@ -178,8 +185,7 @@ export class FamilyProfileRepository {
   async archive(profileId: string): Promise<void> {
     const { error } = await this.supabase
       .from('measurement_profiles')
-      .update({ 
-        is_active: false,
+      .update({
         is_archived: true,
         archived_at: new Date().toISOString()
       })
@@ -198,7 +204,7 @@ export class FamilyProfileRepository {
       .from('measurement_profiles')
       .select('*')
       .contains('shared_with', [userId])
-      .eq('is_active', true);
+      .eq('is_archived', false);
 
     if (error) {
       throw new Error(`Failed to fetch shared family profiles: ${error.message}`);
@@ -271,7 +277,7 @@ export class FamilyProfileRepository {
       .from('measurement_profiles')
       .select('*')
       .eq('relationship', relationship)
-      .eq('is_active', true)
+      .eq('is_archived', false)
       .limit(limit);
 
     if (error) {
@@ -289,7 +295,7 @@ export class FamilyProfileRepository {
       .from('measurement_profiles')
       .select('relationship')
       .eq('user_id', userId)
-      .eq('is_active', true);
+      .eq('is_archived', false);
 
     if (error) {
       throw new Error(`Failed to get profile count: ${error.message}`);
@@ -332,7 +338,7 @@ export class FamilyProfileRepository {
       measurements: (row.measurements as Record<string, number>) || {},
       voiceNoteUrl: row.voice_note_url || undefined,
       lastUpdated: new Date(row.updated_at),
-      isActive: row.is_active,
+      isActive: !row.is_archived,
       privacySettings: (row.privacy_settings as any) || {
         visibility: ProfileVisibility.FAMILY_ONLY,
         shareWithFamily: true,

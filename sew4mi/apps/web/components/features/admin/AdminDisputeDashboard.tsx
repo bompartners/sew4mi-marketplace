@@ -373,12 +373,12 @@ export function AdminDisputeDashboard({
           
           {/* Status Filter */}
           <div className="w-48">
-            <Select onValueChange={(value) => handleFilterChange('status', value ? [value] : [])}>
+            <Select onValueChange={(value) => handleFilterChange('status', value === 'ALL' ? [] : [value])}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="ALL">All Statuses</SelectItem>
                 {Object.values(DisputeStatus).map(status => (
                   <SelectItem key={status} value={status}>
                     {getDisputeStatusConfig(status).label}
@@ -387,15 +387,15 @@ export function AdminDisputeDashboard({
               </SelectContent>
             </Select>
           </div>
-          
+
           {/* Priority Filter */}
           <div className="w-48">
-            <Select onValueChange={(value) => handleFilterChange('priority', value ? [value] : [])}>
+            <Select onValueChange={(value) => handleFilterChange('priority', value === 'ALL' ? [] : [value])}>
               <SelectTrigger>
                 <SelectValue placeholder="Filter by priority" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Priorities</SelectItem>
+                <SelectItem value="ALL">All Priorities</SelectItem>
                 {Object.values(DisputePriority).map(priority => (
                   <SelectItem key={priority} value={priority}>
                     {getDisputePriorityConfig(priority).label}

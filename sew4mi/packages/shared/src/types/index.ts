@@ -8,6 +8,9 @@ export * from './tailor'
 export * from './order-creation'
 export * from './family-profiles'
 export * from './group-order'
+export * from './loyalty'
+export * from './favorites'
+export * from './reorder'
 // Search types are exported separately to avoid conflicts
 export type {
   TailorSearchResult,

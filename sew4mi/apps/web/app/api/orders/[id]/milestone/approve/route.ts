@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { 
   EscrowMilestoneApproveSchema,
   EscrowApprovalResponseSchema 
@@ -16,7 +15,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createClient();
     const orderId = (await params).id;
     
     // Check authentication

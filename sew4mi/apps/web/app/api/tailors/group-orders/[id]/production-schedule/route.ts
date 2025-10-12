@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { ProductionScheduleService } from '@/lib/services/production-schedule.service';
 import { ProductionScheduleItem } from '@sew4mi/shared/types/group-order';
@@ -16,12 +16,12 @@ import { ProductionScheduleItem } from '@sew4mi/shared/types/group-order';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const groupOrderId = params.id;
+    const { id: groupOrderId } = await params;
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -51,13 +51,13 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const groupOrderId = params.id;
+    const { id: groupOrderId } = await params;
     const body: { items: ProductionScheduleItem[]; eventDate: string } = await request.json();
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

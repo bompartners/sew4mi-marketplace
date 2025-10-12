@@ -1,15 +1,31 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { CustomerDashboard } from '@/components/features/dashboards/CustomerDashboard';
 import { TailorDashboard } from '@/components/features/dashboards/TailorDashboard';
 import { AdminDashboard } from '@/components/features/dashboards/AdminDashboard';
 import { USER_ROLES } from '@sew4mi/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const { user, userRole, isLoading } = useAuth();
+  const router = useRouter();
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Dashboard - Auth State:', { user: !!user, userRole, isLoading });
+  }, [user, userRole, isLoading]);
+
+  // Redirect to login if not authenticated after loading completes
+  useEffect(() => {
+    if (!isLoading && !user) {
+      console.log('No user found, redirecting to login...');
+      router.push('/login');
+    }
+  }, [isLoading, user, router]);
 
   if (isLoading) {
     return (

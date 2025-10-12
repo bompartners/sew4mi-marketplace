@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase';
 import { z } from 'zod';
 import { 
   OrderMessage,
@@ -19,7 +18,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { id } = await params;
 
     // Verify authentication
@@ -135,7 +134,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { id } = await params;
 
     // Verify authentication

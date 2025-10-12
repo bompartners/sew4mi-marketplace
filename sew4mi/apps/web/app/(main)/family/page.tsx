@@ -1,88 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useFamilyProfiles } from '@/hooks/useFamilyProfiles';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, User, Calendar, Ruler, Edit, Plus, Gift, TrendingUp } from 'lucide-react';
+import { Users, Calendar, Ruler, Edit, Plus, TrendingUp, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-
-// Mock family profiles data
-const mockFamilyProfiles = [
-  {
-    id: '1',
-    name: 'Kwame Asante',
-    relationship: 'Son',
-    age: 12,
-    dateOfBirth: '2012-03-15',
-    measurements: {
-      chest: 28,
-      waist: 26,
-      height: 58
-    },
-    lastMeasured: '2024-08-10',
-    recentOrders: 2,
-    growthTracking: [
-      { date: '2024-01-15', height: 55, weight: 85 },
-      { date: '2024-04-15', height: 56, weight: 88 },
-      { date: '2024-08-10', height: 58, weight: 92 }
-    ],
-    preferences: ['Traditional wear', 'School uniforms'],
-    avatar: 'K'
-  },
-  {
-    id: '2',
-    name: 'Ama Asante',
-    relationship: 'Daughter', 
-    age: 8,
-    dateOfBirth: '2016-07-22',
-    measurements: {
-      chest: 24,
-      waist: 22,
-      height: 48
-    },
-    lastMeasured: '2024-08-12',
-    recentOrders: 1,
-    growthTracking: [
-      { date: '2024-01-15', height: 45, weight: 55 },
-      { date: '2024-04-15', height: 46, weight: 58 },
-      { date: '2024-08-12', height: 48, weight: 62 }
-    ],
-    preferences: ['Dresses', 'Traditional wear'],
-    avatar: 'A'
-  },
-  {
-    id: '3',
-    name: 'Akosua Asante',
-    relationship: 'Wife',
-    age: 35,
-    dateOfBirth: '1989-11-08',
-    measurements: {
-      chest: 36,
-      waist: 30,
-      height: 64
-    },
-    lastMeasured: '2024-08-05',
-    recentOrders: 3,
-    growthTracking: [],
-    preferences: ['Contemporary designs', 'Business wear', 'Traditional wear'],
-    avatar: 'A'
-  }
-];
+import { RelationshipType } from '@sew4mi/shared/types/family-profiles';
 
 const relationshipColors = {
-  'Son': 'bg-blue-100 text-blue-800',
-  'Daughter': 'bg-pink-100 text-pink-800', 
-  'Wife': 'bg-purple-100 text-purple-800',
-  'Husband': 'bg-green-100 text-green-800',
-  'Mother': 'bg-orange-100 text-orange-800',
-  'Father': 'bg-gray-100 text-gray-800'
+  [RelationshipType.SELF]: 'bg-blue-100 text-blue-800',
+  [RelationshipType.CHILD]: 'bg-pink-100 text-pink-800',
+  [RelationshipType.SPOUSE]: 'bg-purple-100 text-purple-800',
+  [RelationshipType.PARENT]: 'bg-orange-100 text-orange-800',
+  [RelationshipType.SIBLING]: 'bg-green-100 text-green-800',
+  [RelationshipType.OTHER]: 'bg-gray-100 text-gray-800'
+};
+
+const relationshipLabels = {
+  [RelationshipType.SELF]: 'Self',
+  [RelationshipType.CHILD]: 'Child',
+  [RelationshipType.SPOUSE]: 'Spouse',
+  [RelationshipType.PARENT]: 'Parent',
+  [RelationshipType.SIBLING]: 'Sibling',
+  [RelationshipType.OTHER]: 'Other'
 };
 
 export default function FamilyPage() {
   const { user } = useAuth();
-  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const {
+    familyProfiles,
+    isLoading,
+    error,
+    stats,
+  } = useFamilyProfiles();
 
   if (!user) {
     return (
@@ -96,29 +49,51 @@ export default function FamilyPage() {
     );
   }
 
-  const calculateAge = (dateOfBirth: string) => {
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <Loader2 className="h-12 w-12 animate-spin text-[#CE1126] mb-4" />
+            <p className="text-center text-gray-600">Loading family profiles...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md border-red-200">
+          <CardContent className="pt-6">
+            <p className="text-center text-red-600 mb-4">Error loading family profiles</p>
+            <p className="text-center text-sm text-gray-600">{error.message}</p>
+            <div className="mt-4 text-center">
+              <Button onClick={() => window.location.reload()} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const calculateAge = (birthDate?: Date) => {
+    if (!birthDate) return null;
     const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
       age--;
     }
-    
-    return age;
-  };
 
-  const getGrowthTrend = (growthData: any[]) => {
-    if (growthData.length < 2) return null;
-    
-    const recent = growthData[growthData.length - 1];
-    const previous = growthData[growthData.length - 2];
-    
-    const heightGrowth = recent.height - previous.height;
-    const weightGrowth = recent.weight - previous.weight;
-    
-    return { height: heightGrowth, weight: weightGrowth };
+    return age;
   };
 
   return (
@@ -148,29 +123,29 @@ export default function FamilyPage() {
                   <Users className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
-                  <p className="text-2xl font-bold text-gray-900">{mockFamilyProfiles.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
                   <p className="text-gray-600">Family Members</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
-                  <Gift className="w-6 h-6" />
+                  <Calendar className="w-6 h-6" />
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">
-                    {mockFamilyProfiles.reduce((sum, profile) => sum + profile.recentOrders, 0)}
+                    {stats.recentlyUpdated}
                   </p>
-                  <p className="text-gray-600">Total Orders</p>
+                  <p className="text-gray-600">Recently Updated</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -179,14 +154,14 @@ export default function FamilyPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">
-                    {mockFamilyProfiles.filter(p => p.age < 18).length}
+                    {stats.withGrowthTracking}
                   </p>
-                  <p className="text-gray-600">Growing Kids</p>
+                  <p className="text-gray-600">Growth Tracking</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -195,7 +170,7 @@ export default function FamilyPage() {
                 </div>
                 <div className="ml-4">
                   <p className="text-2xl font-bold text-gray-900">
-                    {mockFamilyProfiles.length}
+                    {stats.total}
                   </p>
                   <p className="text-gray-600">Active Profiles</p>
                 </div>
@@ -205,7 +180,7 @@ export default function FamilyPage() {
         </div>
 
         {/* Family Profiles Grid */}
-        {mockFamilyProfiles.length === 0 ? (
+        {familyProfiles.length === 0 ? (
           <Card>
             <CardContent className="py-12">
               <div className="text-center">
@@ -227,9 +202,10 @@ export default function FamilyPage() {
           </Card>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {mockFamilyProfiles.map((profile) => {
-              const growthTrend = getGrowthTrend(profile.growthTracking);
-              const relationshipColor = relationshipColors[profile.relationship as keyof typeof relationshipColors] || 'bg-gray-100 text-gray-800';
+            {familyProfiles.map((profile) => {
+              const age = profile.age || calculateAge(profile.birthDate);
+              const relationshipColor = relationshipColors[profile.relationship] || 'bg-gray-100 text-gray-800';
+              const relationshipLabel = relationshipLabels[profile.relationship] || profile.relationship;
               
               return (
                 <Card key={profile.id} className="hover:shadow-lg transition-shadow duration-200">
@@ -237,86 +213,77 @@ export default function FamilyPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 bg-[#CE1126] text-white rounded-full flex items-center justify-center text-lg font-bold">
-                          {profile.avatar}
+                          {profile.nickname.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <CardTitle className="text-lg">{profile.name}</CardTitle>
+                          <CardTitle className="text-lg">{profile.nickname}</CardTitle>
                           <div className="flex items-center space-x-2">
                             <Badge className={relationshipColor}>
-                              {profile.relationship}
+                              {relationshipLabel}
                             </Badge>
-                            <span className="text-sm text-gray-500">Age {profile.age}</span>
+                            {age && <span className="text-sm text-gray-500">Age {age}</span>}
                           </div>
                         </div>
                       </div>
-                      
-                      <Button variant="outline" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
+
+                      <Link href={`/family/${profile.id}/edit`}>
+                        <Button variant="outline" size="sm">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </Link>
                     </div>
                   </CardHeader>
-                  
+
                   <CardContent className="space-y-4">
                     {/* Key Measurements */}
                     <div>
                       <h4 className="text-sm font-medium text-gray-900 mb-2">Current Measurements</h4>
                       <div className="grid grid-cols-3 gap-2 text-center">
-                        <div className="bg-gray-50 rounded-lg p-2">
-                          <p className="text-xs text-gray-600">Chest</p>
-                          <p className="font-semibold">{profile.measurements.chest}"</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-2">
-                          <p className="text-xs text-gray-600">Waist</p>
-                          <p className="font-semibold">{profile.measurements.waist}"</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-2">
-                          <p className="text-xs text-gray-600">Height</p>
-                          <p className="font-semibold">{profile.measurements.height}"</p>
-                        </div>
+                        {profile.measurements.chest && (
+                          <div className="bg-gray-50 rounded-lg p-2">
+                            <p className="text-xs text-gray-600">Chest</p>
+                            <p className="font-semibold">{profile.measurements.chest}"</p>
+                          </div>
+                        )}
+                        {profile.measurements.waist && (
+                          <div className="bg-gray-50 rounded-lg p-2">
+                            <p className="text-xs text-gray-600">Waist</p>
+                            <p className="font-semibold">{profile.measurements.waist}"</p>
+                          </div>
+                        )}
+                        {profile.measurements.hips && (
+                          <div className="bg-gray-50 rounded-lg p-2">
+                            <p className="text-xs text-gray-600">Hips</p>
+                            <p className="font-semibold">{profile.measurements.hips}"</p>
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        Last measured: {new Date(profile.lastMeasured).toLocaleDateString()}
+                        Last measured: {new Date(profile.lastUpdated).toLocaleDateString()}
                       </p>
                     </div>
 
-                    {/* Growth Trend for Kids */}
-                    {profile.age < 18 && growthTrend && (
+                    {/* Growth Tracking for Kids */}
+                    {profile.growthTracking.isTrackingEnabled && (
                       <div>
                         <h4 className="text-sm font-medium text-gray-900 mb-2">Growth Tracking</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-green-50 rounded-lg p-2 text-center">
-                            <p className="text-xs text-green-600">Height Growth</p>
-                            <p className="font-semibold text-green-700">+{growthTrend.height}"</p>
-                          </div>
-                          <div className="bg-blue-50 rounded-lg p-2 text-center">
-                            <p className="text-xs text-blue-600">Weight Growth</p>
-                            <p className="font-semibold text-blue-700">+{growthTrend.weight} lbs</p>
-                          </div>
+                        <div className="bg-green-50 rounded-lg p-2 text-center">
+                          <p className="text-xs text-green-600">Tracking Enabled</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Frequency: {profile.growthTracking.reminderFrequency}
+                          </p>
                         </div>
                       </div>
                     )}
 
-                    {/* Preferences */}
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-2">Preferences</h4>
-                      <div className="flex flex-wrap gap-1">
-                        {profile.preferences.map((pref, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {pref}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Recent Orders */}
                     <div className="flex items-center justify-between pt-4 border-t">
-                      <div className="text-sm">
-                        <span className="text-gray-600">Recent Orders: </span>
-                        <span className="font-medium">{profile.recentOrders}</span>
+                      <div className="text-sm text-gray-600">
+                        Profile ID: {profile.id.slice(0, 8)}...
                       </div>
-                      
+
                       <div className="flex space-x-2">
-                        <Link href={`/orders/new?family=${profile.id}`}>
+                        <Link href={`/orders/new?profileId=${profile.id}`}>
                           <Button size="sm" className="bg-[#CE1126] hover:bg-[#CE1126]/90 text-xs px-3">
                             New Order
                           </Button>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,8 +16,7 @@ import {
   Loader2,
   Plus,
   CheckSquare,
-  Square,
-  Crop
+  Square
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -35,7 +34,7 @@ interface PortfolioItem {
 const ITEMS_PER_PAGE = 9;
 
 export default function PortfolioPage() {
-  const { user } = useAuth();
+  const { user, userRole, isLoading: authLoading } = useAuth();
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,32 +42,84 @@ export default function PortfolioPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [cropImage, setCropImage] = useState<string | null>(null);
-  const [pendingCroppedImages, setPendingCroppedImages] = useState<Blob[]>([]);
+  const [, setPendingCroppedImages] = useState<Blob[]>([]);
 
   useEffect(() => {
-    if (user) {
-      fetchPortfolio();
+    console.log('Portfolio - Auth state:', { user: !!user, userRole, authLoading });
+
+    // Wait for auth to finish loading
+    if (authLoading) {
+      console.log('Waiting for auth to finish loading...');
+      return;
     }
-  }, [user]);
+
+    if (user) {
+      console.log('User authenticated, fetching portfolio...');
+      fetchPortfolio();
+    } else {
+      console.log('No user found, stopping load');
+      setLoading(false);
+      setError('Please log in to view your portfolio.');
+    }
+  }, [user, authLoading]);
 
   const fetchPortfolio = async () => {
     try {
+      console.log('Fetching portfolio from API...');
       setLoading(true);
-      const response = await fetch('/api/tailors/portfolio');
+
+      // Get auth service to get current session
+      const { authService } = await import('@/services/auth.service');
+      const session = await authService.getSession();
+
+      console.log('Session check:', { hasSession: !!session, userId: session?.user?.id });
+
+      if (!session?.access_token) {
+        console.error('No session found');
+        setError('No active session. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching with auth token...');
+
+      const response = await fetch('/api/tailors/portfolio', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+      console.log('Portfolio API response:', response.status, response.statusText);
 
       if (!response.ok) {
-        throw new Error('Failed to fetch portfolio');
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Portfolio API error:', response.status, errorData);
+
+        // Show specific error messages
+        if (response.status === 401) {
+          setError('Please log in to view your portfolio.');
+        } else if (response.status === 403) {
+          setError('Access denied. You must be a tailor to view this page.');
+        } else if (response.status === 404) {
+          setError('Tailor profile not found. Please complete your profile setup.');
+        } else {
+          setError(errorData.error || 'Failed to load portfolio. Please try again.');
+        }
+        setPortfolioItems([]);
+        setLoading(false);
+        return;
       }
 
       const data = await response.json();
+      console.log('Portfolio data received:', data);
       setPortfolioItems(data.items || []);
       setError(null);
     } catch (err) {
-      console.warn('Error fetching portfolio:', err instanceof Error ? err.message : 'Unknown error');
-      setError('Failed to load portfolio. Please try again.');
+      console.error('Error fetching portfolio:', err);
+      setError('Failed to load portfolio. Please check your connection and try again.');
       setPortfolioItems([]);
     } finally {
       setLoading(false);
+      console.log('Portfolio fetch complete');
     }
   };
 

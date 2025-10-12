@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
+    const supabase = await createClient()
+
     // Get session (optional for error logging)
     const { data: { session } } = await supabase.auth.getSession()
 
     // Parse error data
-    const errorData = await _request.json()
+    const errorData = await request.json()
 
     // Validate required fields
     if (!errorData.message || !errorData.type || !errorData.level) {
@@ -25,11 +24,11 @@ export async function POST(_request: NextRequest) {
       ...errorData,
       userId: session?.user?.id || null,
       serverTimestamp: new Date().toISOString(),
-      ip: _request.headers.get('x-forwarded-for') || _request.headers.get('x-real-ip') || 'unknown',
+      ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
       headers: {
-        userAgent: _request.headers.get('user-agent'),
-        referer: _request.headers.get('referer'),
-        origin: _request.headers.get('origin')
+        userAgent: request.headers.get('user-agent'),
+        referer: request.headers.get('referer'),
+        origin: request.headers.get('origin')
       }
     }
 
@@ -108,9 +107,9 @@ export async function POST(_request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
+    const supabase = await createClient()
     
     // Check if user is admin (optional - for error dashboard)
     const { data: { session } } = await supabase.auth.getSession()

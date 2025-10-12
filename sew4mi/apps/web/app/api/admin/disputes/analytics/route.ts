@@ -5,8 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 /**
@@ -116,7 +115,7 @@ export async function GET(_request: NextRequest) {
 
     const { startDate, endDate, includePatterns, includeTrends, includePerformance } = queryParams.data;
 
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get current user and verify admin role
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -127,14 +126,28 @@ export async function GET(_request: NextRequest) {
       );
     }
 
-    // Verify admin role
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    // Verify admin role from user metadata or database
+    let userRole = user.user_metadata?.role || user.app_metadata?.role;
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    // If not in metadata, fetch from database
+    if (!userRole) {
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        return NextResponse.json(
+          { error: 'Unable to verify user permissions' },
+          { status: 403 }
+        );
+      }
+      userRole = userData.role;
+    }
+
+    // Check if user has admin role
+    if (userRole?.toLowerCase() !== 'admin') {
       return NextResponse.json(
         { error: 'Admin access required' },
         { status: 403 }

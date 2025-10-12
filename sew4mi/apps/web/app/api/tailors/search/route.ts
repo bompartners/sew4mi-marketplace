@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TailorSearchFiltersSchema } from '@sew4mi/shared';
 import { TailorSearchService } from '@/lib/services/tailor-search.service';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase';
 import { z } from 'zod';
 
 const searchService = new TailorSearchService();
@@ -128,7 +128,7 @@ export async function GET(_request: NextRequest) {
 }
 
 // Handle CORS preflight
-export async function OPTIONS(_request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

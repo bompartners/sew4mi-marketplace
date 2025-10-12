@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { EnhancedGroupOrder } from '@sew4mi/shared/types/group-order';
 
@@ -15,7 +15,7 @@ import { EnhancedGroupOrder } from '@sew4mi/shared/types/group-order';
 export async function GET(request: NextRequest) {
   try {
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

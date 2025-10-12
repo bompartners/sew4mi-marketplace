@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { tailorApplicationSchema } from '@sew4mi/shared';
 
@@ -8,13 +7,13 @@ const submissionSchema = tailorApplicationSchema.extend({
   userId: z.string().uuid('Invalid user ID')
 });
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
+    const supabase = await createClient();
+
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -22,7 +21,7 @@ export async function POST(_request: NextRequest) {
       );
     }
 
-    const body = await _request.json();
+    const body = await request.json();
     
     // Validate the submission
     const validationResult = submissionSchema.safeParse(body);
@@ -168,9 +167,9 @@ export async function POST(_request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

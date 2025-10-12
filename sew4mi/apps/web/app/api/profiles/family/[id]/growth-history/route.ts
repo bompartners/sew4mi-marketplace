@@ -1,36 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { familyProfileService } from '@/lib/services/family-profile.service';
+import { createClient } from '@/lib/supabase';
+import { FamilyProfileService } from '@/lib/services/family-profile.service';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
+    const supabase = await createClient();
+
     // Get authenticated user
     const {
-      data: { session },
+      data: { user },
       error: authError,
-    } = await supabase.auth.getSession();
+    } = await supabase.auth.getUser();
 
-    if (authError || !session) {
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const profileId = params.id;
+    const { id: profileId } = await params;
     const url = new URL(request.url);
     const timeRange = url.searchParams.get('range') || '1y'; // 3m, 6m, 1y, all
     const measurement = url.searchParams.get('measurement'); // specific measurement to focus on
 
     // Verify profile ownership
-    const profile = await familyProfileService.getProfile(profileId, session.user.id);
+    const familyProfileService = new FamilyProfileService(supabase);
+    const profile = await familyProfileService.getFamilyProfile(user.id, profileId);
     
     if (!profile) {
       return NextResponse.json(

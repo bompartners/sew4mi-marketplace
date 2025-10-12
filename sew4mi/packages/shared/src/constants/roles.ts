@@ -61,6 +61,7 @@ export const PERMISSIONS = {
   SUSPEND_USERS: 'suspend_users',
   DELETE_USERS: 'delete_users',
   VIEW_ALL_ORDERS: 'view_all_orders',
+  MANAGE_ORDERS: 'manage_orders',
   MANAGE_DISPUTES: 'manage_disputes',
   VIEW_ANALYTICS: 'view_analytics',
   MANAGE_PLATFORM_SETTINGS: 'manage_platform_settings',

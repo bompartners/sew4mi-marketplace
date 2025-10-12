@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { TaxInvoiceService } from '@/lib/services/tax-invoice.service';
 import { CommissionService } from '@/lib/services/commission.service';
 import { z } from 'zod';
@@ -19,7 +18,7 @@ export async function POST(
   { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

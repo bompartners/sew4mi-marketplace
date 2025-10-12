@@ -1,23 +1,22 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { RoleBasedNavigation } from '@/components/common/Navigation/RoleBasedNavigation';
+import { LoyaltyPointsBadge } from '@/components/features/loyalty/LoyaltyPointsBadge';
 import { Loader2, Menu, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, userRole, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
 
   // Show loading state while checking auth
   if (isLoading) {
@@ -63,7 +62,8 @@ export default function MainLayout({
             </div>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center space-x-4">
+              <LoyaltyPointsBadge />
               <RoleBasedNavigation />
             </nav>
 

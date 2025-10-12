@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase';
 import { z } from 'zod';
 import { ReminderFrequency } from '@sew4mi/shared/types/family-profiles';
-import { familyProfileService } from '@/lib/services/family-profile.service';
+import { FamilyProfileService } from '@/lib/services/family-profile.service';
 import { notificationService } from '@/lib/services/notification.service';
 
 const ScheduleReminderSchema = z.object({
@@ -18,33 +17,33 @@ type ScheduleReminderRequest = z.infer<typeof ScheduleReminderSchema>;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
+    const supabase = await createClient();
+
     // Get authenticated user
     const {
-      data: { session },
+      data: { user },
       error: authError,
-    } = await supabase.auth.getSession();
+    } = await supabase.auth.getUser();
 
-    if (authError || !session) {
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const profileId = params.id;
-    
+    const { id: profileId } = await params;
+
     // Parse and validate request body
     const body = await request.json();
     const validatedData = ScheduleReminderSchema.parse(body);
 
     // Verify profile ownership
-    const profile = await familyProfileService.getProfile(profileId, session.user.id);
+    const familyProfileService = new FamilyProfileService(supabase);
+    const profile = await familyProfileService.getFamilyProfile(user.id, profileId);
     
     if (!profile) {
       return NextResponse.json(
@@ -85,7 +84,7 @@ export async function POST(
     const nextReminderDate = calculateNextReminderDate(validatedData.frequency, validatedData.advanceNotice);
 
     // Update profile with reminder settings
-    const updatedProfile = await familyProfileService.updateProfile(profileId, session.user.id, {
+    const updatedProfile = await familyProfileService.updateFamilyProfile(user.id, profileId, {
       growthTracking: {
         ...profile.growthTracking,
         isTrackingEnabled: validatedData.frequency !== ReminderFrequency.NEVER,
@@ -104,7 +103,7 @@ export async function POST(
         id: `family-profile-${profileId}-${validatedData.reminderType}`,
         profileId: profileId,
         profileName: profile.nickname,
-        userId: session.user.id,
+        userId: user.id,
         type: validatedData.reminderType,
         scheduledDate: nextReminderDate,
         frequency: validatedData.frequency,
@@ -151,28 +150,28 @@ export async function POST(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
-    
-    const {
-      data: { session },
-      error: authError,
-    } = await supabase.auth.getSession();
+    const supabase = await createClient();
 
-    if (authError || !session) {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       );
     }
 
-    const profileId = params.id;
-    
+    const { id: profileId } = await params;
+
     // Verify profile ownership
-    const profile = await familyProfileService.getProfile(profileId, session.user.id);
+    const familyProfileService = new FamilyProfileService(supabase);
+    const profile = await familyProfileService.getFamilyProfile(user.id, profileId);
     
     if (!profile) {
       return NextResponse.json(
@@ -182,7 +181,7 @@ export async function DELETE(
     }
 
     // Update profile to disable reminders
-    await familyProfileService.updateProfile(profileId, session.user.id, {
+    await familyProfileService.updateFamilyProfile(user.id, profileId, {
       growthTracking: {
         ...profile.growthTracking,
         isTrackingEnabled: false,

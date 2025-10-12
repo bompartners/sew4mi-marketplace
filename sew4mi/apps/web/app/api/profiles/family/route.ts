@@ -4,20 +4,18 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { familyProfileService } from '@/lib/services/family-profile.service';
-import { 
+import { createClient } from '@/lib/supabase';
+import { FamilyProfileService } from '@/lib/services/family-profile.service';
+import {
   CreateFamilyProfileRequest,
   FamilyProfilesListRequest,
-  RelationshipType 
+  RelationshipType
 } from '@sew4mi/shared/types/family-profiles';
-import { Database } from '@sew4mi/shared/types/database';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
-    
+    const supabase = await createClient();
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -38,6 +36,7 @@ export async function GET(request: NextRequest) {
       sortOrder: sortOrder || undefined
     };
 
+    const familyProfileService = new FamilyProfileService(supabase);
     const result = await familyProfileService.getFamilyProfiles(user.id, filters);
 
     return NextResponse.json({
@@ -47,23 +46,27 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching family profiles:', error);
-    
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
     if (error instanceof Error) {
-      return NextResponse.json({ 
-        error: error.message 
+      return NextResponse.json({
+        error: error.message,
+        details: error.stack,
+        type: error.constructor.name
       }, { status: 500 });
     }
 
-    return NextResponse.json({ 
-      error: 'Failed to fetch family profiles' 
+    return NextResponse.json({
+      error: 'Failed to fetch family profiles',
+      details: String(error)
     }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
-    
+    const supabase = await createClient();
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -75,18 +78,19 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!profileData.nickname || !profileData.relationship || !profileData.gender) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: nickname, relationship, gender' 
+      return NextResponse.json({
+        error: 'Missing required fields: nickname, relationship, gender'
       }, { status: 400 });
     }
 
     if (!profileData.measurements || Object.keys(profileData.measurements).length === 0) {
-      return NextResponse.json({ 
-        error: 'At least one measurement is required' 
+      return NextResponse.json({
+        error: 'At least one measurement is required'
       }, { status: 400 });
     }
 
     // Create the family profile
+    const familyProfileService = new FamilyProfileService(supabase);
     const result = await familyProfileService.createFamilyProfile(user.id, profileData);
 
     if (!result.success) {

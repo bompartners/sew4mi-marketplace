@@ -1,6 +1,10 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@sew4mi/shared/types/database'
-import { DatabaseError, mapSupabaseError } from './errors'
+import { DatabaseError } from './errors'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+// Singleton instance for browser (client-side only)
+let browserClient: SupabaseClient<Database> | null = null
 
 export function createClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -15,68 +19,35 @@ export function createClient() {
     )
   }
 
+  // Return existing client if in browser and already initialized
+  if (typeof window !== 'undefined' && browserClient) {
+    return browserClient
+  }
+
   try {
-    const client = createSupabaseClient<Database>(
+    // Use createBrowserClient from @supabase/ssr for cookie-based sessions
+    // This ensures client and middleware share the same session storage (cookies)
+    const client = createBrowserClient<Database>(
       supabaseUrl,
-      supabaseAnonKey,
-      {
-        auth: {
-          autoRefreshToken: true,
-          persistSession: true,
-          detectSessionInUrl: true
-        },
-        global: {
-          headers: {
-            'x-application-name': 'sew4mi-web',
-          },
-          fetch: async (url, options = {}) => {
-            const controller = new AbortController()
-            const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
-
-            try {
-              const response = await fetch(url, {
-                ...options,
-                signal: controller.signal,
-              })
-
-              clearTimeout(timeoutId)
-
-              if (!response.ok) {
-                throw new DatabaseError(
-                  `HTTP ${response.status}: ${response.statusText}`,
-                  'SERVER_ERROR' as any,
-                  undefined,
-                  response.status >= 500,
-                  response.status
-                )
-              }
-
-              return response
-            } catch (error: any) {
-              clearTimeout(timeoutId)
-              
-              if (error.name === 'AbortError') {
-                throw new DatabaseError(
-                  'Request timeout after 30 seconds',
-                  'TIMEOUT' as any,
-                  error,
-                  true
-                )
-              }
-              
-              if (error instanceof DatabaseError) {
-                throw error
-              }
-              
-              throw mapSupabaseError(error)
-            }
-          }
-        }
-      }
+      supabaseAnonKey
     )
+
+    // Cache the client for browser only (not for server-side)
+    if (typeof window !== 'undefined') {
+      browserClient = client
+    }
 
     return client
   } catch (error) {
-    throw mapSupabaseError(error)
+    throw new DatabaseError(
+      error instanceof Error ? error.message : 'Failed to create Supabase client',
+      'CONNECTION_FAILED' as any,
+      error,
+      false
+    )
   }
 }
+
+// Backwards compatibility aliases
+export { createClient as createClientSupabaseClient };
+export { createClient as createClientComponentClient };

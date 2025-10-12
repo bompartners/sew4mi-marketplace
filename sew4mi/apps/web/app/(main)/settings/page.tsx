@@ -8,13 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Settings as SettingsIcon,
+import {
   Shield,
   Bell,
   Eye,
   EyeOff,
-  Trash2,
   Download,
   Lock,
   Globe,
@@ -28,7 +26,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function SettingsPage() {
-  const { user, userRole, signOut } = useAuth();
+  const { user } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

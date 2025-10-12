@@ -4,33 +4,32 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { familyProfileService } from '@/lib/services/family-profile.service';
+import { createClient } from '@/lib/supabase';
+import { FamilyProfileService } from '@/lib/services/family-profile.service';
 import { UpdateFamilyProfileRequest } from '@sew4mi/shared/types/family-profiles';
-import { Database } from '@sew4mi/shared/types/database';
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
-    
+    const supabase = await createClient();
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profileId = params.id;
+    const { id: profileId } = await params;
     if (!profileId) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 });
     }
 
+    const familyProfileService = new FamilyProfileService(supabase);
     const profile = await familyProfileService.getFamilyProfile(user.id, profileId);
     
     if (!profile) {
@@ -55,17 +54,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(_request: NextRequest, { params }: RouteParams) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
-    
+    const supabase = await createClient();
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profileId = params.id;
+    const { id: profileId } = await params;
     if (!profileId) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 });
     }
@@ -80,6 +79,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update the profile
+    const familyProfileService = new FamilyProfileService(supabase);
     const updatedProfile = await familyProfileService.updateFamilyProfile(user.id, profileId, updates);
 
     return NextResponse.json({
@@ -104,22 +104,23 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const supabase = createRouteHandlerClient<Database>({ cookies });
-    
+    const supabase = await createClient();
+
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const profileId = params.id;
+    const { id: profileId } = await params;
     if (!profileId) {
       return NextResponse.json({ error: 'Profile ID is required' }, { status: 400 });
     }
 
     // Delete (archive) the profile
+    const familyProfileService = new FamilyProfileService(supabase);
     await familyProfileService.deleteFamilyProfile(user.id, profileId);
 
     return NextResponse.json({

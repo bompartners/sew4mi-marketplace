@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 
 /**
@@ -13,13 +13,13 @@ import { createErrorResponse } from '@/lib/utils/api-error-handler';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const groupOrderId = params.id;
+    const { id: groupOrderId } = await params;
 
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase';
 import type { 
   TailorProfile, 
   TailorReview, 
@@ -14,7 +14,7 @@ export class TailorProfileRepository {
       .from('tailor_profiles')
       .select(`
         *,
-        users!inner(
+        users!tailor_profiles_user_id_fkey(
           id,
           full_name,
           phone_number,
@@ -25,7 +25,7 @@ export class TailorProfileRepository {
       .single();
 
     if (error || !data) return null;
-    
+
     return this.mapToTailorProfile(data);
   }
 
@@ -35,7 +35,7 @@ export class TailorProfileRepository {
       .from('tailor_profiles')
       .select(`
         *,
-        users!inner(
+        users!tailor_profiles_user_id_fkey(
           id,
           full_name,
           phone_number,
@@ -46,7 +46,7 @@ export class TailorProfileRepository {
       .single();
 
     if (error || !data) return null;
-    
+
     return this.mapToTailorProfile(data);
   }
 
@@ -56,7 +56,7 @@ export class TailorProfileRepository {
       .from('tailor_profiles')
       .select(`
         *,
-        users!inner(
+        users!tailor_profiles_user_id_fkey(
           id,
           full_name,
           phone_number,

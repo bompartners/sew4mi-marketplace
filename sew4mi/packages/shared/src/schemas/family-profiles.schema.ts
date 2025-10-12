@@ -109,7 +109,7 @@ export const UpdateFamilyProfileRequestSchema = z.object({
     nickname: z.string().min(1).max(50).optional(),
     relationship: z.nativeEnum(RelationshipType).optional(),
     gender: z.nativeEnum(Gender).optional(),
-    birthDate: z.date().optional(),
+    birthDate: z.union([z.date(), z.string().transform((str) => new Date(str))]).optional(),
     avatarUrl: z.string().url().optional(),
     measurements: MeasurementsSchema.optional(),
     voiceNoteUrl: z.string().url().optional(),

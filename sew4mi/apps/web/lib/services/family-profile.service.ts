@@ -28,15 +28,13 @@ import {
   getDefaultPrivacySettings
 } from '@sew4mi/shared/constants/relationships';
 import { FamilyProfileRepository } from '../repositories/family-profile.repository';
-import { createClient } from '../supabase/server';
 import { ApiError } from '../utils/errors';
 
 export class FamilyProfileService {
   private repository: FamilyProfileRepository;
 
-  constructor() {
-    const supabase = createClient();
-    this.repository = new FamilyProfileRepository(supabase);
+  constructor(supabaseClient: any) {
+    this.repository = new FamilyProfileRepository(supabaseClient);
   }
 
   /**
@@ -47,6 +45,8 @@ export class FamilyProfileService {
     profileData: CreateFamilyProfileRequest
   ): Promise<CreateFamilyProfileResponse> {
     try {
+      
+
       // Validate input data
       const validation = CreateFamilyProfileRequestSchema.safeParse(profileData);
       if (!validation.success) {
@@ -148,6 +148,7 @@ export class FamilyProfileService {
     filters?: FamilyProfilesListRequest
   ): Promise<FamilyProfilesListResponse> {
     try {
+      
       const profiles = await this.repository.findByUser(userId, {
         includeInactive: filters?.includeInactive,
         relationship: filters?.relationship,
@@ -162,6 +163,15 @@ export class FamilyProfileService {
 
     } catch (error) {
       console.error('Error fetching family profiles:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        name: error instanceof Error ? error.name : undefined
+      });
+      // Re-throw the original error with more context
+      if (error instanceof Error) {
+        throw new ApiError(`Failed to fetch family profiles: ${error.message}`, 500);
+      }
       throw new ApiError('Failed to fetch family profiles', 500);
     }
   }
@@ -175,6 +185,8 @@ export class FamilyProfileService {
     updates: UpdateFamilyProfileRequest['updates']
   ): Promise<FamilyMeasurementProfile> {
     try {
+      
+
       // Validate input
       const validation = UpdateFamilyProfileRequestSchema.safeParse({
         profileId,
@@ -182,7 +194,12 @@ export class FamilyProfileService {
       });
 
       if (!validation.success) {
-        throw new ApiError('Invalid update data', 400);
+        const errorMessages = validation.error.issues.map(issue =>
+          `${issue.path.join('.')}: ${issue.message}`
+        ).join(', ');
+        console.error('Validation failed:', errorMessages);
+        console.error('Validation errors:', JSON.stringify(validation.error.issues, null, 2));
+        throw new ApiError(`Invalid update data: ${errorMessages}`, 400);
       }
 
       // Check if profile exists and user has permission
@@ -261,6 +278,7 @@ export class FamilyProfileService {
    */
   async deleteFamilyProfile(userId: string, profileId: string): Promise<void> {
     try {
+      
       const profile = await this.repository.findById(profileId);
       if (!profile) {
         throw new ApiError('Profile not found', 404);
@@ -288,6 +306,7 @@ export class FamilyProfileService {
    */
   async getFamilyProfile(userId: string, profileId: string): Promise<FamilyMeasurementProfile | null> {
     try {
+      
       const profile = await this.repository.findById(profileId);
       
       if (!profile) {
@@ -374,6 +393,7 @@ export class FamilyProfileService {
     profileData: Partial<FamilyMeasurementProfile>,
     excludeProfileId?: string
   ): Promise<FamilyProfileConflict[]> {
+    
     const conflicts: FamilyProfileConflict[] = [];
 
     // Check for duplicate nicknames
@@ -431,5 +451,3 @@ export class FamilyProfileService {
     }
   }
 }
-
-export const familyProfileService = new FamilyProfileService();

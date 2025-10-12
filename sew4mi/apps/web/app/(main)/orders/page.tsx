@@ -2,12 +2,14 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, Clock, CheckCircle, XCircle, Eye, Plus } from 'lucide-react';
 import Link from 'next/link';
+import { AddToFavoritesButton } from '@/components/features/favorites/AddToFavoritesButton';
+import { ReorderButton } from '@/components/features/reorder/ReorderButton';
 
 // Mock data for demonstration
 const mockOrders = [
@@ -74,7 +76,7 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function OrdersPage() {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('all');
 
   const filterOrders = (status: string) => {
@@ -233,16 +235,29 @@ export default function OrdersPage() {
                               </div>
                             </div>
 
-                            <div className="text-right">
+                            <div className="text-right flex flex-col items-end gap-2">
                               <p className="text-xl font-bold text-gray-900">
                                 GHS {order.price.toFixed(2)}
                               </p>
-                              <Link href={`/orders/${order.id}`}>
-                                <Button variant="outline" size="sm" className="mt-2">
-                                  <Eye className="w-4 h-4 mr-2" />
-                                  View Details
-                                </Button>
-                              </Link>
+                              <div className="flex gap-2">
+                                <Link href={`/orders/${order.id}`}>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="w-4 h-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                </Link>
+                                {order.status === 'completed' && (
+                                  <>
+                                    <ReorderButton orderId={order.id} size="sm" />
+                                    <AddToFavoritesButton
+                                      orderId={order.id}
+                                      orderName={order.title}
+                                      size="sm"
+                                      showText={false}
+                                    />
+                                  </>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </CardContent>

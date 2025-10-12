@@ -1,28 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase'
 import { UserRepository } from '@/lib/repositories/userRepository'
 import { profileUpdateSchema } from '@sew4mi/shared/schemas/auth.schema'
 import { emailService } from '@/lib/services/emailService'
 
-export async function PUT(_request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
+    const supabase = await createClient()
+
     // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession()
-    
-    if (authError || !session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Parse and validate request body
-    const body = await _request.json()
+    const body = await request.json()
     const validatedData = profileUpdateSchema.parse(body)
 
     // Update user profile
     const userRepository = new UserRepository(supabase)
-    const updatedUser = await userRepository.updateProfile(session.user.id, validatedData)
+    const updatedUser = await userRepository.updateProfile(user.id, validatedData)
 
     // Send welcome email if this is the first profile completion
     if (validatedData.full_name && updatedUser.email) {
@@ -60,20 +59,20 @@ export async function PUT(_request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies })
-    
+    const supabase = await createClient()
+
     // Check authentication
-    const { data: { session }, error: authError } = await supabase.auth.getSession()
-    
-    if (authError || !session) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Get user profile with completion status
     const userRepository = new UserRepository(supabase)
-    const userWithStatus = await userRepository.getUserWithProfileStatus(session.user.id)
+    const userWithStatus = await userRepository.getUserWithProfileStatus(user.id)
 
     if (!userWithStatus) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })

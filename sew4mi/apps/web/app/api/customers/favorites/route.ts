@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AddFavoriteSchema } from '@sew4mi/shared';
 import { FavoritesService } from '@/lib/services/favorites.service';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase';
 import { z } from 'zod';
 
 const favoritesService = new FavoritesService();
@@ -32,11 +31,11 @@ function checkRateLimit(identifier: string): boolean {
 /**
  * GET - Get user's favorites
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    const { searchParams } = new URL(_request.url);
-    
+    const supabase = await createClient();
+    const { searchParams } = new URL(request.url);
+
     // Get user info
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -103,10 +102,10 @@ export async function GET(_request: NextRequest) {
 /**
  * POST - Add tailor to favorites
  */
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
+    const supabase = await createClient();
+
     // Get user info
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -139,7 +138,7 @@ export async function POST(_request: NextRequest) {
     }
 
     // Parse and validate request body
-    const body = await _request.json();
+    const body = await request.json();
     const { tailorId } = AddFavoriteSchema.parse(body);
 
     // Add favorite
@@ -175,7 +174,7 @@ export async function POST(_request: NextRequest) {
 }
 
 // Handle CORS preflight
-export async function OPTIONS(_request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

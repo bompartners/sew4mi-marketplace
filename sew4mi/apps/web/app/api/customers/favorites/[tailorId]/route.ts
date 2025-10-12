@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { FavoritesService } from '@/lib/services/favorites.service';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase';
 
 const favoritesService = new FavoritesService();
 
@@ -39,9 +38,9 @@ export async function GET(
   { params }: { params: Promise<RouteParams> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { tailorId } = await params;
-    
+
     // Get user info
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -89,9 +88,9 @@ export async function DELETE(
   { params }: { params: Promise<RouteParams> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { tailorId } = await params;
-    
+
     // Get user info
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -161,9 +160,9 @@ export async function PUT(
   { params }: { params: Promise<RouteParams> }
 ) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { tailorId } = await params;
-    
+
     // Get user info
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -226,7 +225,7 @@ export async function PUT(
 }
 
 // Handle CORS preflight
-export async function OPTIONS(_request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

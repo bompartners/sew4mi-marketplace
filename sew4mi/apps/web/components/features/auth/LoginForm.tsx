@@ -15,8 +15,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { GhanaPhoneInput } from '@/components/ui/GhanaPhoneInput'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 import { createContextualError, getUserFriendlyMessage, GHANA_ERROR_MESSAGES } from '@sew4mi/shared/utils'
+import { USER_ROLES } from '@sew4mi/shared'
 // Import toast system when implemented
 // import { useAuthToast } from '@/components/ui/toast'
 // import { useNetworkStatus } from '@/lib/services/networkService.client'
@@ -69,6 +70,7 @@ export function LoginForm() {
   const loginType = watch('loginType')
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log('🔐 LoginForm - Submit started');
     setIsLoading(true)
     setError(null)
 
@@ -81,12 +83,20 @@ export function LoginForm() {
 
     try {
       const credential = data.loginType === 'email' ? data.email! : data.phone!
+      console.log('🔐 LoginForm - Calling signIn with credential:', credential);
       const result = await signIn(credential, data.password, data.rememberMe)
-      
+      console.log('🔐 LoginForm - SignIn result:', { success: result.success, error: result.error });
+
       if (result.success) {
+        console.log('✅ LoginForm - Sign in successful, received role:', result.userRole);
         // toast.success('Signed in successfully!', 'Welcome back to Sew4Mi')
-        router.push('/dashboard')
+
+        // Redirect based on user role returned from signIn
+        const redirectPath = result.userRole === USER_ROLES.ADMIN ? '/admin/dashboard' : '/dashboard';
+        console.log('🔀 LoginForm - Redirecting to:', redirectPath, 'for role:', result.userRole);
+        router.push(redirectPath);
       } else {
+        console.error('❌ LoginForm - Sign in failed:', result.error);
         const contextualError = createContextualError(
           result.error || 'Login failed. Please try again.',
           {

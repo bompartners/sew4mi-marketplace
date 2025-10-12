@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { EscrowRepository } from '../../../../../lib/repositories/escrow.repository';
 import { EscrowService } from '../../../../../lib/services/escrow.service';
 
@@ -11,7 +10,7 @@ import { EscrowService } from '../../../../../lib/services/escrow.service';
  */
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createClient();
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -120,7 +119,7 @@ export async function GET(_request: NextRequest) {
  */
 export async function POST(_request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createClient();
     
     // Check authentication and admin role
     const { data: { user }, error: authError } = await supabase.auth.getUser();

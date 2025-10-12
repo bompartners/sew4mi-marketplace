@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu,
@@ -19,7 +19,7 @@ import {
   hasPermission,
   PERMISSIONS 
 } from '@sew4mi/shared';
-import { 
+import {
   Home,
   Package,
   Users,
@@ -36,7 +36,9 @@ import {
   ShoppingBag,
   Search,
   Ruler,
-  UserPlus
+  UserPlus,
+  Heart,
+  Award
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -96,11 +98,21 @@ export function RoleBasedNavigation({
             icon: Ruler,
             permission: PERMISSIONS.CREATE_MEASUREMENTS
           },
-          { 
-            href: '/family', 
-            label: 'Family Profiles', 
+          {
+            href: '/family',
+            label: 'Family Profiles',
             icon: UserPlus,
             permission: PERMISSIONS.MANAGE_FAMILY_PROFILES
+          },
+          {
+            href: '/favorites',
+            label: 'Favorites',
+            icon: Heart
+          },
+          {
+            href: '/loyalty',
+            label: 'Loyalty Rewards',
+            icon: Award
           }
         ];
 
@@ -191,6 +203,8 @@ export function RoleBasedNavigation({
     try {
       await signOut();
       if (onNavigate) onNavigate();
+      // Redirect to landing/default page after sign out
+      window.location.href = '/';
     } catch (error) {
       console.error('Sign out failed:', error);
     }

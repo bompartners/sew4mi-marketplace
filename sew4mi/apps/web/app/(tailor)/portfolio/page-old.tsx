@@ -12,8 +12,7 @@ import {
   Eye,
   Image as ImageIcon,
   Loader2,
-  Plus,
-  X
+  Plus
 } from 'lucide-react';
 import Image from 'next/image';
 

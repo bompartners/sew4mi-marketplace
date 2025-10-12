@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:watch": "vitest watch",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:perf": "vitest run tests/performance --reporter=verbose"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -34,10 +35,10 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@sew4mi/shared": "workspace:*",
     "@sew4mi/ui": "workspace:*",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.54.0",
     "@tanstack/react-query": "^5.63.0",
+    "@tanstack/react-virtual": "^3.11.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "critters": "^0.0.25",

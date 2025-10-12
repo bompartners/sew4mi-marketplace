@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { 
-  USER_ROLES, 
-  hasPermission, 
-  PERMISSIONS, 
+import { createClient } from '@/lib/supabase/server';
+import {
+  USER_ROLES,
+  hasPermission,
+  PERMISSIONS,
   canManageUser,
-  adminRoleChangeSchema 
+  adminRoleChangeSchema
 } from '@sew4mi/shared';
 
-export async function POST(_request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    
+    const supabase = await createClient();
+
     // Get the current user (admin)
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -23,7 +22,7 @@ export async function POST(_request: NextRequest) {
       );
     }
 
-    const body = await _request.json();
+    const body = await request.json();
     
     // Validate request body
     const validationResult = adminRoleChangeSchema.safeParse(body);
@@ -149,7 +148,7 @@ export async function POST(_request: NextRequest) {
 
     // Create a notification for the user (optional)
     try {
-      await fetch(`${_request.nextUrl.origin}/api/notifications/role-change`, {
+      await fetch(`${request.nextUrl.origin}/api/notifications/role-change`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,9 +187,9 @@ export async function POST(_request: NextRequest) {
   }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

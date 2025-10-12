@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase/server';
 import { GarmentCategory } from '@sew4mi/shared/types';
 import { GARMENT_TYPES, GARMENT_CATEGORIES } from '@sew4mi/shared/constants';
 
@@ -11,14 +10,14 @@ import { GARMENT_TYPES, GARMENT_CATEGORIES } from '@sew4mi/shared/constants';
  * - category: Filter by garment category (optional)
  * - active: Filter by active status (default: true)
  */
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
 
     // Verify authentication (optional for public garment types)
     const { data: { user: _user } } = await supabase.auth.getUser(); // Not used in current implementation
     
-    const { searchParams } = new URL(_request.url);
+    const { searchParams } = new URL(request.url);
     const category = searchParams.get('category') as GarmentCategory | null;
     const activeOnly = searchParams.get('active') !== 'false'; // Default to true
 
@@ -74,9 +73,9 @@ export async function GET(_request: NextRequest) {
  * POST /api/orders/garment-types
  * Creates a new garment type (Admin only)
  */
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
 
     // Verify authentication and admin role
     const { data: { user }, error: authError } = await supabase.auth.getUser();

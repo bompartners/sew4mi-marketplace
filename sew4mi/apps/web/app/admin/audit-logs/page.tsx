@@ -73,11 +73,29 @@ export default function AuditLogsPage() {
   // Check if user has admin permissions
   const canViewAuditLogs = userRole && hasPermission(userRole, PERMISSIONS.VIEW_AUDIT_LOGS);
 
+  const fetchAuditLogs = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/admin/audit-logs');
+      if (!response.ok) {
+        throw new Error('Failed to fetch audit logs');
+      }
+      const data = await response.json();
+      setLogs(data.logs || []);
+      setError(null);
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      setError(error instanceof Error ? error.message : 'Failed to fetch audit logs');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (canViewAuditLogs) {
       fetchAuditLogs();
     }
-  }, [canViewAuditLogs]);
+  }, [canViewAuditLogs, fetchAuditLogs]);
 
   useEffect(() => {
     // Filter logs based on search and filters
@@ -108,7 +126,7 @@ export default function AuditLogsPage() {
     if (timeFilter !== 'all') {
       const now = new Date();
       let cutoffDate: Date;
-      
+
       switch (timeFilter) {
         case '1h':
           cutoffDate = new Date(now.getTime() - 60 * 60 * 1000);
@@ -125,29 +143,12 @@ export default function AuditLogsPage() {
         default:
           cutoffDate = new Date(0);
       }
-      
+
       filtered = filtered.filter(log => new Date(log.performed_at) >= cutoffDate);
     }
 
     setFilteredLogs(filtered);
   }, [logs, searchQuery, tableFilter, actionFilter, timeFilter]);
-
-  const fetchAuditLogs = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/admin/audit-logs');
-      if (!response.ok) {
-        throw new Error('Failed to fetch audit logs');
-      }
-      const data = await response.json();
-      setLogs(data.logs || []);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch audit logs');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const exportLogs = async () => {
     try {
@@ -187,7 +188,7 @@ export default function AuditLogsPage() {
 
   if (!canViewAuditLogs) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Alert variant="destructive">
           <Shield className="h-4 w-4" />
           <AlertDescription>
@@ -274,7 +275,7 @@ export default function AuditLogsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

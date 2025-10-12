@@ -2,23 +2,29 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCustomerDashboard } from '@/hooks/useDashboardData';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Package, 
-  Plus, 
-  Clock, 
-  CheckCircle, 
+import {
+  Package,
+  Plus,
+  Clock,
+  CheckCircle,
   Star,
   Search,
   Ruler,
   Users,
   TrendingUp,
   Calendar,
-  MapPin
+  MapPin,
+  AlertCircle,
+  Heart
 } from 'lucide-react';
+import { LoyaltyPointsBadge } from '@/components/features/loyalty/LoyaltyPointsBadge';
+import { StyleRecommendations } from '@/components/features/recommendations/StyleRecommendations';
+import { useRouter } from 'next/navigation';
 
 interface CustomerDashboardProps {
   className?: string;
@@ -26,62 +32,38 @@ interface CustomerDashboardProps {
 
 export function CustomerDashboard({ className }: CustomerDashboardProps) {
   const { user } = useAuth();
+  const { stats, recentOrders, recommendations, isLoading, isError } = useCustomerDashboard();
 
-  // Mock data - in real app, this would come from API
+  // Show error state
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Card className="w-96 border-red-200">
+          <CardContent className="flex items-center justify-center p-6 text-center">
+            <div>
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-gray-600 mb-4">Unable to load dashboard data</p>
+              <Button onClick={() => window.location.reload()}>Retry</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Use real API data, with fallback to empty states while loading
   const dashboardData = {
-    orders: {
-      total: 8,
-      pending: 2,
-      inProgress: 3,
-      completed: 3,
-      recent: [
-        {
-          id: 'ORD-20240818-001',
-          tailorName: 'Akosua\'s Fashion',
-          garmentType: 'Traditional Kente Dress',
-          status: 'In Progress',
-          orderDate: '2024-08-15',
-          estimatedDelivery: '2024-08-30',
-          amount: 250.00
-        },
-        {
-          id: 'ORD-20240815-002', 
-          tailorName: 'Kwame\'s Suits',
-          garmentType: 'Business Suit',
-          status: 'Completed',
-          orderDate: '2024-08-10',
-          completedDate: '2024-08-17',
-          amount: 350.00,
-          rating: 5
-        }
-      ]
+    orders: stats?.orders || {
+      total: 0,
+      pending: 0,
+      inProgress: 0,
+      completed: 0,
     },
-    favoriteDesigns: [
-      { id: 1, name: 'Elegant Kaftan', tailor: 'Ama\'s Designs', likes: 24 },
-      { id: 2, name: 'Modern Dashiki', tailor: 'Kofi\'s Creations', likes: 18 }
-    ],
-    measurements: {
-      profiles: 3,
-      lastUpdated: '2024-08-01'
+    measurements: stats?.measurements || {
+      profiles: 0,
     },
-    recommendations: [
-      {
-        id: 1,
-        tailorName: 'Adwoa\'s Atelier',
-        specialization: 'Wedding Dresses',
-        rating: 4.9,
-        distance: '2.5 km',
-        image: '/api/placeholder/100/100'
-      },
-      {
-        id: 2,
-        tailorName: 'Yaw\'s Traditional Wear',
-        specialization: 'Kente & Dashiki',
-        rating: 4.8,
-        distance: '1.2 km', 
-        image: '/api/placeholder/100/100'
-      }
-    ]
+    recent: recentOrders || [],
+    recommendations: recommendations || [],
   };
 
   const getStatusColor = (status: string) => {
@@ -102,10 +84,13 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-[#FFFDD0] to-[#FFD700]/20 rounded-lg p-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Customer'}!
-            </h1>
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Welcome back, {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Customer'}!
+              </h1>
+              <LoyaltyPointsBadge />
+            </div>
             <p className="text-gray-600 mt-1">
               Ready to create something beautiful? Let's find the perfect tailor for your next garment.
             </p>
@@ -176,9 +161,12 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
         </Card>
       </div>
 
+      {/* Personalized Recommendations */}
+      <StyleRecommendations />
+
       {/* Main Content Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
+
         {/* Recent Orders */}
         <Card className="md:col-span-2 border-[#8B4513]/10">
           <CardHeader>
@@ -195,7 +183,7 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {dashboardData.orders.recent.map((order) => (
+              {dashboardData.recent.map((order) => (
                 <div key={order.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
@@ -234,7 +222,7 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
                 </div>
               ))}
               
-              {dashboardData.orders.recent.length === 0 && (
+              {dashboardData.recent.length === 0 && !isLoading && (
                 <div className="text-center py-8">
                   <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">No orders yet</p>
@@ -298,7 +286,7 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
           <CardDescription>Everything you need to get started</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <Button variant="outline" className="h-20 flex flex-col items-center justify-center" asChild>
               <Link href="/orders/new">
                 <Plus className="w-6 h-6 mb-2" />
@@ -324,6 +312,13 @@ export function CustomerDashboard({ className }: CustomerDashboardProps) {
               <Link href="/family">
                 <Users className="w-6 h-6 mb-2" />
                 <span className="text-sm">Family</span>
+              </Link>
+            </Button>
+
+            <Button variant="outline" className="h-20 flex flex-col items-center justify-center" asChild>
+              <Link href="/favorites">
+                <Heart className="w-6 h-6 mb-2" />
+                <span className="text-sm">Favorites</span>
               </Link>
             </Button>
           </div>

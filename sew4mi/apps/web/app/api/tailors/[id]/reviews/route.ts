@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase';
 import { tailorProfileService } from '@/lib/services/tailor-profile.service';
 import { CreateReviewSchema } from '@sew4mi/shared';
 

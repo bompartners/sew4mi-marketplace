@@ -101,7 +101,7 @@ export async function GET(_request: NextRequest) {
 }
 
 // Handle CORS preflight
-export async function OPTIONS(_request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

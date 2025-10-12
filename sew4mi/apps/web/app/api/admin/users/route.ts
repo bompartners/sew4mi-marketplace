@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { hasPermission, PERMISSIONS } from '@sew4mi/shared';
 
 export async function GET(_request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -57,11 +56,7 @@ export async function GET(_request: NextRequest) {
         phone_verified,
         created_at,
         updated_at,
-        metadata,
-        auth.users!inner(
-          email_confirmed_at,
-          last_sign_in_at
-        )
+        metadata
       `, { count: 'exact' });
 
     // Apply filters
@@ -91,22 +86,40 @@ export async function GET(_request: NextRequest) {
       );
     }
 
-    // Transform data to include email confirmation status
-    const transformedUsers = usersData?.map((user: any) => ({
-      id: user.id,
-      email: user.email,
-      full_name: user.full_name,
-      phone_number: user.phone_number,
-      role: user.role,
-      phone_verified: user.phone_verified,
-      created_at: user.created_at,
-      updated_at: user.updated_at,
-      metadata: user.metadata || {},
-      // auth.users relationship
-      email_confirmed: !!user.auth?.users?.email_confirmed_at,
-      // auth.users relationship  
-      last_sign_in_at: user.auth?.users?.last_sign_in_at
-    })) || [];
+    // Create admin client with service role for auth data access
+    const adminClient = createServiceRoleClient();
+
+    // Get auth data for each user from auth.users (admin only)
+    const transformedUsers = await Promise.all(
+      (usersData || []).map(async (user: any) => {
+        // Try to get auth metadata - this might fail for some users
+        let emailConfirmed = false;
+        let lastSignInAt = null;
+
+        try {
+          const { data: authData } = await adminClient.auth.admin.getUserById(user.id);
+          emailConfirmed = !!authData?.user?.email_confirmed_at;
+          lastSignInAt = authData?.user?.last_sign_in_at || null;
+        } catch (error) {
+          // If auth lookup fails, continue with defaults
+          console.error(`Failed to fetch auth data for user ${user.id}:`, error);
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          full_name: user.full_name,
+          phone_number: user.phone_number,
+          role: user.role,
+          phone_verified: user.phone_verified,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+          metadata: user.metadata || {},
+          email_confirmed: emailConfirmed,
+          last_sign_in_at: lastSignInAt
+        };
+      })
+    );
 
     return NextResponse.json({
       users: transformedUsers,
@@ -129,7 +142,7 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(_request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     
     // Get the current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

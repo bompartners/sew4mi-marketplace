@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { groupOrderService } from '@/lib/services/group-order.service';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { AddGroupOrderItemRequestSchema } from '@sew4mi/shared/schemas/group-order.schema';
@@ -21,7 +21,7 @@ export async function POST(
 ) {
   try {
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -90,7 +90,7 @@ export async function GET(
 ) {
   try {
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

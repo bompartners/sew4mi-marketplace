@@ -1,15 +1,16 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { RegistrationInput, ForgotPasswordInput, ResetPasswordInput } from '@sew4mi/shared';
+import { authCache } from '@/lib/cache/authCache';
+import { createClient } from '@/lib/supabase/client';
 // import type { LoginInput, OTPInput } from '@sew4mi/shared'; // TODO: Use when needed
 // import { ENV_CONFIG } from '@/lib/config/env'; // TODO: Use when needed
 
 export class AuthService {
-  private _supabase: ReturnType<typeof createClientComponentClient> | null = null;
-  
+  private _supabase: ReturnType<typeof createClient> | null = null;
+
   private get supabase() {
     if (!this._supabase) {
-      // Lazy initialization to avoid SSR issues
-      this._supabase = createClientComponentClient();
+      // Use our singleton client with correct storage key configuration
+      this._supabase = createClient();
     }
     return this._supabase;
   }
@@ -146,9 +147,11 @@ export class AuthService {
    * Sign in with email/phone and password
    */
   async signIn(credential: string, password: string, rememberMe: boolean = false) {
+    console.log('🔒 AuthService.signIn - Started with credential:', credential, 'rememberMe:', rememberMe);
     try {
       // Validate credential parameter
       if (!credential || typeof credential !== 'string') {
+        console.error('❌ AuthService.signIn - Invalid credential');
         return {
           success: false,
           error: 'Please provide a valid email or phone number',
@@ -159,7 +162,8 @@ export class AuthService {
 
       // Determine if credential is email or phone
       const isEmail = credential.includes('@');
-      
+      console.log('🔒 AuthService.signIn - Credential type:', isEmail ? 'email' : 'phone');
+
       let signInData: any = {
         password,
       };
@@ -170,9 +174,16 @@ export class AuthService {
         signInData.phone = credential;
       }
 
+      console.log('🔒 AuthService.signIn - Calling Supabase signInWithPassword...');
       const { data: authData, error } = await this.supabase.auth.signInWithPassword(signInData);
+      console.log('🔒 AuthService.signIn - Supabase response:', {
+        hasUser: !!authData?.user,
+        hasSession: !!authData?.session,
+        error: error?.message
+      });
 
       if (error) {
+        console.error('❌ AuthService.signIn - Supabase error:', error.message);
         return {
           success: false,
           error: error.message,
@@ -183,6 +194,7 @@ export class AuthService {
 
       // Set session persistence based on remember me
       if (rememberMe && authData.session) {
+        console.log('🔒 AuthService.signIn - Setting persistent session...');
         // Store session with longer expiration (30 days)
         await this.supabase.auth.setSession({
           access_token: authData.session.access_token,
@@ -190,6 +202,7 @@ export class AuthService {
         });
       }
 
+      console.log('✅ AuthService.signIn - Success!');
       return {
         success: true,
         error: null,
@@ -197,7 +210,7 @@ export class AuthService {
         session: authData.session
       };
     } catch (error) {
-      console.error('Sign in failed:', error);
+      console.error('❌ AuthService.signIn - Exception:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'An unexpected error occurred',
@@ -275,19 +288,47 @@ export class AuthService {
   }
 
   /**
-   * Get current session
+   * Get current session (with caching to reduce API calls)
    */
   async getSession() {
     try {
+      console.log('🔍 AuthService.getSession() called');
+
+      // Check cache first to prevent unnecessary API calls on page refresh
+      const cachedSession = authCache.getSession();
+      if (cachedSession) {
+        console.log('✅ Using cached session:', {
+          userId: cachedSession.user?.id,
+          hasAccessToken: !!cachedSession.access_token
+        });
+        return cachedSession;
+      }
+
+      console.log('🔄 No cached session, fetching from Supabase...');
       const { data, error } = await this.supabase.auth.getSession();
-      
+
+      console.log('📦 Supabase getSession result:', {
+        hasSession: !!data.session,
+        hasError: !!error,
+        userId: data.session?.user?.id,
+        error: error?.message
+      });
+
       if (error) {
         throw new Error(this.formatError(error.message));
       }
 
+      // Cache the session for future calls
+      if (data.session) {
+        authCache.setSession(data.session);
+        console.log('💾 Cached new session');
+      } else {
+        console.warn('⚠️ No session returned from Supabase');
+      }
+
       return data.session;
     } catch (error) {
-      console.error('Get session failed:', error);
+      console.error('❌ Get session failed:', error);
       throw error;
     }
   }

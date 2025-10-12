@@ -1,24 +1,28 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { 
-  EscrowTransaction, 
-  EscrowStage, 
+import { createClient } from '@/lib/supabase/server';
+import {
+  EscrowTransaction,
+  EscrowStage,
   EscrowTransactionType,
-  EscrowStatus 
+  EscrowStatus
 } from '@sew4mi/shared';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export class EscrowRepository {
-  private supabase;
+  private supabase: SupabaseClient | null = null;
 
-  constructor() {
-    this.supabase = createServerComponentClient({ cookies });
+  private async getClient() {
+    if (!this.supabase) {
+      this.supabase = await createClient();
+    }
+    return this.supabase;
   }
 
   /**
    * Get escrow status for an order
    */
   async getEscrowStatus(orderId: string): Promise<EscrowStatus | null> {
-    const { data: order, error } = await this.supabase
+    const supabase = await this.getClient();
+    const { data: order, error } = await supabase
       .from('orders')
       .select(`
         id,
@@ -40,7 +44,7 @@ export class EscrowRepository {
     }
 
     // Get stage transition history
-    const { data: transactions } = await this.supabase
+    const { data: transactions } = await supabase
       .from('escrow_transactions')
       .select('*')
       .eq('order_id', orderId)
@@ -91,6 +95,7 @@ export class EscrowRepository {
     newStage: EscrowStage,
     paidAmount?: number
   ): Promise<boolean> {
+    const supabase = await this.getClient();
     const updates: any = {
       escrow_stage: newStage,
       updated_at: new Date().toISOString()
@@ -111,7 +116,7 @@ export class EscrowRepository {
       }
     }
 
-    const { error } = await this.supabase
+    const { error } = await supabase
       .from('orders')
       .update(updates)
       .eq('id', orderId);
@@ -132,6 +137,7 @@ export class EscrowRepository {
     approvedBy?: string,
     notes?: string
   ): Promise<EscrowTransaction | null> {
+    const supabase = await this.getClient();
     const transactionData = {
       order_id: orderId,
       transaction_type: transactionType,
@@ -146,7 +152,7 @@ export class EscrowRepository {
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('escrow_transactions')
       .insert(transactionData)
       .select()
@@ -176,7 +182,8 @@ export class EscrowRepository {
    * Get escrow transactions for an order
    */
   async getEscrowTransactions(orderId: string): Promise<EscrowTransaction[]> {
-    const { data, error } = await this.supabase
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
       .from('escrow_transactions')
       .select('*')
       .eq('order_id', orderId)
@@ -206,7 +213,8 @@ export class EscrowRepository {
    * Get total escrow funds across all orders
    */
   async getTotalEscrowFunds(): Promise<number> {
-    const { data, error } = await this.supabase
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
       .from('orders')
       .select('escrow_balance')
       .gt('escrow_balance', 0);
@@ -222,7 +230,8 @@ export class EscrowRepository {
    * Get escrow summary for admin reporting
    */
   async getEscrowSummary() {
-    const { data, error } = await this.supabase
+    const supabase = await this.getClient();
+    const { data, error } = await supabase
       .from('escrow_summary')
       .select('*')
       .order('order_created_at', { ascending: false });
@@ -244,7 +253,8 @@ export class EscrowRepository {
     finalAmount: number,
     escrowBalance: number
   ): Promise<boolean> {
-    const { error } = await this.supabase
+    const supabase = await this.getClient();
+    const { error } = await supabase
       .from('orders')
       .update({
         deposit_amount: depositAmount,
@@ -262,7 +272,8 @@ export class EscrowRepository {
    * Get orders by escrow stage for processing
    */
   async getOrdersByEscrowStage(stage: EscrowStage): Promise<any[]> {
-    const { data } = await this.supabase
+    const supabase = await this.getClient();
+    const { data } = await supabase
       .from('orders')
       .select(`
         id,

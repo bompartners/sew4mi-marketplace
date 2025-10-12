@@ -1,17 +1,12 @@
+import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { cookies } from 'next/headers'
 import type { Database } from '@sew4mi/shared/types/database'
 import { DatabaseError, mapSupabaseError } from './errors'
-// import { withRetry, DEFAULT_RETRY_OPTIONS } from './retry' // TODO: Use when implementing retry logic
 
-// For API routes - creates a client with environment variables
-export function createClient() {
-  return createServerSupabaseClient();
-}
-
-// Export raw client creation function for explicit usage
-export { createSupabaseClient }
-
-export function createServerSupabaseClient(): ReturnType<typeof createSupabaseClient<Database>> {
+// For API routes and server components - creates a client that reads from cookies
+export async function createClient() {
+  const cookieStore = await cookies()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -25,56 +20,22 @@ export function createServerSupabaseClient(): ReturnType<typeof createSupabaseCl
   }
 
   try {
-    return createSupabaseClient<Database>(
+    return createServerClient<Database>(
       supabaseUrl,
       supabaseAnonKey,
       {
-          global: {
-            fetch: async (url, options = {}) => {
-              const controller = new AbortController()
-              const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout for server
-
-              try {
-                const response = await fetch(url, {
-                  ...options,
-                  signal: controller.signal,
-                })
-
-                clearTimeout(timeoutId)
-
-                if (!response.ok) {
-                  throw new DatabaseError(
-                    `HTTP ${response.status}: ${response.statusText}`,
-                    'SERVER_ERROR' as any,
-                    undefined,
-                    response.status >= 500,
-                    response.status
-                  )
-                }
-
-                return response
-              } catch (error: any) {
-                clearTimeout(timeoutId)
-                
-                if (error.name === 'AbortError') {
-                  throw new DatabaseError(
-                    'Request timeout after 15 seconds',
-                    'TIMEOUT' as any,
-                    error,
-                    true
-                  )
-                }
-                
-                if (error instanceof DatabaseError) {
-                  throw error
-                }
-                
-                throw mapSupabaseError(error)
-              }
-            }
-          }
-        }
-      )
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            // DO NOT set cookies in API routes - this causes the auth cookie to be cleared
+            // Cookies are only managed by the client-side Supabase client
+            // This method is required by the interface but should be a no-op in API routes
+          },
+        },
+      }
+    )
   } catch (error) {
     throw mapSupabaseError(error)
   }

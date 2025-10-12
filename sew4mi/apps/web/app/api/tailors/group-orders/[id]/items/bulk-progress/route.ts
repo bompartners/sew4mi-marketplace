@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { OrderStatus } from '@sew4mi/shared/types';
 import { BulkProgressUpdateSchema, formatZodErrors } from '@/lib/validation/group-order.schemas';
@@ -25,10 +25,10 @@ interface BulkProgressUpdate {
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const groupOrderId = params.id;
+    const { id: groupOrderId } = await params;
     const body: BulkProgressUpdate = await request.json();
 
     // Validate request body
@@ -43,7 +43,7 @@ export async function PUT(
       );
     }
 
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

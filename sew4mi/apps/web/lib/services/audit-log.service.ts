@@ -3,7 +3,7 @@
  * Logs all sensitive operations for security and compliance
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 
 export enum AuditAction {
   // Group Order Actions

@@ -200,26 +200,35 @@ export function TimelineSelection({
 
   // Load tailor availability
   useEffect(() => {
-    if (tailorId) {
-      // Simulate API call to check tailor availability
-      setTailorAvailability(prev => ({ ...prev, isLoading: true }));
-      
-      setTimeout(() => {
-        // Mock blocked dates
-        const blocked = [
-          addDays(new Date(), 10),
-          addDays(new Date(), 15),
-          addDays(new Date(), 25)
-        ];
-        
-        setTailorAvailability({
-          isLoading: false,
-          blockedDates: blocked,
-          standardAvailable: true,
-          expressAvailable: Math.random() > 0.3 // 70% chance express is available
-        });
-      }, 1000);
+    if (!tailorId) {
+      // No tailor selected, use default availability
+      setTailorAvailability({
+        isLoading: false,
+        blockedDates: [],
+        standardAvailable: true,
+        expressAvailable: true
+      });
+      return;
     }
+
+    // Simulate API call to check tailor availability
+    setTailorAvailability(prev => ({ ...prev, isLoading: true }));
+
+    setTimeout(() => {
+      // Mock blocked dates
+      const blocked = [
+        addDays(new Date(), 10),
+        addDays(new Date(), 15),
+        addDays(new Date(), 25)
+      ];
+
+      setTailorAvailability({
+        isLoading: false,
+        blockedDates: blocked,
+        standardAvailable: true,
+        expressAvailable: Math.random() > 0.3 // 70% chance express is available
+      });
+    }, 1000);
   }, [tailorId]);
 
   // Auto-update delivery date when urgency changes

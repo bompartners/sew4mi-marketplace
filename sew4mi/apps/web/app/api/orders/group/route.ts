@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { groupOrderService } from '@/lib/services/group-order.service';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { CreateGroupOrderRequestSchema } from '@sew4mi/shared/schemas/group-order.schema';
@@ -15,10 +15,10 @@ import type { CreateGroupOrderRequest } from '@sew4mi/shared/types/group-order';
  * GET /api/orders/group
  * Get all group orders for the authenticated user
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

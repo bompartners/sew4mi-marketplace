@@ -1,10 +1,12 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { CacheStats } from '@/components/debug/CacheStats';
+import { Providers } from './providers';
+import { OfflineIndicator } from '@/components/common/OfflineIndicator';
 
 export const metadata: Metadata = {
   title: 'Sew4Mi',
   description: 'Connect with skilled Ghanaian tailors',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -15,9 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
-        {/* Development debugging component - only shows in dev mode */}
-        <CacheStats />
+        <Providers>
+          <OfflineIndicator />
+          {children}
+        </Providers>
       </body>
     </html>
   );

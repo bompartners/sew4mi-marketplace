@@ -220,20 +220,26 @@ export class TailorProfileService {
     };
   }
 
-  private buildPortfolio(images: string[], specializations: string[]): TailorPortfolio {
+  private buildPortfolio(images: any[], specializations: string[]): TailorPortfolio {
     // Group images by category based on specializations
     const categories = ['All Work', ...specializations.slice(0, 5)];
-    
+
+    // Handle both string URLs and image objects
+    const imageUrls = images.map(img => typeof img === 'string' ? img : img.url);
+
     // Create featured work from first few images
-    const featuredWork = images.slice(0, 6).map((imageUrl, index) => ({
-      imageUrl,
-      title: `Featured Work ${index + 1}`,
-      description: `Quality craftsmanship in ${specializations[index % specializations.length] || 'custom tailoring'}`,
-      garmentType: specializations[index % specializations.length] || 'Custom',
-    }));
+    const featuredWork = images.slice(0, 6).map((img, index) => {
+      const imageUrl = typeof img === 'string' ? img : img.url;
+      return {
+        imageUrl,
+        title: `Featured Work ${index + 1}`,
+        description: `Quality craftsmanship in ${specializations[index % specializations.length] || 'custom tailoring'}`,
+        garmentType: specializations[index % specializations.length] || 'Custom',
+      };
+    });
 
     return {
-      images,
+      images: imageUrls,
       categories,
       featuredWork,
     };

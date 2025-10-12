@@ -9,24 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Shield, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Shield,
   Bell,
-  Eye,
-  EyeOff,
   Edit,
   Save,
   Camera,
   Globe,
-  Heart,
   Star
 } from 'lucide-react';
-import Link from 'next/link';
 
 // Mock user profile data
 const mockUserProfile = {
@@ -68,9 +64,8 @@ const membershipTiers = {
 };
 
 export default function ProfilePage() {
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [profileData, setProfileData] = useState(mockUserProfile);
 
   const handleSave = () => {

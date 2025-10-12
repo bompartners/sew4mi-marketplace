@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { authService } from '@/services/auth.service';
 import type { User, Session } from '@supabase/supabase-js';
 import type { RegistrationInput } from '@sew4mi/shared/schemas/auth.schema';
@@ -27,6 +27,7 @@ interface AuthActions {
 }
 
 export function useAuth(): AuthState & AuthActions {
+  const initRef = useRef(false);
   const [state, setState] = useState<AuthState>({
     user: null,
     session: null,
@@ -112,13 +113,17 @@ export function useAuth(): AuthState & AuthActions {
 
   // Initialize auth state
   useEffect(() => {
+    // Prevent double initialization in React StrictMode
+    if (initRef.current) return;
+    initRef.current = true;
+
     let isMounted = true;
 
     const initializeAuth = async () => {
       try {
         const session = await authService.getSession();
         const userRole = await fetchUserRole(session?.user ?? null);
-        
+
         if (isMounted) {
           setState(prev => ({
             ...prev,
@@ -165,7 +170,7 @@ export function useAuth(): AuthState & AuthActions {
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserRole]);
 
   const signIn = useCallback(async (credential: string, password: string, rememberMe: boolean = false) => {
     try {

@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@tanstack/react-virtual':
+        specifier: ^3.13.12
+        version: 3.13.12(react-dom@19.1.0)(react@19.1.0)
     devDependencies:
       '@commitlint/cli':
         specifier: ^19.8.1
@@ -119,9 +123,6 @@ importers:
       '@sew4mi/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@supabase/auth-helpers-nextjs':
-        specifier: ^0.10.0
-        version: 0.10.0(@supabase/supabase-js@2.54.0)
       '@supabase/ssr':
         specifier: ^0.7.0
         version: 0.7.0(@supabase/supabase-js@2.54.0)
@@ -131,6 +132,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.63.0
         version: 5.84.2(react@19.1.0)
+      '@tanstack/react-virtual':
+        specifier: ^3.11.2
+        version: 3.13.12(react-dom@19.1.0)(react@19.1.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -2706,27 +2710,6 @@ packages:
     resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
     dev: false
 
-  /@supabase/auth-helpers-nextjs@0.10.0(@supabase/supabase-js@2.54.0):
-    resolution: {integrity: sha512-2dfOGsM4yZt0oS4TPiE7bD4vf7EVz7NRz/IJrV6vLg0GP7sMUx8wndv2euLGq4BjN9lUCpu6DG/uCC8j+ylwPg==}
-    deprecated: This package is now deprecated - please use the @supabase/ssr package instead.
-    peerDependencies:
-      '@supabase/supabase-js': ^2.39.8
-    dependencies:
-      '@supabase/auth-helpers-shared': 0.7.0(@supabase/supabase-js@2.54.0)
-      '@supabase/supabase-js': 2.54.0
-      set-cookie-parser: 2.7.1
-    dev: false
-
-  /@supabase/auth-helpers-shared@0.7.0(@supabase/supabase-js@2.54.0):
-    resolution: {integrity: sha512-FBFf2ei2R7QC+B/5wWkthMha8Ca2bWHAndN+syfuEUUfufv4mLcAgBCcgNg5nJR8L0gZfyuaxgubtOc9aW3Cpg==}
-    deprecated: This package is now deprecated - please use the @supabase/ssr package instead.
-    peerDependencies:
-      '@supabase/supabase-js': ^2.39.8
-    dependencies:
-      '@supabase/supabase-js': 2.54.0
-      jose: 4.15.9
-    dev: false
-
   /@supabase/auth-js@2.71.1:
     resolution: {integrity: sha512-mMIQHBRc+SKpZFRB2qtupuzulaUhFYupNyxqDj5Jp/LyPvcWvjaJzZzObv6URtL/O6lPxkanASnotGtNpS3H2Q==}
     dependencies:
@@ -2810,6 +2793,21 @@ packages:
     dependencies:
       '@tanstack/query-core': 5.83.1
       react: 19.1.0
+    dev: false
+
+  /@tanstack/react-virtual@3.13.12(react-dom@19.1.0)(react@19.1.0):
+    resolution: {integrity: sha512-Gd13QdxPSukP8ZrkbgS2RwoZseTTbQPLnQEn7HY/rqtM+8Zt95f7xKC7N0EsKs7aoz0WzZ+fditZux+F8EzYxA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    dependencies:
+      '@tanstack/virtual-core': 3.13.12
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+    dev: false
+
+  /@tanstack/virtual-core@3.13.12:
+    resolution: {integrity: sha512-1YBOJfRHV4sXUmWsFSf5rQor4Ss82G8dQWLRbnk3GA4jeP8hQt1hxXh0tmflpC0dz3VgEv/1+qwPyLeWkQuPFA==}
     dev: false
 
   /@testing-library/dom@10.4.1:
@@ -5652,10 +5650,6 @@ packages:
     hasBin: true
     dev: true
 
-  /jose@4.15.9:
-    resolution: {integrity: sha512-1vUQX+IdDMVPj4k8kOxgUqlcK518yluMuGZwqlr44FS1ppZB/5GWh4rZG89erpOBOJjU/OBsnCVFfapsRz6nEA==}
-    dev: false
-
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -6933,10 +6927,6 @@ packages:
     resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
     engines: {node: '>=10'}
     hasBin: true
-
-  /set-cookie-parser@2.7.1:
-    resolution: {integrity: sha512-IOc8uWeOZgnb3ptbCURJWNjWUPcO3ZnTTdzsurqERrP6nPyv+paC55vJM0LpOlT2ne+Ix+9+CRG1MNLlyZ4GjQ==}
-    dev: false
 
   /set-function-length@1.2.2:
     resolution: {integrity: sha512-pgRc4hJ4/sNjWCSS9AmnS40x3bNMDTknHgL5UaMBTMyJnU90EgWh1Rz+MC9eFu4BuN/UwZjKQuY/1v3rM7HMfg==}

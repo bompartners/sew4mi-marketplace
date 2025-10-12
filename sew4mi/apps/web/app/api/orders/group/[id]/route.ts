@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase';
 import { groupOrderService } from '@/lib/services/group-order.service';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { UpdateGroupOrderRequestSchema } from '@sew4mi/shared/schemas/group-order.schema';
@@ -23,7 +23,7 @@ export async function GET(
     const { id: groupOrderId } = await params;
     
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -84,7 +84,7 @@ export async function PUT(
     const { id: groupOrderId } = await params;
     
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
@@ -177,7 +177,7 @@ export async function DELETE(
     const { id: groupOrderId } = await params;
     
     // Get authenticated user
-    const supabase = createServerSupabaseClient();
+    const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {

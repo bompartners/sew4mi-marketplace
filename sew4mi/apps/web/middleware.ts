@@ -1,19 +1,68 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { USER_ROLES, ROLE_ROUTE_MAPPING, canAccessRoute } from '@sew4mi/shared'
 
 export async function middleware(request: NextRequest) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req: request, res })
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
 
   // Rate limiting protection: Skip auth for static assets and API routes that don't need it
   const { pathname } = request.nextUrl
-  if (pathname.startsWith('/_next/') || 
-      pathname.startsWith('/favicon') || 
+  if (pathname.startsWith('/_next/') ||
+      pathname.startsWith('/favicon') ||
       pathname.startsWith('/api/health') ||
       pathname.match(/\.(jpg|jpeg|png|gif|ico|svg|css|js|woff|woff2)$/)) {
-    return res
+    return response
   }
 
   // Refresh session if expired - required for Server Components
@@ -138,7 +187,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return res
+  return response
 }
 
 // Specify which routes this middleware should run on
