@@ -223,4 +223,25 @@ biometric-data/
 
 # Secrets
 secrets/
-.secrets/nul
+.secrets/
+
+# Windows reserved filenames
+nul
+CON
+PRN
+AUX
+NUL
+**/nul
+**/CON
+
+# Temporary documentation and fix files
+*_FIX*.md
+*_SUMMARY*.md
+*_INSTRUCTIONS*.md
+*_COMPLETE*.md
+*_FIXED*.md
+APPLY_*.sql
+apply-*.js
+fix-*.js
+test-login.js
+setup-portfolio-bucket.sql

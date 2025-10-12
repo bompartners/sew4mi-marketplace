@@ -12,8 +12,8 @@ import { z } from 'zod';
  * Analytics query schema
  */
 const analyticsQuerySchema = z.object({
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.string().nullable().optional(),
+  endDate: z.string().nullable().optional(),
   includePatterns: z.boolean().default(true),
   includeTrends: z.boolean().default(true),
   includePerformance: z.boolean().default(true)

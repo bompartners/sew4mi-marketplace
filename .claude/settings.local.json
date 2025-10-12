@@ -64,7 +64,9 @@
       "Bash(while read file)",
       "Bash(do npx eslint \"$file\")",
       "Bash(echo \"$file\")",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c \"\\df get_dispute_analytics\")",
+      "Bash(npx supabase:*)"
     ],
     "deny": [],
     "ask": []
