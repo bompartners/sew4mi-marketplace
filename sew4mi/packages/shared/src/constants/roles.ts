@@ -168,7 +168,6 @@ export const REGISTERABLE_ROLES: UserRole[] = [
 // Routes that require specific roles
 export const ROLE_ROUTE_MAPPING: Record<string, UserRole[]> = {
   // Customer-only routes
-  '/orders': [USER_ROLES.CUSTOMER],
   '/orders/new': [USER_ROLES.CUSTOMER],
   '/tailors': [USER_ROLES.CUSTOMER],
   '/tailors/search': [USER_ROLES.CUSTOMER],
@@ -192,6 +191,7 @@ export const ROLE_ROUTE_MAPPING: Record<string, UserRole[]> = {
   
   // Shared routes (all authenticated users)
   '/dashboard': [USER_ROLES.CUSTOMER, USER_ROLES.TAILOR, USER_ROLES.ADMIN],
+  '/orders': [USER_ROLES.CUSTOMER, USER_ROLES.TAILOR, USER_ROLES.ADMIN],
   '/profile': [USER_ROLES.CUSTOMER, USER_ROLES.TAILOR, USER_ROLES.ADMIN],
   '/settings': [USER_ROLES.CUSTOMER, USER_ROLES.TAILOR, USER_ROLES.ADMIN]
 };
