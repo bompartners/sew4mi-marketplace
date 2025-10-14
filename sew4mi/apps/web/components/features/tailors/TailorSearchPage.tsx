@@ -7,10 +7,11 @@ import { FilterPanel } from './FilterPanel';
 import { SortSelector } from './SortSelector';
 import { TailorSearchResults } from './TailorSearchResults';
 import { FeaturedTailors } from './FeaturedTailors';
+import { SaveSearchDialog } from './SaveSearchDialog';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPin, Grid3X3, List, Map } from 'lucide-react';
+import { MapPin, Grid3X3, List, Map, Heart } from 'lucide-react';
 import { useTailorSearch } from '@/hooks/useTailorSearch';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import {
@@ -45,6 +46,7 @@ export function TailorSearchPage({
   const [displayMode, setDisplayMode] = useState<string>(DISPLAY_MODES.GRID);
   const [showFilters, setShowFilters] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [showSaveSearchDialog, setShowSaveSearchDialog] = useState(false);
 
   // Location hook for distance-based search
   const { location, requestLocation, locationError } = useGeolocation();
@@ -175,7 +177,7 @@ export function TailorSearchPage({
                 <MapPin className="h-4 w-4" />
                 {location ? 'Search Nearby' : 'Use My Location'}
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -188,6 +190,19 @@ export function TailorSearchPage({
                   </span>
                 )}
               </Button>
+
+              {/* Story 4.4: Save Search Button */}
+              {hasSearched && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSaveSearchDialog(true)}
+                  className="flex items-center gap-2"
+                >
+                  <Heart className="h-4 w-4" />
+                  Save Search
+                </Button>
+              )}
 
               {hasSearched && (
                 <Button
@@ -313,6 +328,13 @@ export function TailorSearchPage({
           </div>
         </div>
       </div>
+
+      {/* Story 4.4: Save Search Dialog */}
+      <SaveSearchDialog
+        filters={filters}
+        open={showSaveSearchDialog}
+        onClose={() => setShowSaveSearchDialog(false)}
+      />
     </div>
   );
 }

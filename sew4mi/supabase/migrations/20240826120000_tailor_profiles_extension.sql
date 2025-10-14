@@ -4,7 +4,6 @@
 -- 1. Extend tailor_profiles table with additional fields
 ALTER TABLE tailor_profiles
 ADD COLUMN IF NOT EXISTS profile_photo TEXT,
-ADD COLUMN IF NOT EXISTS portfolio_images TEXT[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS average_response_hours NUMERIC(5,2),
 ADD COLUMN IF NOT EXISTS completed_orders INTEGER DEFAULT 0,
 ADD COLUMN IF NOT EXISTS on_time_delivery_rate NUMERIC(5,2) DEFAULT 100,

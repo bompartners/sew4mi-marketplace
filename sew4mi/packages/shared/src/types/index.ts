@@ -22,6 +22,10 @@ export type {
   FeaturedTailor,
   SearchAnalytics,
   TailorSearchStats,
+  SavedSearch,
+  SavedSearchInput,
+  SavedSearchUpdate,
+  SavedSearchMatch,
 } from './search';
 
 import { UserRole } from '../constants/roles';

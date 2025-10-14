@@ -19,6 +19,15 @@ export const TailorSearchFiltersSchema = z.object({
   }).optional(),
   verified: z.boolean().optional(),
   acceptsRushOrders: z.boolean().optional(),
+  // Story 4.4: Advanced search filters
+  occasions: z.array(z.string()).optional(),
+  deliveryTimeframeMin: z.number().min(0).max(365).optional(),
+  deliveryTimeframeMax: z.number().min(0).max(365).optional(),
+  styleCategories: z.array(z.string()).optional(),
+  fabricPreferences: z.array(z.string()).optional(),
+  colorPreferences: z.array(z.string()).optional(),
+  sizeRanges: z.array(z.string()).optional(),
+  languages: z.array(z.string()).optional(),
 }).refine(data => {
   // Ensure minPrice <= maxPrice if both are provided
   if (data.minPrice !== undefined && data.maxPrice !== undefined) {
@@ -27,6 +36,14 @@ export const TailorSearchFiltersSchema = z.object({
   return true;
 }, {
   message: "minPrice must be less than or equal to maxPrice",
+}).refine(data => {
+  // Ensure deliveryTimeframeMin <= deliveryTimeframeMax if both are provided
+  if (data.deliveryTimeframeMin !== undefined && data.deliveryTimeframeMax !== undefined) {
+    return data.deliveryTimeframeMin <= data.deliveryTimeframeMax;
+  }
+  return true;
+}, {
+  message: "deliveryTimeframeMin must be less than or equal to deliveryTimeframeMax",
 });
 
 export const AutocompleteQuerySchema = z.object({
@@ -60,6 +77,38 @@ export const SearchAnalyticsSchema = z.object({
   convertedResults: z.array(z.string().uuid()).optional(),
 });
 
+// Story 4.4: Saved search schemas
+export const SavedSearchInputSchema = z.object({
+  name: z.string().min(3).max(100),
+  filters: TailorSearchFiltersSchema,
+  alertEnabled: z.boolean().optional().default(false),
+  alertFrequency: z.enum(['daily', 'weekly', 'instant']).optional().default('weekly'),
+});
+
+export const SavedSearchUpdateSchema = z.object({
+  name: z.string().min(3).max(100).optional(),
+  filters: TailorSearchFiltersSchema.optional(),
+  alertEnabled: z.boolean().optional(),
+  alertFrequency: z.enum(['daily', 'weekly', 'instant']).optional(),
+}).refine(data => {
+  // At least one field must be provided for update
+  return Object.keys(data).length > 0;
+}, {
+  message: "At least one field must be provided for update",
+});
+
+export const SavedSearchSchema = z.object({
+  id: z.string().uuid(),
+  customerId: z.string().uuid(),
+  name: z.string(),
+  filters: TailorSearchFiltersSchema,
+  alertEnabled: z.boolean(),
+  alertFrequency: z.enum(['daily', 'weekly', 'instant']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+  lastNotifiedAt: z.string().datetime().nullable(),
+});
+
 // Export types inferred from schemas
 export type TailorSearchFiltersInput = z.input<typeof TailorSearchFiltersSchema>;
 export type TailorSearchFilters = z.output<typeof TailorSearchFiltersSchema>;
@@ -68,3 +117,6 @@ export type AddFavoriteInput = z.infer<typeof AddFavoriteSchema>;
 export type RemoveFavoriteInput = z.infer<typeof RemoveFavoriteSchema>;
 export type FeaturedTailorFilters = z.infer<typeof FeaturedTailorFiltersSchema>;
 export type SearchAnalyticsInput = z.infer<typeof SearchAnalyticsSchema>;
+export type SavedSearchInput = z.infer<typeof SavedSearchInputSchema>;
+export type SavedSearchUpdate = z.infer<typeof SavedSearchUpdateSchema>;
+export type SavedSearch = z.infer<typeof SavedSearchSchema>;

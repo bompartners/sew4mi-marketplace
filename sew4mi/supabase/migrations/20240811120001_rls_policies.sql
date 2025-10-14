@@ -240,14 +240,9 @@ CREATE POLICY "Customers update own reviews" ON public.reviews
 CREATE POLICY "Tailors respond to reviews" ON public.reviews
   FOR UPDATE USING (
     tailor_id IN (
-      SELECT id FROM tailor_profiles 
+      SELECT id FROM tailor_profiles
       WHERE user_id = auth.uid()
     )
-  ) WITH CHECK (
-    -- Only allow updating response fields
-    customer_id = OLD.customer_id AND
-    tailor_id = OLD.tailor_id AND
-    rating = OLD.rating
   );
 
 -- Disputes policies

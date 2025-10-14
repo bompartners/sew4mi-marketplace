@@ -72,6 +72,39 @@ export class TailorSearchRepository {
       query = query.eq('accepts_rush_orders', filters.acceptsRushOrders);
     }
 
+    // Story 4.4: Apply advanced search filters
+    if (filters.occasions && filters.occasions.length > 0) {
+      query = query.overlaps('occasions', filters.occasions);
+    }
+
+    if (filters.styleCategories && filters.styleCategories.length > 0) {
+      query = query.overlaps('style_categories', filters.styleCategories);
+    }
+
+    if (filters.fabricPreferences && filters.fabricPreferences.length > 0) {
+      query = query.overlaps('fabric_specialties', filters.fabricPreferences);
+    }
+
+    if (filters.colorPreferences && filters.colorPreferences.length > 0) {
+      query = query.overlaps('color_specialties', filters.colorPreferences);
+    }
+
+    if (filters.sizeRanges && filters.sizeRanges.length > 0) {
+      query = query.overlaps('size_ranges', filters.sizeRanges);
+    }
+
+    if (filters.languages && filters.languages.length > 0) {
+      query = query.overlaps('languages_spoken', filters.languages);
+    }
+
+    if (filters.deliveryTimeframeMin !== undefined) {
+      query = query.gte('min_delivery_days', filters.deliveryTimeframeMin);
+    }
+
+    if (filters.deliveryTimeframeMax !== undefined) {
+      query = query.lte('max_delivery_days', filters.deliveryTimeframeMax);
+    }
+
     // Apply cursor pagination
     if (filters.cursor) {
       const cursorData = this.decodeCursor(filters.cursor);
@@ -368,6 +401,15 @@ export class TailorSearchRepository {
       vacationMode: tailor.vacation_mode || false,
       acceptsRushOrders: tailor.accepts_rush_orders || false,
       rushOrderFeePercentage: tailor.rush_order_fee_percentage || 0,
+      // Story 4.4: Advanced search attributes
+      occasions: tailor.occasions || [],
+      styleCategories: tailor.style_categories || [],
+      fabricSpecialties: tailor.fabric_specialties || [],
+      colorSpecialties: tailor.color_specialties || [],
+      sizeRanges: tailor.size_ranges || [],
+      languagesSpoken: tailor.languages_spoken || [],
+      minDeliveryDays: tailor.min_delivery_days,
+      maxDeliveryDays: tailor.max_delivery_days,
     };
   }
 
@@ -419,7 +461,7 @@ export class TailorSearchRepository {
    */
   private getAppliedFilters(filters: TailorSearchFilters): string[] {
     const applied: string[] = [];
-    
+
     if (filters.query) applied.push('query');
     if (filters.city) applied.push('city');
     if (filters.region) applied.push('region');
@@ -429,7 +471,15 @@ export class TailorSearchRepository {
     if (filters.location) applied.push('location');
     if (filters.verified !== undefined) applied.push('verified');
     if (filters.acceptsRushOrders !== undefined) applied.push('acceptsRushOrders');
-    
+    // Story 4.4: Advanced filters
+    if (filters.occasions?.length) applied.push('occasions');
+    if (filters.deliveryTimeframeMin || filters.deliveryTimeframeMax) applied.push('deliveryTimeframe');
+    if (filters.styleCategories?.length) applied.push('styleCategories');
+    if (filters.fabricPreferences?.length) applied.push('fabricPreferences');
+    if (filters.colorPreferences?.length) applied.push('colorPreferences');
+    if (filters.sizeRanges?.length) applied.push('sizeRanges');
+    if (filters.languages?.length) applied.push('languages');
+
     return applied;
   }
 }

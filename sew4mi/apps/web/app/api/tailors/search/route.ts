@@ -53,12 +53,23 @@ export async function GET(_request: NextRequest) {
     const processedFilters: any = { ...rawFilters };
     
     // Handle array parameters
-    if (processedFilters.specializations && typeof processedFilters.specializations === 'string') {
-      processedFilters.specializations = processedFilters.specializations.split(',').map((s: string) => s.trim());
-    }
-    
+    const arrayParams = [
+      'specializations',
+      'occasions',
+      'styleCategories',
+      'fabricPreferences',
+      'colorPreferences',
+      'sizeRanges',
+      'languages'
+    ];
+    arrayParams.forEach(key => {
+      if (processedFilters[key] && typeof processedFilters[key] === 'string') {
+        processedFilters[key] = (processedFilters[key] as string).split(',').map((s: string) => s.trim());
+      }
+    });
+
     // Convert numeric parameters
-    ['minRating', 'maxPrice', 'minPrice', 'limit'].forEach(key => {
+    ['minRating', 'maxPrice', 'minPrice', 'limit', 'deliveryTimeframeMin', 'deliveryTimeframeMax'].forEach(key => {
       if (processedFilters[key] && typeof processedFilters[key] === 'string') {
         processedFilters[key] = parseFloat(processedFilters[key] as string);
       }

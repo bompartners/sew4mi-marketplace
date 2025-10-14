@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, MapPin, Star, DollarSign, Filter, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  X, MapPin, Star, DollarSign, Filter, ChevronDown, ChevronUp,
+  Calendar, Clock, Palette, Package, Users, Languages, Ruler
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -15,6 +18,11 @@ import {
   GHANA_MAJOR_CITIES,
   GHANA_SPECIALIZATIONS,
   PRICE_RANGES,
+  GHANA_OCCASIONS,
+  STYLE_CATEGORIES,
+  GHANA_FABRICS,
+  SIZE_RANGES,
+  GHANA_LANGUAGES,
 } from '@sew4mi/shared';
 import { GHANA_REGIONS } from '@sew4mi/shared/constants/tailors';
 
@@ -36,6 +44,13 @@ export function FilterPanel({
     rating: true,
     price: true,
     specializations: false,
+    occasions: false,
+    deliveryTimeframe: false,
+    styleCategories: false,
+    fabricPreferences: false,
+    colorPreferences: false,
+    sizeRanges: false,
+    languages: false,
     other: false,
   });
 
@@ -54,6 +69,14 @@ export function FilterPanel({
     filters.minPrice,
     filters.maxPrice,
     filters.specializations?.length,
+    filters.occasions?.length,
+    filters.deliveryTimeframeMin,
+    filters.deliveryTimeframeMax,
+    filters.styleCategories?.length,
+    filters.fabricPreferences?.length,
+    filters.colorPreferences?.length,
+    filters.sizeRanges?.length,
+    filters.languages?.length,
     filters.verified,
     filters.acceptsRushOrders,
   ].filter(Boolean).length;
@@ -74,6 +97,20 @@ export function FilterPanel({
       minPrice: range.min,
       maxPrice: range.max === 10000 ? undefined : range.max,
     });
+  };
+
+  // Story 4.4: Handle array filter toggles
+  const handleArrayFilterToggle = (
+    filterKey: 'occasions' | 'styleCategories' | 'fabricPreferences' | 'colorPreferences' | 'sizeRanges' | 'languages',
+    value: string,
+    checked: boolean
+  ) => {
+    const current = filters[filterKey] || [];
+    const updated = checked
+      ? [...current, value]
+      : current.filter(v => v !== value);
+
+    onFiltersChange({ [filterKey]: updated });
   };
 
   return (
@@ -305,6 +342,341 @@ export function FilterPanel({
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Story 4.4: Occasions */}
+      <Collapsible
+        open={expandedSections.occasions}
+        onOpenChange={() => toggleSection('occasions')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              <span className="font-medium">Occasions</span>
+              {filters.occasions && filters.occasions.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.occasions.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.occasions ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {GHANA_OCCASIONS.map(occasion => (
+              <label key={occasion} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={filters.occasions?.includes(occasion) || false}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterToggle('occasions', occasion, !!checked)
+                  }
+                />
+                <span className="text-sm">{occasion}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Delivery Timeframe */}
+      <Collapsible
+        open={expandedSections.deliveryTimeframe}
+        onOpenChange={() => toggleSection('deliveryTimeframe')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-600" />
+              <span className="font-medium">Delivery Time</span>
+            </div>
+            {expandedSections.deliveryTimeframe ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Minimum Days</Label>
+              <Select
+                value={filters.deliveryTimeframeMin?.toString() || ''}
+                onValueChange={(value) =>
+                  onFiltersChange({ deliveryTimeframeMin: value ? Number(value) : undefined })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="1">1 day</SelectItem>
+                  <SelectItem value="3">3 days</SelectItem>
+                  <SelectItem value="7">1 week</SelectItem>
+                  <SelectItem value="14">2 weeks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Maximum Days</Label>
+              <Select
+                value={filters.deliveryTimeframeMax?.toString() || ''}
+                onValueChange={(value) =>
+                  onFiltersChange({ deliveryTimeframeMax: value ? Number(value) : undefined })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Any" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Any</SelectItem>
+                  <SelectItem value="7">1 week</SelectItem>
+                  <SelectItem value="14">2 weeks</SelectItem>
+                  <SelectItem value="21">3 weeks</SelectItem>
+                  <SelectItem value="30">1 month</SelectItem>
+                  <SelectItem value="60">2 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Style Categories */}
+      <Collapsible
+        open={expandedSections.styleCategories}
+        onOpenChange={() => toggleSection('styleCategories')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-pink-600" />
+              <span className="font-medium">Style</span>
+              {filters.styleCategories && filters.styleCategories.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.styleCategories.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.styleCategories ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2">
+            {STYLE_CATEGORIES.map(style => (
+              <label key={style.value} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={filters.styleCategories?.includes(style.value) || false}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterToggle('styleCategories', style.value, !!checked)
+                  }
+                />
+                <span className="text-sm">
+                  {style.icon} {style.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Fabric Preferences */}
+      <Collapsible
+        open={expandedSections.fabricPreferences}
+        onOpenChange={() => toggleSection('fabricPreferences')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-amber-600" />
+              <span className="font-medium">Fabrics</span>
+              {filters.fabricPreferences && filters.fabricPreferences.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.fabricPreferences.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.fabricPreferences ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {GHANA_FABRICS.map(fabric => (
+              <label key={fabric} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={filters.fabricPreferences?.includes(fabric) || false}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterToggle('fabricPreferences', fabric, !!checked)
+                  }
+                />
+                <span className="text-sm">{fabric}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Color Preferences */}
+      <Collapsible
+        open={expandedSections.colorPreferences}
+        onOpenChange={() => toggleSection('colorPreferences')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Palette className="h-4 w-4 text-red-600" />
+              <span className="font-medium">Colors</span>
+              {filters.colorPreferences && filters.colorPreferences.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.colorPreferences.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.colorPreferences ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2">
+            <Label className="text-xs text-gray-600">Custom Input</Label>
+            <input
+              type="text"
+              placeholder="Enter color (e.g., Gold, Blue)"
+              className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const value = e.currentTarget.value.trim();
+                  if (value && !filters.colorPreferences?.includes(value)) {
+                    handleArrayFilterToggle('colorPreferences', value, true);
+                    e.currentTarget.value = '';
+                  }
+                }
+              }}
+            />
+            {filters.colorPreferences && filters.colorPreferences.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {filters.colorPreferences.map(color => (
+                  <Badge key={color} variant="secondary" className="text-xs">
+                    {color}
+                    <X
+                      className="h-3 w-3 ml-1 cursor-pointer"
+                      onClick={() => handleArrayFilterToggle('colorPreferences', color, false)}
+                    />
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Size Ranges */}
+      <Collapsible
+        open={expandedSections.sizeRanges}
+        onOpenChange={() => toggleSection('sizeRanges')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Ruler className="h-4 w-4 text-indigo-600" />
+              <span className="font-medium">Size Ranges</span>
+              {filters.sizeRanges && filters.sizeRanges.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.sizeRanges.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.sizeRanges ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2">
+            {SIZE_RANGES.map(size => (
+              <label key={size.value} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={filters.sizeRanges?.includes(size.value) || false}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterToggle('sizeRanges', size.value, !!checked)
+                  }
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{size.label}</span>
+                  <span className="text-xs text-gray-500">{size.description}</span>
+                </div>
+              </label>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Story 4.4: Languages */}
+      <Collapsible
+        open={expandedSections.languages}
+        onOpenChange={() => toggleSection('languages')}
+      >
+        <CollapsibleTrigger className="w-full">
+          <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Languages className="h-4 w-4 text-teal-600" />
+              <span className="font-medium">Languages</span>
+              {filters.languages && filters.languages.length > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {filters.languages.length}
+                </Badge>
+              )}
+            </div>
+            {expandedSections.languages ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </div>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent className="px-3 pb-3">
+          <div className="space-y-2">
+            {GHANA_LANGUAGES.map(lang => (
+              <label key={lang.code} className="flex items-center gap-3 cursor-pointer">
+                <Checkbox
+                  checked={filters.languages?.includes(lang.code) || false}
+                  onCheckedChange={(checked) =>
+                    handleArrayFilterToggle('languages', lang.code, !!checked)
+                  }
+                />
+                <span className="text-sm">{lang.label}</span>
+              </label>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Other Options */}
       <Collapsible
         open={expandedSections.other}
@@ -384,16 +756,109 @@ export function FilterPanel({
               {filters.specializations?.map(spec => (
                 <Badge key={spec} variant="secondary" className="text-xs">
                   {spec}
-                  <X 
+                  <X
                     className="h-3 w-3 ml-1 cursor-pointer"
-                    onClick={() => 
-                      onFiltersChange({ 
-                        specializations: filters.specializations?.filter(s => s !== spec) 
+                    onClick={() =>
+                      onFiltersChange({
+                        specializations: filters.specializations?.filter(s => s !== spec)
                       })
                     }
                   />
                 </Badge>
               ))}
+              {/* Story 4.4: New filter badges */}
+              {filters.occasions?.map(occasion => (
+                <Badge key={occasion} variant="secondary" className="text-xs">
+                  {occasion}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        occasions: filters.occasions?.filter(o => o !== occasion)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {filters.styleCategories?.map(style => (
+                <Badge key={style} variant="secondary" className="text-xs">
+                  {STYLE_CATEGORIES.find(s => s.value === style)?.icon} {style}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        styleCategories: filters.styleCategories?.filter(s => s !== style)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {filters.fabricPreferences?.map(fabric => (
+                <Badge key={fabric} variant="secondary" className="text-xs">
+                  {fabric}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        fabricPreferences: filters.fabricPreferences?.filter(f => f !== fabric)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {filters.colorPreferences?.map(color => (
+                <Badge key={color} variant="secondary" className="text-xs">
+                  {color}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        colorPreferences: filters.colorPreferences?.filter(c => c !== color)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {filters.sizeRanges?.map(size => (
+                <Badge key={size} variant="secondary" className="text-xs">
+                  {SIZE_RANGES.find(s => s.value === size)?.label}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        sizeRanges: filters.sizeRanges?.filter(s => s !== size)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {filters.languages?.map(lang => (
+                <Badge key={lang} variant="secondary" className="text-xs">
+                  {GHANA_LANGUAGES.find(l => l.code === lang)?.label}
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        languages: filters.languages?.filter(l => l !== lang)
+                      })
+                    }
+                  />
+                </Badge>
+              ))}
+              {(filters.deliveryTimeframeMin || filters.deliveryTimeframeMax) && (
+                <Badge variant="secondary" className="text-xs">
+                  Delivery: {filters.deliveryTimeframeMin || 0}-{filters.deliveryTimeframeMax || '∞'} days
+                  <X
+                    className="h-3 w-3 ml-1 cursor-pointer"
+                    onClick={() =>
+                      onFiltersChange({
+                        deliveryTimeframeMin: undefined,
+                        deliveryTimeframeMax: undefined,
+                      })
+                    }
+                  />
+                </Badge>
+              )}
             </div>
           </div>
         </Card>

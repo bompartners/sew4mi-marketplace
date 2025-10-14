@@ -12,7 +12,7 @@ CREATE TABLE public.tailor_applications (
   portfolio_description TEXT NOT NULL,
   business_location TEXT NOT NULL,
   workspace_photos TEXT[] DEFAULT '{}',
-  references JSONB DEFAULT '[]'::jsonb,
+  business_references JSONB DEFAULT '[]'::jsonb,
   business_registration_url TEXT,
   tax_id TEXT,
   status TEXT CHECK (status IN ('PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'RESUBMITTED')) DEFAULT 'PENDING',
@@ -26,11 +26,13 @@ CREATE TABLE public.tailor_applications (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   metadata JSONB DEFAULT '{}'::jsonb,
-  UNIQUE(user_id), -- One application per user
-  INDEX idx_tailor_applications_user (user_id),
-  INDEX idx_tailor_applications_status (status),
-  INDEX idx_tailor_applications_submitted (submitted_at DESC)
+  UNIQUE(user_id) -- One application per user
 );
+
+-- Create indexes for tailor_applications
+CREATE INDEX idx_tailor_applications_user ON tailor_applications (user_id);
+CREATE INDEX idx_tailor_applications_status ON tailor_applications (status);
+CREATE INDEX idx_tailor_applications_submitted ON tailor_applications (submitted_at DESC);
 
 -- Create audit logs table for role changes and other admin actions
 CREATE TABLE public.audit_logs (
@@ -44,13 +46,15 @@ CREATE TABLE public.audit_logs (
   performed_at TIMESTAMPTZ DEFAULT NOW(),
   ip_address INET,
   user_agent TEXT,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  INDEX idx_audit_logs_table (table_name),
-  INDEX idx_audit_logs_record (record_id),
-  INDEX idx_audit_logs_user (user_id),
-  INDEX idx_audit_logs_performed (performed_at DESC),
-  INDEX idx_audit_logs_action (action)
+  metadata JSONB DEFAULT '{}'::jsonb
 );
+
+-- Create indexes for audit_logs
+CREATE INDEX idx_audit_logs_table ON audit_logs (table_name);
+CREATE INDEX idx_audit_logs_record ON audit_logs (record_id);
+CREATE INDEX idx_audit_logs_user ON audit_logs (user_id);
+CREATE INDEX idx_audit_logs_performed ON audit_logs (performed_at DESC);
+CREATE INDEX idx_audit_logs_action ON audit_logs (action);
 
 -- Create role change requests table
 CREATE TABLE public.role_change_requests (
@@ -69,12 +73,14 @@ CREATE TABLE public.role_change_requests (
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  metadata JSONB DEFAULT '{}'::jsonb,
-  INDEX idx_role_change_requests_user (user_id),
-  INDEX idx_role_change_requests_status (status),
-  INDEX idx_role_change_requests_requested_by (requested_by),
-  INDEX idx_role_change_requests_created (created_at DESC)
+  metadata JSONB DEFAULT '{}'::jsonb
 );
+
+-- Create indexes for role_change_requests
+CREATE INDEX idx_role_change_requests_user ON role_change_requests (user_id);
+CREATE INDEX idx_role_change_requests_status ON role_change_requests (status);
+CREATE INDEX idx_role_change_requests_requested_by ON role_change_requests (requested_by);
+CREATE INDEX idx_role_change_requests_created ON role_change_requests (created_at DESC);
 
 -- Add updated_at triggers for new tables
 CREATE TRIGGER update_tailor_applications_updated_at 
@@ -293,9 +299,9 @@ CREATE POLICY "Admins can manage role change requests" ON public.role_change_req
     )
   );
 
--- Create indexes for performance
-CREATE INDEX CONCURRENTLY idx_users_role ON public.users(role);
-CREATE INDEX CONCURRENTLY idx_users_created_role ON public.users(created_at, role);
+-- Create indexes for performance (removed CONCURRENTLY as migrations run in a transaction)
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
+CREATE INDEX IF NOT EXISTS idx_users_created_role ON public.users(created_at, role);
 
 -- Add comments for documentation
 COMMENT ON TABLE public.tailor_applications IS 'Applications submitted by users wanting to become expert tailors';

@@ -100,13 +100,15 @@ CREATE TABLE public.tailor_profiles (
   bank_account_details JSONB,
   mobile_money_details JSONB,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_tailor_location USING GIST (location),
-  INDEX idx_tailor_city (city),
-  INDEX idx_tailor_region (region),
-  INDEX idx_tailor_rating (rating DESC),
-  INDEX idx_tailor_verification (verification_status)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for tailor_profiles
+CREATE INDEX idx_tailor_location ON tailor_profiles USING GIST (location);
+CREATE INDEX idx_tailor_city ON tailor_profiles (city);
+CREATE INDEX idx_tailor_region ON tailor_profiles (region);
+CREATE INDEX idx_tailor_rating ON tailor_profiles (rating DESC);
+CREATE INDEX idx_tailor_verification ON tailor_profiles (verification_status);
 
 -- Measurement profiles table
 CREATE TABLE public.measurement_profiles (
@@ -121,9 +123,11 @@ CREATE TABLE public.measurement_profiles (
   last_updated_by UUID REFERENCES public.users(id),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, profile_name),
-  INDEX idx_measurement_user (user_id)
+  UNIQUE(user_id, profile_name)
 );
+
+-- Create index for measurement_profiles
+CREATE INDEX idx_measurement_user ON measurement_profiles (user_id);
 
 -- Orders table
 CREATE TABLE public.orders (
@@ -159,13 +163,15 @@ CREATE TABLE public.orders (
   cancelled_at TIMESTAMPTZ,
   cancelled_reason TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  metadata JSONB DEFAULT '{}'::jsonb,
-  INDEX idx_order_customer (customer_id),
-  INDEX idx_order_tailor (tailor_id),
-  INDEX idx_order_status (status),
-  INDEX idx_order_created (created_at DESC),
-  INDEX idx_order_delivery_date (delivery_date)
+  metadata JSONB DEFAULT '{}'::jsonb
 );
+
+-- Create indexes for orders
+CREATE INDEX idx_order_customer ON orders (customer_id);
+CREATE INDEX idx_order_tailor ON orders (tailor_id);
+CREATE INDEX idx_order_status ON orders (status);
+CREATE INDEX idx_order_created ON orders (created_at DESC);
+CREATE INDEX idx_order_delivery_date ON orders (delivery_date);
 
 -- Order milestones table
 CREATE TABLE public.order_milestones (
@@ -182,10 +188,12 @@ CREATE TABLE public.order_milestones (
   customer_approved BOOLEAN DEFAULT false,
   customer_approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_milestone_order (order_id),
-  INDEX idx_milestone_status (milestone_status)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for order_milestones
+CREATE INDEX idx_milestone_order ON order_milestones (order_id);
+CREATE INDEX idx_milestone_status ON order_milestones (milestone_status);
 
 -- Payment transactions table
 CREATE TABLE public.payment_transactions (
@@ -213,13 +221,15 @@ CREATE TABLE public.payment_transactions (
   fee_amount DECIMAL(10,2),
   net_amount DECIMAL(10,2),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_transaction_order (order_id),
-  INDEX idx_transaction_user (user_id),
-  INDEX idx_transaction_status (status),
-  INDEX idx_transaction_provider (payment_provider),
-  INDEX idx_transaction_created (created_at DESC)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for payment_transactions
+CREATE INDEX idx_transaction_order ON payment_transactions (order_id);
+CREATE INDEX idx_transaction_user ON payment_transactions (user_id);
+CREATE INDEX idx_transaction_status ON payment_transactions (status);
+CREATE INDEX idx_transaction_provider ON payment_transactions (payment_provider);
+CREATE INDEX idx_transaction_created ON payment_transactions (created_at DESC);
 
 -- Group orders table
 CREATE TABLE public.group_orders (
@@ -235,10 +245,12 @@ CREATE TABLE public.group_orders (
   whatsapp_group_id TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_group_organizer (organizer_id),
-  INDEX idx_group_status (status)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for group_orders
+CREATE INDEX idx_group_organizer ON group_orders (organizer_id);
+CREATE INDEX idx_group_status ON group_orders (status);
 
 -- Reviews table
 CREATE TABLE public.reviews (
@@ -260,12 +272,14 @@ CREATE TABLE public.reviews (
   reported BOOLEAN DEFAULT false,
   reported_reason TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_review_tailor (tailor_id),
-  INDEX idx_review_customer (customer_id),
-  INDEX idx_review_rating (rating DESC),
-  INDEX idx_review_created (created_at DESC)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for reviews
+CREATE INDEX idx_review_tailor ON reviews (tailor_id);
+CREATE INDEX idx_review_customer ON reviews (customer_id);
+CREATE INDEX idx_review_rating ON reviews (rating DESC);
+CREATE INDEX idx_review_created ON reviews (created_at DESC);
 
 -- Disputes table
 CREATE TABLE public.disputes (
@@ -282,11 +296,13 @@ CREATE TABLE public.disputes (
   refund_amount DECIMAL(10,2),
   compensation_amount DECIMAL(10,2),
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  INDEX idx_dispute_order (order_id),
-  INDEX idx_dispute_status (status),
-  INDEX idx_dispute_assigned (assigned_to)
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Create indexes for disputes
+CREATE INDEX idx_dispute_order ON disputes (order_id);
+CREATE INDEX idx_dispute_status ON disputes (status);
+CREATE INDEX idx_dispute_assigned ON disputes (assigned_to);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()

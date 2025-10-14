@@ -18,10 +18,8 @@ CREATE INDEX IF NOT EXISTS idx_customer_favorites_tailor ON customer_favorites(t
 CREATE INDEX IF NOT EXISTS idx_customer_favorites_created_at ON customer_favorites(created_at);
 
 -- Add search optimization indexes to tailor_profiles
--- Full-text search index for business names and specializations
-CREATE INDEX IF NOT EXISTS idx_tailor_profiles_search ON tailor_profiles USING GIN(
-    to_tsvector('english', COALESCE(business_name, '') || ' ' || COALESCE(array_to_string(specializations, ' '), ''))
-);
+-- Note: Full-text search will use function-based search rather than index on expression
+-- because to_tsvector is not immutable due to configuration dependency
 
 -- Composite indexes for common search patterns
 CREATE INDEX IF NOT EXISTS idx_tailor_profiles_city_rating ON tailor_profiles(city, rating DESC)
@@ -34,8 +32,8 @@ CREATE INDEX IF NOT EXISTS idx_tailor_profiles_location_verified ON tailor_profi
 WHERE verification_status = 'VERIFIED';
 
 -- Index for response time sorting
-CREATE INDEX IF NOT EXISTS idx_tailor_profiles_response_time ON tailor_profiles(average_response_hours ASC)
-WHERE verification_status = 'VERIFIED' AND average_response_hours IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tailor_profiles_response_time ON tailor_profiles(response_time_hours ASC)
+WHERE verification_status = 'VERIFIED' AND response_time_hours IS NOT NULL;
 
 -- Index for completion rate and activity
 CREATE INDEX IF NOT EXISTS idx_tailor_profiles_activity ON tailor_profiles(completion_rate DESC, updated_at DESC)
@@ -62,8 +60,7 @@ CREATE TABLE IF NOT EXISTS search_analytics (
 -- Indexes for search analytics
 CREATE INDEX IF NOT EXISTS idx_search_analytics_user ON search_analytics(user_id);
 CREATE INDEX IF NOT EXISTS idx_search_analytics_created_at ON search_analytics(created_at);
-CREATE INDEX IF NOT EXISTS idx_search_analytics_query ON search_analytics USING GIN(to_tsvector('english', query))
-WHERE query IS NOT NULL;
+-- Note: Full-text search index on query not possible due to immutability constraints
 
 -- Create featured_tailors table for admin-curated featured tailors
 CREATE TABLE IF NOT EXISTS featured_tailors (
@@ -174,8 +171,8 @@ BEGIN
     v_review_score := LEAST(v_tailor.total_reviews / 50.0, 1.0) * 10;
     
     -- Response time score (0-20 points, faster = better)
-    IF v_tailor.average_response_hours IS NOT NULL THEN
-        v_response_score := GREATEST(0, (24 - v_tailor.average_response_hours) / 24.0) * 20;
+    IF v_tailor.response_time_hours IS NOT NULL THEN
+        v_response_score := GREATEST(0, (24 - v_tailor.response_time_hours) / 24.0) * 20;
     END IF;
     
     -- Completion rate score (0-15 points)
@@ -229,7 +226,7 @@ BEGIN
         jsonb_build_object(
             'city', tp.city,
             'rating', tp.rating,
-            'imageUrl', tp.profile_photo
+            'imageUrl', tp.portfolio_url
         ) as meta
     FROM tailor_profiles tp
     WHERE tp.verification_status = 'VERIFIED'

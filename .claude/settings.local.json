@@ -68,7 +68,12 @@
       "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c \"\\df get_dispute_analytics\")",
       "Bash(npx supabase:*)",
       "Bash(PGPASSWORD=postgres psql -h 127.0.0.1 -p 54322 -U postgres -d postgres -c \"SELECT id, email, role FROM users WHERE email = ''adwoa@example.com'';\")",
-      "Bash(PORT=3000 NEXT_TELEMETRY_DISABLED=1 pnpm dev)"
+      "Bash(PORT=3000 NEXT_TELEMETRY_DISABLED=1 pnpm dev)",
+      "Bash(PGPASSWORD=postgres psql:*)",
+      "Bash(docker compose:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(cp:*)"
     ],
     "deny": [],
     "ask": []

@@ -121,3 +121,88 @@ export const SEARCH_RATE_LIMITS = {
   AUTOCOMPLETE_PER_MINUTE: 200,
   FAVORITES_PER_MINUTE: 50,
 } as const;
+
+// Story 4.4: Advanced search filter constants
+
+// Ghana-specific occasions
+export const GHANA_OCCASIONS = [
+  'Wedding',
+  'Engagement',
+  'Funeral',
+  'Naming Ceremony',
+  'Church Service',
+  'Corporate Event',
+  'Festival',
+  'Birthday Party',
+  'Graduation',
+  'Casual Wear',
+] as const;
+
+// Style categories with icons
+export const STYLE_CATEGORIES = [
+  { value: 'traditional', label: 'Traditional', icon: '🏛️', description: 'Classic Ghanaian styles' },
+  { value: 'contemporary', label: 'Contemporary', icon: '✨', description: 'Modern fashion designs' },
+  { value: 'fusion', label: 'Fusion', icon: '🔄', description: 'Blend of traditional and modern' },
+] as const;
+
+// Ghana fabric types
+export const GHANA_FABRICS = [
+  'Kente',
+  'Ankara',
+  'Batik',
+  'Cotton',
+  'Silk',
+  'Linen',
+  'Lace',
+  'Velvet',
+  'African Print',
+  'Woodin',
+  'Vlisco',
+  'Dashiki',
+  'Adinkra',
+] as const;
+
+// Ghana languages
+export const GHANA_LANGUAGES = [
+  { code: 'EN', label: 'English' },
+  { code: 'TWI', label: 'Twi' },
+  { code: 'GA', label: 'Ga' },
+  { code: 'EWE', label: 'Ewe' },
+  { code: 'HAUSA', label: 'Hausa' },
+  { code: 'FANTE', label: 'Fante' },
+  { code: 'DAGBANI', label: 'Dagbani' },
+  { code: 'NZEMA', label: 'Nzema' },
+] as const;
+
+// Size ranges with descriptions
+export const SIZE_RANGES = [
+  { value: 'petite', label: 'Petite', description: 'XS-M sizes' },
+  { value: 'regular', label: 'Regular', description: 'S-XL sizes' },
+  { value: 'plus-size', label: 'Plus Size', description: '2XL+ sizes' },
+  { value: 'children', label: 'Children', description: 'Ages 0-16' },
+  { value: 'tall', label: 'Tall', description: 'Extended lengths' },
+] as const;
+
+// Delivery timeframe presets (in days)
+export const DELIVERY_TIMEFRAMES = [
+  { label: 'Rush (1-3 days)', min: 1, max: 3 },
+  { label: 'Fast (4-7 days)', min: 4, max: 7 },
+  { label: 'Standard (1-2 weeks)', min: 8, max: 14 },
+  { label: 'Flexible (2-4 weeks)', min: 15, max: 28 },
+  { label: 'Extended (1+ month)', min: 29, max: 90 },
+] as const;
+
+// Saved search configuration
+export const SAVED_SEARCH_CONFIG = {
+  MAX_SAVED_SEARCHES_PER_USER: 10,
+  MIN_NAME_LENGTH: 3,
+  MAX_NAME_LENGTH: 100,
+  ALERT_CHECK_INTERVAL_MINUTES: 15, // For instant alerts
+} as const;
+
+// Alert frequency options
+export const ALERT_FREQUENCIES = [
+  { value: 'instant', label: 'Instant', description: 'Notify immediately when new matches are found' },
+  { value: 'daily', label: 'Daily', description: 'Daily digest at 8:00 AM' },
+  { value: 'weekly', label: 'Weekly', description: 'Weekly summary on Mondays' },
+] as const;

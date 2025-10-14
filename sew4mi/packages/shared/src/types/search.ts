@@ -17,6 +17,15 @@ export interface TailorSearchFilters {
   };
   verified?: boolean;
   acceptsRushOrders?: boolean;
+  // Story 4.4: Advanced search filters
+  occasions?: string[]; // Wedding, Funeral, Church Service, etc.
+  deliveryTimeframeMin?: number; // Minimum delivery days
+  deliveryTimeframeMax?: number; // Maximum delivery days
+  styleCategories?: string[]; // traditional, contemporary, fusion
+  fabricPreferences?: string[]; // Kente, Ankara, Cotton, Silk, etc.
+  colorPreferences?: string[]; // Color expertise
+  sizeRanges?: string[]; // petite, regular, plus-size, children, tall
+  languages?: string[]; // EN, TWI, GA, EWE, HAUSA, etc.
 }
 
 export interface TailorSearchResult {
@@ -64,6 +73,15 @@ export interface TailorSearchItem {
   maxPrice?: number; // calculated from pricing tiers
   isFavorite?: boolean; // for authenticated users
   isOnline?: boolean; // last activity within 24 hours
+  // Story 4.4: Advanced search attributes
+  occasions?: string[]; // Supported occasions
+  styleCategories?: string[]; // traditional, contemporary, fusion
+  fabricSpecialties?: string[]; // Fabric expertise
+  colorSpecialties?: string[]; // Color expertise
+  sizeRanges?: string[]; // Supported size ranges
+  languagesSpoken?: string[]; // Languages spoken
+  minDeliveryDays?: number; // Minimum delivery timeframe
+  maxDeliveryDays?: number; // Maximum delivery timeframe
 }
 
 export interface AutocompleteResult {
@@ -126,4 +144,37 @@ export interface TailorSearchStats {
   clickThroughRate: number;
   conversionRate: number;
   popularFilters: Record<string, number>;
+}
+
+// Story 4.4: Saved search types
+export interface SavedSearch {
+  id: string;
+  customerId: string;
+  name: string;
+  filters: TailorSearchFilters;
+  alertEnabled: boolean;
+  alertFrequency: 'daily' | 'weekly' | 'instant';
+  createdAt: string;
+  updatedAt: string;
+  lastNotifiedAt: string | null;
+}
+
+export interface SavedSearchInput {
+  name: string;
+  filters: TailorSearchFilters;
+  alertEnabled?: boolean;
+  alertFrequency?: 'daily' | 'weekly' | 'instant';
+}
+
+export interface SavedSearchUpdate {
+  name?: string;
+  filters?: TailorSearchFilters;
+  alertEnabled?: boolean;
+  alertFrequency?: 'daily' | 'weekly' | 'instant';
+}
+
+export interface SavedSearchMatch {
+  tailorId: string;
+  businessName: string;
+  matchedAt: string;
 }
