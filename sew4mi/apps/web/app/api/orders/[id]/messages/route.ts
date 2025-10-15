@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase';
 import { z } from 'zod';
-import { 
+import {
   OrderMessage,
   OrderMessageType,
   OrderParticipantRole,
   SendOrderMessageRequest,
   SendOrderMessageResponse
 } from '@sew4mi/shared/types';
+import { sanitizeMessage, sanitizeUrl } from '@/lib/utils/sanitize';
 
 /**
  * GET /api/orders/[id]/messages
@@ -158,7 +159,19 @@ export async function POST(
       mediaUrl: z.string().url().optional()
     });
 
-    const { message, messageType, mediaUrl } = messageSchema.parse(body);
+    const { message: rawMessage, messageType, mediaUrl: rawMediaUrl } = messageSchema.parse(body);
+
+    // Sanitize message content to prevent XSS attacks
+    const message = sanitizeMessage(rawMessage);
+    const mediaUrl = rawMediaUrl ? sanitizeUrl(rawMediaUrl) : undefined;
+
+    // Validate sanitized message is not empty
+    if (!message.trim()) {
+      return NextResponse.json(
+        { success: false, errors: ['Message content cannot be empty after sanitization'] },
+        { status: 400 }
+      );
+    }
 
     // Verify user has access to this order and get user details
     const { data: orderData, error: orderError } = await supabase

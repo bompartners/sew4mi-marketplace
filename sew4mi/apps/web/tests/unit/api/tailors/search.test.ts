@@ -1,25 +1,31 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET } from '@/app/api/tailors/search/route';
-import { TailorSearchService } from '@/lib/services/tailor-search.service';
 import { createClient } from '@/lib/supabase/server';
 
+// Mock search tailors function - must be defined before vi.mock()
+const mockSearchTailors = vi.fn();
+
 // Mock dependencies
-vi.mock('@/lib/services/tailor-search.service');
 vi.mock('@/lib/supabase/server');
 
+vi.mock('@/lib/services/tailor-search.service', () => {
+  return {
+    TailorSearchService: class {
+      searchTailors = mockSearchTailors;
+    },
+  };
+});
+
+// Import the route handler after mocking
+const { GET } = await import('@/app/api/tailors/search/route');
+
 describe('/api/tailors/search', () => {
-  let mockSearchService: any;
   let mockSupabase: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSearchTailors.mockReset();
 
-    // Mock search service
-    mockSearchService = {
-      searchTailors: vi.fn(),
-    } as any;
-    
     // Mock supabase client
     mockSupabase = {
       auth: {
@@ -28,7 +34,6 @@ describe('/api/tailors/search', () => {
     };
 
     (createClient as any).mockReturnValue(mockSupabase);
-    (TailorSearchService as any).mockImplementation(() => mockSearchService);
   });
 
   afterEach(() => {
@@ -61,7 +66,7 @@ describe('/api/tailors/search', () => {
         },
       };
 
-      mockSearchService.searchTailors.mockResolvedValue(mockResult);
+      mockSearchTailors.mockResolvedValue(mockResult);
 
       // Create request with search parameters
       const url = 'http://localhost:3000/api/tailors/search?query=kente&city=Accra&minRating=4.0';
@@ -72,7 +77,7 @@ describe('/api/tailors/search', () => {
 
       expect(response.status).toBe(200);
       expect(data).toEqual(mockResult);
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.objectContaining({
           query: 'kente',
           city: 'Accra',
@@ -95,7 +100,7 @@ describe('/api/tailors/search', () => {
         total: 0,
       };
 
-      mockSearchService.searchTailors.mockResolvedValue(mockResult);
+      mockSearchTailors.mockResolvedValue(mockResult);
 
       const url = 'http://localhost:3000/api/tailors/search?query=tailor';
       const request = new NextRequest(url);
@@ -103,7 +108,7 @@ describe('/api/tailors/search', () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.objectContaining({ query: 'tailor' }),
         undefined,
         expect.any(String)
@@ -115,7 +120,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockResolvedValue({
+      mockSearchTailors.mockResolvedValue({
         tailors: [],
         hasMore: false,
         total: 0,
@@ -126,7 +131,7 @@ describe('/api/tailors/search', () => {
 
       await GET(request);
 
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.objectContaining({
           specializations: ['Kente Weaving', 'Wedding Dresses'],
           verified: true,
@@ -141,7 +146,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockResolvedValue({
+      mockSearchTailors.mockResolvedValue({
         tailors: [],
         hasMore: false,
         total: 0,
@@ -152,7 +157,7 @@ describe('/api/tailors/search', () => {
 
       await GET(request);
 
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.objectContaining({
           location: {
             lat: 5.6037,
@@ -186,7 +191,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockRejectedValue(new Error('Database connection failed'));
+      mockSearchTailors.mockRejectedValue(new Error('Database connection failed'));
 
       const url = 'http://localhost:3000/api/tailors/search?query=test';
       const request = new NextRequest(url);
@@ -225,7 +230,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockResolvedValue({
+      mockSearchTailors.mockResolvedValue({
         tailors: [],
         hasMore: false,
         total: 0,
@@ -246,7 +251,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockResolvedValue({
+      mockSearchTailors.mockResolvedValue({
         tailors: [],
         hasMore: false,
         total: 0,
@@ -257,7 +262,7 @@ describe('/api/tailors/search', () => {
 
       await GET(request);
 
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.any(Object),
         undefined,
         expect.stringMatching(/^session-\d+-[a-z0-9]+$/)
@@ -269,7 +274,7 @@ describe('/api/tailors/search', () => {
         data: { user: null },
       });
 
-      mockSearchService.searchTailors.mockResolvedValue({
+      mockSearchTailors.mockResolvedValue({
         tailors: [],
         hasMore: false,
         total: 0,
@@ -284,7 +289,7 @@ describe('/api/tailors/search', () => {
 
       await GET(request);
 
-      expect(mockSearchService.searchTailors).toHaveBeenCalledWith(
+      expect(mockSearchTailors).toHaveBeenCalledWith(
         expect.any(Object),
         undefined,
         'custom-session-123'

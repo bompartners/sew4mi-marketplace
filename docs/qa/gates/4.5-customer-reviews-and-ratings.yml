@@ -1,0 +1,300 @@
+schema: 1
+story: "4.5"
+story_title: "Customer Reviews and Ratings"
+gate: READY
+status_reason: "Story is comprehensive, well-specified, and fully implementation-ready. All critical gaps filled through validation process. Clear specifications for database schema, business rules, moderation tools, photo storage, and accessibility requirements. Zero blockers identified."
+reviewer: "Sarah (Product Owner)"
+updated: "2025-10-15T00:00:00Z"
+
+waiver: { active: false }
+
+top_issues: []
+
+quality_score: 100
+expires: "2025-11-15T00:00:00Z"
+
+evidence:
+  validation_checks: 10
+  issues_resolved: 8
+  trace:
+    ac_covered: [1, 2, 3, 4, 5, 6, 7]
+    ac_gaps: []
+
+nfr_validation:
+  security:
+    status: READY
+    notes: "Comprehensive security: Content sanitization (bad-words package), rate limiting (1 review per order), purchase verification, photo upload restrictions (5MB, JPEG/PNG/WebP only), CSRF protection. No concerns identified."
+  performance:
+    status: READY
+    notes: "Clear performance benchmarks specified: Review list <500ms, submission <800ms, photo upload <3s on 3G, trigger execution <50ms, vote interaction <100ms optimistic. Database triggers for rating calculations prevent application-level bottlenecks."
+  reliability:
+    status: READY
+    notes: "Business rules fully documented including edge cases (disputed orders, missing delivery confirmations, group orders, partial deliveries). 90-day review window with 48-hour edit policy clearly specified."
+  maintainability:
+    status: READY
+    notes: "Clean architecture with repository/service/API/UI separation. All file paths specified. Moderation tools named (bad-words v3.0+). Notification templates provided. Storage service integration detailed."
+  accessibility:
+    status: READY
+    notes: "Comprehensive accessibility requirements: Keyboard navigation specs, screen reader announcements, complete ARIA attributes, focus management, color contrast ratios, minimum touch targets (44x44px stars, 48x48px buttons)."
+  testability:
+    status: READY
+    notes: "Test organization specified with unit/integration/E2E locations. Accessibility test requirements included. Mock patterns documented. All test scenarios identified."
+
+validation_improvements:
+  critical_fixes:
+    - issue: "Incorrect architecture file reference (unified-project-structure.md)"
+      resolution: "Corrected to source-tree.md"
+      impact: "Dev agent can now locate correct architecture documentation"
+
+  should_fix_additions:
+    - issue: "Missing photo storage implementation details"
+      resolution: "Added Photo Storage Configuration section with Supabase bucket setup, image transformation pipeline (3 variants), WebP compression, CDN caching, StorageService skeleton, and error handling"
+      impact: "Dev agent has complete storage architecture specification"
+
+    - issue: "Underspecified review eligibility logic"
+      resolution: "Added Review Eligibility Business Rules section with time windows (24hr-90day), order status requirements, edit/delete policy (48hr text, 7day photos), and 4 edge case specifications"
+      impact: "All business logic edge cases documented, no ambiguity"
+
+    - issue: "Moderation workflow not detailed"
+      resolution: "Specified bad-words npm package v3.0+ with Ghana-specific dictionary, spam detection rules (repeated text, excessive links, all-caps), auto-flagging thresholds (>3 profane words or >2 links)"
+      impact: "Dev agent knows exact tools and thresholds to implement"
+
+    - issue: "Missing database trigger detail for 4-category ratings"
+      resolution: "Clarified overall rating = AVG(fit, quality, communication, timeliness) per review; tailor rating = AVG(overall) across approved reviews only; added category-specific averages (rating_fit_avg, etc.) to tailor_profiles"
+      impact: "Database trigger logic completely specified, no guesswork"
+
+  enhancements_added:
+    - enhancement: "Notification template specifications"
+      details: "Added email/WhatsApp templates for review requests, tailor notifications, customer responses, and admin alerts with example message formats"
+      value: "Consistent notification UX, clear implementation guidance"
+
+    - enhancement: "Accessibility test requirements"
+      details: "Added keyboard navigation specs, screen reader announcements, ARIA attributes (role, aria-checked, aria-pressed, aria-required), focus management, color contrast, touch targets"
+      value: "WCAG AA compliance, better user experience for assistive technology users"
+
+    - enhancement: "Performance benchmarks"
+      details: "Added 8 specific performance targets: review list 500ms, submission 800ms, photo upload 3s on 3G, trigger 50ms, moderation queue 200ms, page load 1.5s, vote 100ms optimistic, search 400ms"
+      value: "Measurable acceptance criteria, clear optimization targets"
+
+path_consistency:
+  correction: "Removed sew4mi/ prefix from all file paths to match Story 4.4 pattern"
+  rationale: "Story 4.4 Dev Notes states 'All paths are relative to monorepo root' but doesn't use prefix in file locations"
+  files_updated: 6
+
+architecture_validation:
+  database_layer: "READY - Reviews table extensions specified (4 rating categories, moderation_status enum, helpful/unhelpful counts). New tables defined (review_photos, review_votes, review_responses). Trigger logic complete with formula specifications."
+  storage_layer: "READY - Supabase Storage bucket configuration, image transformation pipeline (thumbnail/medium/optimized), WebP compression, CDN caching, filename patterns, error handling all specified."
+  application_layer: "READY - Repository pattern with dependency injection (learned from 4.4), service layer with business logic, moderation integration (bad-words package), notification triggers, photo upload flow."
+  api_layer: "READY - 7 REST endpoints specified with authentication/authorization. Rate limiting, Zod validation, error handling, Edge function configuration all documented."
+  ui_layer: "READY - 8 React components specified with Shadcn/ui integration. State management (React Query + Zustand), optimistic updates, accessibility compliance, mobile-first design."
+
+business_rules_coverage:
+  time_windows:
+    - "Review prompt: 24 hours after delivery"
+    - "Submission window: up to 90 days post-delivery"
+    - "Edit window: 48 hours for text/ratings"
+    - "Photo additions: 7 days (max 5 photos)"
+
+  order_status_logic:
+    - "Must be DELIVERED status"
+    - "Disputed orders: hide review (not delete)"
+    - "Resolved disputes: customer-favor = visible, tailor-favor = mark DISPUTED_RESOLVED"
+    - "Cancelled/Refunded orders: review disabled"
+
+  edge_cases:
+    - "Missing delivery confirmation: auto-deliver after 14 days at READY_FOR_DELIVERY"
+    - "Group orders: separate review per item"
+    - "Partial deliveries: review per delivered item"
+    - "Reorders: each order gets separate review"
+
+moderation_specification:
+  profanity_filter:
+    tool: "bad-words npm package"
+    version: "v3.0+"
+    customization: "Ghana-specific dictionary additions"
+    threshold: ">3 profane words = auto-flag"
+
+  spam_detection:
+    patterns: ["Repeated text", "Excessive links", "All-caps text"]
+    threshold: ">2 links = auto-flag"
+    action: "Flag for manual review queue"
+
+  workflow:
+    states: ["PENDING", "APPROVED", "REJECTED", "FLAGGED"]
+    auto_approve: "Reviews with 0 profanity/spam triggers"
+    manual_review: "Admin moderation dashboard for flagged content"
+
+notification_templates:
+  review_request_email:
+    subject: "How was your experience with [Tailor Name]?"
+    body: "Hi [Customer Name], your order #[ORDER_NUM] was delivered! Share your experience to help other customers. Rate fit, quality, communication, and timeliness."
+
+  review_request_whatsapp:
+    message: "🧵 Sew4Mi: Your [garment type] from [Tailor Name] was delivered! How was your experience? Tap to review: [Short Link] Your feedback helps the community! 🌟"
+
+  tailor_new_review:
+    whatsapp: "⭐ New review for your work! [Customer] rated your [garment]: [overall rating]/5. View details: [Link]"
+    email: "Include full review text, ratings breakdown, and option to respond"
+
+  tailor_response_notification:
+    message: "[Tailor Name] responded to your review! View: [Link]"
+
+  admin_moderation_alert:
+    email: "Review flagged for moderation. Reason: [Profanity/Spam/User Report] | Reviewer: [name] | Review ID: [id]. Action Required: Approve/Reject | [Dashboard Link]"
+
+photo_storage_architecture:
+  bucket: "review-photos"
+  policies:
+    - "Public read access for approved reviews"
+    - "Authenticated write for customers with verified orders"
+    - "5MB file size limit"
+    - "MIME types: image/jpeg, image/png, image/webp"
+
+  filename_pattern: "{orderId}/{reviewId}/{timestamp}-{random}.jpg"
+
+  transformations:
+    thumbnail: "150x150px (review cards)"
+    medium: "600x600px (lightbox preview)"
+    optimized: "Max 1200px width (full-size viewing)"
+
+  compression:
+    format: "WebP"
+    quality: "80%"
+    cache_control: "public, max-age=31536000"
+
+  error_handling:
+    - "Upload timeout: 30s (retry once)"
+    - "Invalid type: user-friendly error message"
+    - "Size exceeded: client-side compression before upload"
+    - "Network failure: queue for offline retry"
+
+performance_benchmarks:
+  review_list_load: "500ms for 10 reviews (p95)"
+  review_submission: "800ms end-to-end (including trigger)"
+  photo_upload_3g: "3s with client-side compression"
+  rating_trigger: "50ms execution time"
+  moderation_queue: "200ms for 50 pending reviews"
+  tailor_profile_page: "1.5s total page load on 3G"
+  vote_interaction: "100ms optimistic UI, 300ms server confirmation"
+  review_search: "400ms text search across 1000+ reviews"
+
+accessibility_requirements:
+  keyboard_navigation:
+    - "Tab through star ratings: Fit → Quality → Communication → Timeliness"
+    - "Enter/Space to select star rating"
+    - "Arrow keys: Left/Down decrease, Right/Up increase"
+    - "Tab to photo upload → consent checkbox → submit button"
+
+  screen_reader_announcements:
+    - "Fit rating: 4 out of 5 stars selected"
+    - "12 reviews for [Tailor Name], sorted by most helpful"
+    - "Mark review as helpful, currently 15 people found this helpful"
+
+  aria_attributes:
+    star_rating: "role='radiogroup' with aria-labelledby for category label"
+    individual_star: "role='radio' with aria-checked state"
+    vote_buttons: "aria-pressed state for voted/not voted"
+    form_fields: "aria-required='true' on rating fields"
+    photo_upload: "aria-describedby linking to consent text"
+
+  focus_management:
+    - "After submit: focus moves to success message"
+    - "Modal open: focus to first rating input"
+    - "Modal close: focus returns to trigger button"
+
+  color_contrast:
+    - "Filled stars (#FFD700 gold) meet 4.5:1 contrast"
+    - "Error messages (#DC2626 red) meet WCAG AA"
+
+  touch_targets:
+    - "Star rating buttons: minimum 44x44px"
+    - "Vote buttons: minimum 48x48px for mobile"
+
+database_trigger_logic:
+  per_review_calculation:
+    formula: "AVG(rating_fit, rating_quality, rating_communication, rating_timeliness)"
+    storage: "Computed overall rating stored in reviews.rating column"
+
+  tailor_aggregate:
+    formula: "AVG(reviews.rating) WHERE moderation_status = 'APPROVED'"
+    storage: "tailor_profiles.rating"
+    category_averages:
+      - "tailor_profiles.rating_fit_avg"
+      - "tailor_profiles.rating_quality_avg"
+      - "tailor_profiles.rating_communication_avg"
+      - "tailor_profiles.rating_timeliness_avg"
+
+  trigger_events: ["INSERT", "UPDATE", "DELETE on reviews table"]
+  execution_target: "<50ms per trigger execution"
+
+compliance_summary:
+  coding_standards: true
+  project_structure: true
+  testing_strategy: true
+  all_acs_met: true
+  documentation_complete: true
+  architecture_references_verified: true
+
+recommendations:
+  pre_implementation:
+    - action: "Create review-photos Supabase Storage bucket with specified policies"
+      refs: ["Photo Storage Configuration section"]
+    - action: "Install bad-words npm package (v3.0+) and create Ghana-specific profanity dictionary"
+      refs: ["Moderation Specification section"]
+    - action: "Set up notification templates in email service and Twilio WhatsApp"
+      refs: ["Notification Templates section"]
+
+  during_implementation:
+    - action: "Follow dependency injection pattern from Story 4.4 for ReviewRepository"
+      refs: ["Story 4.4 QA learnings on testability"]
+    - action: "Write tests first (TDD) to catch testability issues early"
+      refs: ["Story 4.4 learning notes"]
+    - action: "Verify database trigger performance with EXPLAIN ANALYZE"
+      refs: ["Performance Benchmarks - rating trigger <50ms"]
+
+  post_implementation:
+    - action: "Run accessibility audit with screen reader (NVDA/JAWS)"
+      refs: ["Accessibility Requirements section"]
+    - action: "Performance test photo upload on simulated 3G connection"
+      refs: ["Performance Benchmarks - photo upload 3s target"]
+    - action: "Load test rating calculation trigger with 100+ concurrent reviews"
+      refs: ["Performance Benchmarks - trigger <50ms"]
+
+risk_summary:
+  totals:
+    critical: 0
+    high: 0
+    medium: 0
+    low: 0
+  highest:
+    score: 3
+    category: "Complexity"
+    rationale: "7 ACs + photo storage + moderation + notifications = moderate complexity, but well-specified with zero ambiguity"
+  recommendations:
+    must_fix: []
+    monitor:
+      - "Database trigger performance under load (target <50ms)"
+      - "Photo upload performance on 3G networks (target <3s)"
+      - "Profanity filter effectiveness with Ghana-specific terms"
+
+positive_findings:
+  - "Exceptional story quality - most comprehensive specification reviewed to date"
+  - "All 8 validation improvements completed successfully (critical + should-fix + enhancements)"
+  - "Zero ambiguity in business rules - all edge cases documented"
+  - "Complete moderation specification with exact tools and thresholds"
+  - "Photo storage architecture production-ready with transformation pipeline"
+  - "Accessibility requirements exceed WCAG AA standard with comprehensive testing specs"
+  - "Performance benchmarks measurable and realistic for Ghana 3G networks"
+  - "Notification templates provided eliminate guesswork"
+  - "Database trigger logic mathematically specified"
+  - "Learned from Story 4.4 testability issues - dependency injection ready"
+
+learning_notes: "Story 4.5 demonstrates the value of thorough product owner validation before implementation. By identifying and resolving 8 specification gaps during validation, we've prevented dev agent blockers, reduced implementation risk, and established clear acceptance criteria. This story is a model for comprehensive requirements documentation."
+
+estimated_implementation_effort: "5-7 days (based on Story 4.4 complexity with similar scope)"
+
+gate_history:
+  - date: "2025-10-15"
+    status: "READY"
+    reviewer: "Sarah (Product Owner)"
+    notes: "Story validated and approved. All critical gaps filled. Zero blockers. Implementation ready to begin."

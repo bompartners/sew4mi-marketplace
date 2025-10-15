@@ -1,3 +1,10 @@
+// Load test environment variables first
+import { config } from 'dotenv';
+import path from 'path';
+
+// Load .env.test file
+config({ path: path.resolve(__dirname, '../.env.test') });
+
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';

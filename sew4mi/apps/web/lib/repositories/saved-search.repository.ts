@@ -6,12 +6,34 @@ import {
   SavedSearchMatch,
   TailorSearchFilters,
 } from '@sew4mi/shared';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Repository for managing saved searches and search alerts
  * Story 4.4: Advanced Search and Filtering
  */
 export class SavedSearchRepository {
+  private supabaseClient?: SupabaseClient;
+
+  /**
+   * Constructor with optional Supabase client injection for testing
+   * @param client - Optional Supabase client (for testing)
+   */
+  constructor(client?: SupabaseClient) {
+    this.supabaseClient = client;
+  }
+
+  /**
+   * Get Supabase client (uses injected client for tests or creates one for production)
+   * @private
+   */
+  private async getClient(): Promise<SupabaseClient> {
+    if (this.supabaseClient) {
+      return this.supabaseClient;
+    }
+    return getSupabaseClient();
+  }
+
   /**
    * Save a new search with optional alerts
    * @param customerId - The ID of the customer saving the search
@@ -20,7 +42,7 @@ export class SavedSearchRepository {
    * @throws Error if save fails or name already exists
    */
   async saveSearch(customerId: string, input: SavedSearchInput): Promise<SavedSearch> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { data, error } = await supabase
       .from('saved_searches')
@@ -50,7 +72,7 @@ export class SavedSearchRepository {
    * @returns Promise resolving to array of saved searches
    */
   async getSavedSearches(customerId: string): Promise<SavedSearch[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { data, error } = await supabase
       .from('saved_searches')
@@ -75,7 +97,7 @@ export class SavedSearchRepository {
     savedSearchId: string,
     customerId: string
   ): Promise<SavedSearch | null> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { data, error } = await supabase
       .from('saved_searches')
@@ -107,7 +129,7 @@ export class SavedSearchRepository {
     customerId: string,
     update: SavedSearchUpdate
   ): Promise<SavedSearch> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     // Build update object with snake_case field names
     const updateData: any = {};
@@ -148,7 +170,7 @@ export class SavedSearchRepository {
     savedSearchId: string,
     customerId: string
   ): Promise<boolean> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { error, count } = await supabase
       .from('saved_searches')
@@ -173,7 +195,7 @@ export class SavedSearchRepository {
     savedSearchId: string,
     since?: Date
   ): Promise<SavedSearchMatch[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { data, error } = await supabase.rpc('check_saved_search_matches', {
       p_saved_search_id: savedSearchId,
@@ -199,7 +221,7 @@ export class SavedSearchRepository {
   async getSavedSearchesWithAlerts(
     frequency: 'instant' | 'daily' | 'weekly'
   ): Promise<SavedSearch[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     // Calculate time threshold based on frequency
     let timeThreshold: Date;
@@ -237,7 +259,7 @@ export class SavedSearchRepository {
    * @returns Promise resolving when update is complete
    */
   async updateLastNotified(savedSearchId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { error } = await supabase
       .from('saved_searches')
@@ -255,7 +277,7 @@ export class SavedSearchRepository {
    * @returns Promise resolving to the count
    */
   async getCount(customerId: string): Promise<number> {
-    const supabase = await getSupabaseClient();
+    const supabase = await this.getClient();
 
     const { count, error } = await supabase
       .from('saved_searches')

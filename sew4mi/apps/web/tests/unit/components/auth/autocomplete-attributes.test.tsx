@@ -12,8 +12,17 @@ import { RegistrationForm } from '@/components/features/auth/RegistrationForm';
 // Mock the hooks and router
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
+    user: null,
+    session: null,
+    loading: false,
+    initialized: true,
     signIn: vi.fn(),
     signUp: vi.fn(),
+    signOut: vi.fn(),
+    verifyOTP: vi.fn(),
+    resendOTP: vi.fn(),
+    requestPasswordReset: vi.fn(),
+    resetPassword: vi.fn(),
   }),
 }));
 

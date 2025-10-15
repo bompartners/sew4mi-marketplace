@@ -7,7 +7,17 @@ import { RegistrationForm } from '@/components/features/auth/RegistrationForm';
 // Mock useAuth hook
 vi.mock('@/hooks/useAuth', () => ({
   useAuth: () => ({
-    signUp: vi.fn().mockResolvedValue({ requiresVerification: true, verificationMethod: 'email' })
+    user: null,
+    session: null,
+    loading: false,
+    initialized: true,
+    signIn: vi.fn(),
+    signUp: vi.fn().mockResolvedValue({ requiresVerification: true, verificationMethod: 'email' }),
+    signOut: vi.fn(),
+    verifyOTP: vi.fn(),
+    resendOTP: vi.fn(),
+    requestPasswordReset: vi.fn(),
+    resetPassword: vi.fn(),
   })
 }));
 

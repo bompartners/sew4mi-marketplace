@@ -29,13 +29,16 @@ vi.mock('@/lib/supabase', () => ({
   createClient: () => mockSupabaseClient
 }));
 
-describe('/api/disputes/[id]/resolve', () => {
-  let mockResolutionService: any;
+// Create mock resolution service
+const mockResolveDispute = vi.fn();
+const mockResolutionService = {
+  resolveDispute: mockResolveDispute
+};
 
+describe('/api/disputes/[id]/resolve', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    const { DisputeResolutionService } = require('@/lib/services/dispute-resolution.service');
-    mockResolutionService = new DisputeResolutionService();
+    mockResolveDispute.mockReset();
   });
 
   const createRequest = (disputeId: string, body: any) => {

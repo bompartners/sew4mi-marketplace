@@ -15,12 +15,23 @@ vi.mock('@/lib/services/dispute-resolution.service', () => ({
   }))
 }));
 
-describe.skip('DisputeResolutionService', () => {
-  let mockResolutionService: any;
+// Create mocked functions
+const mockResolveDispute = vi.fn();
+const mockProcessRefund = vi.fn();
+const mockSendResolutionNotifications = vi.fn();
+const mockCreateResolutionRecord = vi.fn();
+const mockGetResolutionTemplates = vi.fn();
 
+const mockResolutionService = {
+  resolveDispute: mockResolveDispute,
+  processRefund: mockProcessRefund,
+  sendResolutionNotifications: mockSendResolutionNotifications,
+  createResolutionRecord: mockCreateResolutionRecord,
+  getResolutionTemplates: mockGetResolutionTemplates
+};
+
+describe.skip('DisputeResolutionService', () => {
   beforeEach(() => {
-    const { DisputeResolutionService } = require('@/lib/services/dispute-resolution.service');
-    mockResolutionService = new DisputeResolutionService();
     vi.clearAllMocks();
   });
 

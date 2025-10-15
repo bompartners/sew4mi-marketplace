@@ -18,6 +18,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { OrderMessage, OrderParticipantRole, OrderMessageType } from '@sew4mi/shared/types/order-creation';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { sanitizeMessage } from '@/lib/utils/sanitize';
 
 /**
  * Props for OrderChat component
@@ -302,12 +303,20 @@ export function OrderChat({
     if (!content.trim() || !isConnected) return;
 
     try {
+      // Sanitize message content to prevent XSS attacks
+      const sanitizedContent = sanitizeMessage(content.trim());
+
+      if (!sanitizedContent) {
+        setError('Message content is invalid');
+        return;
+      }
+
       const message: Partial<OrderMessage> = {
         orderId,
         senderId: userId,
         senderType: userRole,
         senderName: 'User', // You might want to pass this as a prop
-        message: content.trim(),
+        message: sanitizedContent,
         messageType: type,
         isInternal: false,
         readBy: [userId]
@@ -317,7 +326,7 @@ export function OrderChat({
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(JSON.stringify({
           type: 'send_message',
-          message
+          data: message
         }));
       }
 

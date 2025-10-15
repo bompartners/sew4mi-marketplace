@@ -7,6 +7,9 @@ import { useRateLimitStats } from '@/lib/utils/rateLimiter';
 /**
  * Debug component to show caching and rate limiting statistics
  * Only shows in development mode
+ *
+ * IMPORTANT: Always renders a div (never null) to prevent hydration mismatches.
+ * Visibility is controlled via CSS classes instead of conditional rendering.
  */
 export function CacheStats() {
   const [mounted, setMounted] = useState(false);
@@ -17,20 +20,19 @@ export function CacheStats() {
     setMounted(true);
   }, []);
 
-  // Don't render anything until mounted (prevents hydration mismatch)
-  if (!mounted) {
-    return null;
-  }
-
   // Check if in development mode (client-side only)
   const isDev = process.env.NODE_ENV === 'development';
-  if (!isDev) {
-    return null;
-  }
+
+  // Always render a div to prevent hydration mismatch
+  // Control visibility with CSS classes instead of conditional rendering
+  const isVisible = mounted && isDev;
 
   return (
     <div
-      className="fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg text-xs font-mono z-50"
+      className={`fixed bottom-4 right-4 bg-black/80 text-white p-3 rounded-lg text-xs font-mono z-50 ${
+        isVisible ? 'block' : 'hidden'
+      }`}
+      aria-hidden={!isVisible}
     >
       <div className="mb-2 font-bold">Cache & Rate Limit Stats</div>
 

@@ -4,15 +4,21 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { recommendationService } from '@/lib/services/recommendation-engine.service';
+import { recommendationEngineService as recommendationService } from '@/lib/services/recommendation-engine.service';
 import type { OrderAnalytics } from '@sew4mi/shared/types';
 
 // Mock data generators
 function generateMockAnalytics(orderCount: number): OrderAnalytics {
-  const garmentTypes: Record<string, number> = {};
-  const tailors: Record<string, number> = {};
-  const fabrics: Record<string, number> = {};
-  const colors: Record<string, { count: number; seasonal: boolean }> = {};
+  const garmentTypeFrequency: Record<string, number> = {};
+  const preferredTailorsSet = new Set<string>();
+  const fabricPreferences: Record<string, number> = {};
+  const colorPreferences: Record<string, number> = {};
+  const seasonalPatterns: Record<string, string[]> = {
+    spring: [],
+    summer: [],
+    fall: [],
+    winter: [],
+  };
 
   // Generate diverse data
   const garmentTypesList = ['Custom Suit', 'Dress', 'Kente', 'Shirt', 'Trousers', 'Kaftan', 'Blouse'];
@@ -25,23 +31,28 @@ function generateMockAnalytics(orderCount: number): OrderAnalytics {
     const color = colorsList[i % colorsList.length];
     const tailorId = `tailor-${(i % 20) + 1}`; // 20 different tailors
 
-    garmentTypes[garmentType] = (garmentTypes[garmentType] || 0) + 1;
-    tailors[tailorId] = (tailors[tailorId] || 0) + 1;
-    fabrics[fabric] = (fabrics[fabric] || 0) + 1;
-    colors[color] = {
-      count: (colors[color]?.count || 0) + 1,
-      seasonal: Math.random() > 0.5,
-    };
+    garmentTypeFrequency[garmentType] = (garmentTypeFrequency[garmentType] || 0) + 1;
+    preferredTailorsSet.add(tailorId);
+    fabricPreferences[fabric] = (fabricPreferences[fabric] || 0) + 1;
+    colorPreferences[color] = (colorPreferences[color] || 0) + 1;
+
+    // Add to seasonal patterns
+    const seasons = ['spring', 'summer', 'fall', 'winter'];
+    const season = seasons[i % seasons.length];
+    if (!seasonalPatterns[season].includes(garmentType)) {
+      seasonalPatterns[season].push(garmentType);
+    }
   }
 
   return {
-    totalOrders: orderCount,
-    garmentTypes,
-    tailors,
-    fabrics,
-    colors,
-    averageOrderValue: 300 + Math.random() * 200,
-    lastOrderDate: new Date().toISOString(),
+    userId: `user-${Math.floor(Math.random() * 1000)}`,
+    garmentTypeFrequency,
+    fabricPreferences,
+    colorPreferences,
+    avgOrderValue: 300 + Math.random() * 200,
+    preferredTailors: Array.from(preferredTailorsSet),
+    seasonalPatterns,
+    lastUpdated: new Date(),
   };
 }
 
@@ -53,12 +64,12 @@ describe('Recommendation Algorithm Performance Tests', () => {
   describe('Garment Recommendation Performance', () => {
     it('should calculate garment recommendations in <10ms for small dataset (10 orders)', () => {
       const analytics = generateMockAnalytics(10);
-      const garmentTypes = Object.keys(analytics.garmentTypes);
+      const garmentTypes = Object.keys(analytics.garmentTypeFrequency);
 
       const startTime = performance.now();
 
       for (const garmentType of garmentTypes) {
-        recommendationService.calculateGarmentScore(garmentType, analytics);
+        recommendationService['calculateGarmentScore'](garmentType, analytics);
       }
 
       const endTime = performance.now();
@@ -70,12 +81,12 @@ describe('Recommendation Algorithm Performance Tests', () => {
 
     it('should calculate garment recommendations in <50ms for medium dataset (100 orders)', () => {
       const analytics = generateMockAnalytics(100);
-      const garmentTypes = Object.keys(analytics.garmentTypes);
+      const garmentTypes = Object.keys(analytics.garmentTypeFrequency);
 
       const startTime = performance.now();
 
       for (const garmentType of garmentTypes) {
-        recommendationService.calculateGarmentScore(garmentType, analytics);
+        recommendationService['calculateGarmentScore'](garmentType, analytics);
       }
 
       const endTime = performance.now();
@@ -87,12 +98,12 @@ describe('Recommendation Algorithm Performance Tests', () => {
 
     it('should calculate garment recommendations in <200ms for large dataset (1000 orders)', () => {
       const analytics = generateMockAnalytics(1000);
-      const garmentTypes = Object.keys(analytics.garmentTypes);
+      const garmentTypes = Object.keys(analytics.garmentTypeFrequency);
 
       const startTime = performance.now();
 
       for (const garmentType of garmentTypes) {
-        recommendationService.calculateGarmentScore(garmentType, analytics);
+        recommendationService['calculateGarmentScore'](garmentType, analytics);
       }
 
       const endTime = performance.now();
@@ -110,7 +121,7 @@ describe('Recommendation Algorithm Performance Tests', () => {
 
       for (let i = 0; i < iterations; i++) {
         const startTime = performance.now();
-        recommendationService.calculateGarmentScore(garmentType, analytics);
+        recommendationService['calculateGarmentScore'](garmentType, analytics);
         const endTime = performance.now();
         durations.push(endTime - startTime);
       }
@@ -129,39 +140,48 @@ describe('Recommendation Algorithm Performance Tests', () => {
   describe('Tailor Recommendation Performance', () => {
     it('should rank tailors in <20ms for 20 tailors', () => {
       const analytics = generateMockAnalytics(100);
-      const tailorIds = Object.keys(analytics.tailors);
+      const tailorCount = 20;
+
+      // Create mock tailor objects
+      const mockTailors = Array.from({ length: tailorCount }, (_, i) => ({
+        id: `tailor-${i + 1}`,
+        specializations: ['Custom Suit', 'Dress'],
+        rating: 4.0 + Math.random(),
+        base_price: 200 + Math.random() * 300,
+      }));
 
       const startTime = performance.now();
 
-      const rankings = tailorIds.map(tailorId => ({
-        tailorId,
-        score: recommendationService.calculateTailorScore(tailorId, analytics),
+      const rankings = mockTailors.map(tailor => ({
+        tailorId: tailor.id,
+        score: recommendationService['calculateTailorScore'](tailor, analytics),
       })).sort((a, b) => b.score - a.score);
 
       const endTime = performance.now();
       const duration = endTime - startTime;
 
       expect(duration).toBeLessThan(20);
-      expect(rankings.length).toBe(tailorIds.length);
+      expect(rankings.length).toBe(tailorCount);
       console.log(`Tailor ranking (20 tailors): ${duration.toFixed(2)}ms`);
     });
 
     it('should handle large tailor dataset (100 tailors) in <100ms', () => {
-      // Generate analytics with 100 different tailors
       const analytics = generateMockAnalytics(500);
       const tailorCount = 100;
-      const tailorIds = Array.from({ length: tailorCount }, (_, i) => `tailor-${i + 1}`);
 
-      // Add tailors to analytics
-      tailorIds.forEach(id => {
-        analytics.tailors[id] = Math.floor(Math.random() * 10) + 1;
-      });
+      // Create mock tailor objects
+      const mockTailors = Array.from({ length: tailorCount }, (_, i) => ({
+        id: `tailor-${i + 1}`,
+        specializations: ['Custom Suit', 'Dress', 'Shirt'],
+        rating: 3.5 + Math.random() * 1.5,
+        base_price: 150 + Math.random() * 400,
+      }));
 
       const startTime = performance.now();
 
-      const rankings = tailorIds.map(tailorId => ({
-        tailorId,
-        score: recommendationService.calculateTailorScore(tailorId, analytics),
+      const rankings = mockTailors.map(tailor => ({
+        tailorId: tailor.id,
+        score: recommendationService['calculateTailorScore'](tailor, analytics),
       })).sort((a, b) => b.score - a.score);
 
       const endTime = performance.now();
@@ -176,12 +196,12 @@ describe('Recommendation Algorithm Performance Tests', () => {
   describe('Fabric Recommendation Performance', () => {
     it('should calculate fabric scores in <15ms for typical dataset', () => {
       const analytics = generateMockAnalytics(100);
-      const fabrics = Object.keys(analytics.fabrics);
+      const fabrics = Object.keys(analytics.fabricPreferences);
 
       const startTime = performance.now();
 
       for (const fabric of fabrics) {
-        recommendationService.calculateFabricScore(fabric, analytics);
+        recommendationService['calculateFabricScore'](fabric, analytics);
       }
 
       const endTime = performance.now();
@@ -199,26 +219,34 @@ describe('Recommendation Algorithm Performance Tests', () => {
       const startTime = performance.now();
 
       // Simulate full recommendation generation
-      const garmentRecs = Object.keys(analytics.garmentTypes)
+      const garmentRecs = Object.keys(analytics.garmentTypeFrequency)
         .map(type => ({
           type,
-          score: recommendationService.calculateGarmentScore(type, analytics),
+          score: recommendationService['calculateGarmentScore'](type, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
-      const tailorRecs = Object.keys(analytics.tailors)
-        .map(id => ({
-          id,
-          score: recommendationService.calculateTailorScore(id, analytics),
+      // Create mock tailors for scoring
+      const mockTailors = analytics.preferredTailors.slice(0, 10).map(id => ({
+        id,
+        specializations: ['Custom Suit', 'Dress'],
+        rating: 4.0 + Math.random(),
+        base_price: 250 + Math.random() * 200,
+      }));
+
+      const tailorRecs = mockTailors
+        .map(tailor => ({
+          id: tailor.id,
+          score: recommendationService['calculateTailorScore'](tailor, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
 
-      const fabricRecs = Object.keys(analytics.fabrics)
+      const fabricRecs = Object.keys(analytics.fabricPreferences)
         .map(fabric => ({
           fabric,
-          score: recommendationService.calculateFabricScore(fabric, analytics),
+          score: recommendationService['calculateFabricScore'](fabric, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
@@ -240,26 +268,34 @@ describe('Recommendation Algorithm Performance Tests', () => {
 
       const startTime = performance.now();
 
-      const garmentRecs = Object.keys(analytics.garmentTypes)
+      const garmentRecs = Object.keys(analytics.garmentTypeFrequency)
         .map(type => ({
           type,
-          score: recommendationService.calculateGarmentScore(type, analytics),
+          score: recommendationService['calculateGarmentScore'](type, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 5);
 
-      const tailorRecs = Object.keys(analytics.tailors)
-        .map(id => ({
-          id,
-          score: recommendationService.calculateTailorScore(id, analytics),
+      // Create mock tailors for scoring
+      const mockTailors = analytics.preferredTailors.slice(0, 10).map(id => ({
+        id,
+        specializations: ['Custom Suit', 'Dress', 'Shirt'],
+        rating: 3.8 + Math.random() * 1.2,
+        base_price: 200 + Math.random() * 300,
+      }));
+
+      const tailorRecs = mockTailors
+        .map(tailor => ({
+          id: tailor.id,
+          score: recommendationService['calculateTailorScore'](tailor, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
 
-      const fabricRecs = Object.keys(analytics.fabrics)
+      const fabricRecs = Object.keys(analytics.fabricPreferences)
         .map(fabric => ({
           fabric,
-          score: recommendationService.calculateFabricScore(fabric, analytics),
+          score: recommendationService['calculateFabricScore'](fabric, analytics),
         }))
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
@@ -280,12 +316,12 @@ describe('Recommendation Algorithm Performance Tests', () => {
       for (let i = 0; i < 10; i++) {
         const analytics = generateMockAnalytics(1000);
 
-        Object.keys(analytics.garmentTypes).forEach(type => {
-          recommendationService.calculateGarmentScore(type, analytics);
+        Object.keys(analytics.garmentTypeFrequency).forEach(type => {
+          recommendationService['calculateGarmentScore'](type, analytics);
         });
 
-        Object.keys(analytics.tailors).forEach(id => {
-          recommendationService.calculateTailorScore(id, analytics);
+        Object.keys(analytics.fabricPreferences).forEach(fabric => {
+          recommendationService['calculateFabricScore'](fabric, analytics);
         });
       }
 
@@ -300,17 +336,18 @@ describe('Recommendation Algorithm Performance Tests', () => {
   describe('Edge Cases Performance', () => {
     it('should handle empty analytics quickly', () => {
       const analytics: OrderAnalytics = {
-        totalOrders: 0,
-        garmentTypes: {},
-        tailors: {},
-        fabrics: {},
-        colors: {},
-        averageOrderValue: 0,
-        lastOrderDate: new Date().toISOString(),
+        userId: 'user-test',
+        garmentTypeFrequency: {},
+        fabricPreferences: {},
+        colorPreferences: {},
+        avgOrderValue: 0,
+        preferredTailors: [],
+        seasonalPatterns: {},
+        lastUpdated: new Date(),
       };
 
       const startTime = performance.now();
-      recommendationService.calculateGarmentScore('Custom Suit', analytics);
+      recommendationService['calculateGarmentScore']('Custom Suit', analytics);
       const endTime = performance.now();
 
       expect(endTime - startTime).toBeLessThan(1);
@@ -320,8 +357,8 @@ describe('Recommendation Algorithm Performance Tests', () => {
       const analytics = generateMockAnalytics(1);
 
       const startTime = performance.now();
-      Object.keys(analytics.garmentTypes).forEach(type => {
-        recommendationService.calculateGarmentScore(type, analytics);
+      Object.keys(analytics.garmentTypeFrequency).forEach(type => {
+        recommendationService['calculateGarmentScore'](type, analytics);
       });
       const endTime = performance.now();
 

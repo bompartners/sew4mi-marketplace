@@ -74,6 +74,9 @@ describe('Saved Search API Endpoints', () => {
         body: JSON.stringify(input),
       });
 
+      // Mock the json() method to return the parsed input
+      vi.spyOn(request, 'json').mockResolvedValue(input);
+
       const response = await postSaveSearch(request);
       const data = await response.json();
 
@@ -99,6 +102,9 @@ describe('Saved Search API Endpoints', () => {
         body: JSON.stringify(input),
       });
 
+      // Mock the json() method to return the parsed input
+      vi.spyOn(request, 'json').mockResolvedValue(input);
+
       const response = await postSaveSearch(request);
       const data = await response.json();
 
@@ -121,6 +127,9 @@ describe('Saved Search API Endpoints', () => {
         method: 'POST',
         body: JSON.stringify(invalidInput),
       });
+
+      // Mock the json() method to return the parsed invalid input
+      vi.spyOn(request, 'json').mockResolvedValue(invalidInput);
 
       const response = await postSaveSearch(request);
       const data = await response.json();
@@ -150,6 +159,9 @@ describe('Saved Search API Endpoints', () => {
         method: 'POST',
         body: JSON.stringify(input),
       });
+
+      // Mock the json() method to return the parsed input
+      vi.spyOn(request, 'json').mockResolvedValue(input);
 
       const response = await postSaveSearch(request);
       const data = await response.json();
@@ -263,6 +275,9 @@ describe('Saved Search API Endpoints', () => {
         body: JSON.stringify(update),
       });
 
+      // Mock the json() method to return the parsed update
+      vi.spyOn(request, 'json').mockResolvedValue(update);
+
       const params = Promise.resolve({ id: 'search-1' });
       const response = await putSavedSearch(request, { params });
       const data = await response.json();
@@ -290,6 +305,9 @@ describe('Saved Search API Endpoints', () => {
         body: JSON.stringify(update),
       });
 
+      // Mock the json() method to return the parsed update
+      vi.spyOn(request, 'json').mockResolvedValue(update);
+
       const params = Promise.resolve({ id: 'search-1' });
       const response = await putSavedSearch(request, { params });
       const data = await response.json();
@@ -311,6 +329,9 @@ describe('Saved Search API Endpoints', () => {
         method: 'PUT',
         body: JSON.stringify(invalidUpdate),
       });
+
+      // Mock the json() method to return the parsed invalid update
+      vi.spyOn(request, 'json').mockResolvedValue(invalidUpdate);
 
       const params = Promise.resolve({ id: 'search-1' });
       const response = await putSavedSearch(request, { params });
@@ -338,6 +359,9 @@ describe('Saved Search API Endpoints', () => {
         method: 'PUT',
         body: JSON.stringify(update),
       });
+
+      // Mock the json() method to return the parsed update
+      vi.spyOn(request, 'json').mockResolvedValue(update);
 
       const params = Promise.resolve({ id: 'search-1' });
       const response = await putSavedSearch(request, { params });
