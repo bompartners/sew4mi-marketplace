@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../supabase';
+import { createClient } from '../supabase/server';
 import {
   SavedSearch,
   SavedSearchInput,
@@ -31,7 +31,7 @@ export class SavedSearchRepository {
     if (this.supabaseClient) {
       return this.supabaseClient;
     }
-    return getSupabaseClient();
+    return createClient();
   }
 
   /**

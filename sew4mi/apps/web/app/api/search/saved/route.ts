@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { savedSearchService } from '@/lib/services/saved-search.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * GET /api/search/saved

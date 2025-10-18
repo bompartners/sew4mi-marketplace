@@ -35,7 +35,7 @@ export default function TailorLayout({
 
   // If not authenticated, redirect to login
   if (!user) {
-    router.push('/auth/login');
+    router.push('/login');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-96">

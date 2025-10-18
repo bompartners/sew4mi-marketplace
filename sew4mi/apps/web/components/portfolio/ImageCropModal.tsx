@@ -24,7 +24,7 @@ interface CropArea {
 
 export function ImageCropModal({ image, open, onClose, onCropComplete }: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.8);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -118,7 +118,7 @@ export function ImageCropModal({ image, open, onClose, onCropComplete }: ImageCr
               image={image}
               crop={crop}
               zoom={zoom}
-              aspect={4 / 3}
+              aspect={3 / 4}
               onCropChange={onCropChange}
               onCropComplete={onCropCompleteHandler}
               onZoomChange={onZoomChange}
@@ -131,7 +131,7 @@ export function ImageCropModal({ image, open, onClose, onCropComplete }: ImageCr
             <Label htmlFor="zoom">Zoom</Label>
             <Slider
               id="zoom"
-              min={1}
+              min={0.5}
               max={3}
               step={0.1}
               value={[zoom]}

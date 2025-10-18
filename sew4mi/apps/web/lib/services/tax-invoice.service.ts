@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import type { TaxInvoice } from '@sew4mi/shared';
 import type { Database } from '@sew4mi/shared';
 

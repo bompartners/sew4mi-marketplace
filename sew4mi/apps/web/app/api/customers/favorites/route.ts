@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AddFavoriteSchema } from '@sew4mi/shared';
 import { FavoritesService } from '@/lib/services/favorites.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 const favoritesService = new FavoritesService();

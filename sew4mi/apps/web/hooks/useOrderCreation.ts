@@ -65,6 +65,13 @@ export function useOrderCreation(): UseOrderCreationReturn {
 
     try {
       switch (step) {
+        case 'TAILOR_SELECTION' as OrderCreationStep:
+          if (!state.tailorId) {
+            errors.tailorId = 'Please select a tailor';
+            isValid = false;
+          }
+          break;
+
         case OrderCreationStep.GARMENT_TYPE:
           if (!state.garmentType) {
             errors.garmentType = 'Please select a garment type';
@@ -234,6 +241,8 @@ export function useOrderCreation(): UseOrderCreationReturn {
     setError(null);
 
     try {
+      console.log('Order data before validation:', orderData);
+      
       // Validate order data
       const validatedOrderData = OrderCreationSchemas.CreateOrderInput.parse(orderData);
 
@@ -253,6 +262,9 @@ export function useOrderCreation(): UseOrderCreationReturn {
 
       return responseData as CreateOrderResponse;
     } catch (err) {
+      if (err instanceof Error && err.name === 'ZodError') {
+        console.error('Validation errors:', (err as any).errors);
+      }
       const errorMessage = err instanceof Error ? err.message : 'Failed to create order';
       setError(errorMessage);
       throw err;

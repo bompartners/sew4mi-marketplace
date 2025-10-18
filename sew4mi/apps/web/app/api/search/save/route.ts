@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SavedSearchInputSchema } from '@sew4mi/shared';
 import { savedSearchService } from '@/lib/services/saved-search.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 /**

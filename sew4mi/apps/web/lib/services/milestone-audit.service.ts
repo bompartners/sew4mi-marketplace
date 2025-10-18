@@ -4,7 +4,7 @@
  * Story 2.3: Task 7 - Audit Trail and Reporting
  */
 
-import { createClient } from '../supabase';
+import { createClient } from '../supabase/server';
 import type { 
   MilestoneApprovalHistory, 
   TailorPerformanceMetrics, 

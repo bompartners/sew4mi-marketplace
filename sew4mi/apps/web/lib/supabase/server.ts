@@ -29,9 +29,15 @@ export async function createClient() {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet) {
-            // DO NOT set cookies in API routes - this causes the auth cookie to be cleared
-            // Cookies are only managed by the client-side Supabase client
-            // This method is required by the interface but should be a no-op in API routes
+            try {
+              cookiesToSet.forEach(({ name, value, options }) => {
+                cookieStore.set(name, value, options)
+              })
+            } catch {
+              // The `set` method was called from a Server Component.
+              // This can be ignored if you have middleware refreshing
+              // user sessions.
+            }
           },
         },
       }

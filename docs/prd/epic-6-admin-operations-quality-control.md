@@ -76,3 +76,21 @@ so that we can make data-driven decisions.
 5. Seasonal pattern identification
 6. Custom report builder with scheduling
 7. KPI dashboard for executive reporting
+
+## Story 6.6: System Configuration and Pricing Management
+
+As a platform administrator,  
+I want to configure system-wide settings and manage garment pricing,  
+so that the platform can adapt to market conditions without code deployments.
+
+**Acceptance Criteria:**
+1. Admin can view all garment types with current pricing in a table format
+2. Admin can edit base prices and estimated delivery times for each garment type
+3. Admin can add new garment types with full configuration
+4. Admin can deactivate/reactivate garment types without deletion
+5. Admin can configure fabric requirements (yards needed, supported types)
+6. Admin can set measurement requirements for each garment type
+7. Admin can configure platform-wide pricing multipliers (rush orders, fabric markup)
+8. All pricing changes are logged with admin user, timestamp, and old/new values
+9. Admin can preview pricing impact before applying changes
+10. Changes take effect immediately without requiring code deployment

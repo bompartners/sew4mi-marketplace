@@ -6,9 +6,9 @@
 
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
-import { Check, CheckCheck, Download, Play, Pause, FileText, Image as ImageIcon, Volume2, MessageSquare } from 'lucide-react';
+import { Check, CheckCheck, Download, Play, Pause, FileText, Image as ImageIcon, Volume2, MessageSquare, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
@@ -46,21 +46,17 @@ interface MessageBubbleProps {
 }
 
 /**
- * Audio player state
- */
-interface AudioState {
-  [messageId: string]: {
-    isPlaying: boolean;
-    duration: number;
-    currentTime: number;
-  };
-}
-
-/**
  * Format message timestamp
  */
 const formatMessageTime = (timestamp: Date | string): string => {
+  if (!timestamp) return 'Just now';
+  
   const date = new Date(timestamp);
+  
+  // Check if date is invalid
+  if (isNaN(date.getTime())) {
+    return 'Just now';
+  }
   
   if (isToday(date)) {
     return format(date, 'h:mm a');
@@ -75,7 +71,14 @@ const formatMessageTime = (timestamp: Date | string): string => {
  * Format message date header
  */
 const formatDateHeader = (timestamp: Date | string): string => {
+  if (!timestamp) return 'Today';
+  
   const date = new Date(timestamp);
+  
+  // Check if date is invalid
+  if (isNaN(date.getTime())) {
+    return 'Today';
+  }
   
   if (isToday(date)) {
     return 'Today';
@@ -88,63 +91,98 @@ const formatDateHeader = (timestamp: Date | string): string => {
 
 /**
  * Audio Message Component
+ * Simplified to use only native HTML5 audio controls to avoid fetch abortion issues
  */
-function AudioMessage({ 
+const AudioMessage = React.memo(({ 
   message, 
-  isOwn, 
-  audioState, 
-  onPlayToggle 
+  isOwn
 }: { 
   message: OrderMessage;
   isOwn: boolean;
-  audioState?: AudioState[string];
-  onPlayToggle: (messageId: string) => void;
-}) {
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+}) => {
+  // Memoize audioUrl to prevent recalculation on every render
+  const audioUrl = useMemo(() => message.mediaUrl || message.message, [message.mediaUrl, message.message]);
+  const [error, setError] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Log when component mounts with audio URL
+  useEffect(() => {
+    console.log('AudioMessage mounted with URL:', audioUrl);
+  }, [audioUrl]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-2 p-3 bg-gray-100 rounded-lg max-w-xs">
+        <div className="flex items-center gap-2">
+          <Volume2 className="h-4 w-4 text-gray-400" />
+          <span className="text-sm text-gray-600">Audio unavailable</span>
+        </div>
+        <a 
+          href={audioUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-xs text-blue-600 hover:underline"
+        >
+          Try opening in new tab
+        </a>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg max-w-xs">
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => onPlayToggle(message.id!)}
-        className="h-8 w-8 p-0"
-      >
-        {audioState?.isPlaying ? (
-          <Pause className="h-4 w-4" />
-        ) : (
-          <Play className="h-4 w-4" />
-        )}
-      </Button>
-      
-      <div className="flex-1 min-w-0">
-        <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-          <div 
-            className={cn(
-              'h-full transition-all duration-300',
-              isOwn ? 'bg-blue-600' : 'bg-gray-600'
-            )}
-            style={{ 
-              width: audioState?.duration 
-                ? `${(audioState.currentTime / audioState.duration) * 100}%` 
-                : '0%' 
-            }}
-          />
-        </div>
+    <div className="flex flex-col gap-2 p-2 bg-gray-50 rounded-lg max-w-xs">
+      <div className="flex items-center gap-2 mb-1">
+        <Volume2 className="h-4 w-4 text-gray-500" />
+        <span className="text-xs text-gray-600">Voice message</span>
       </div>
       
-      <Volume2 className="h-3 w-3 text-gray-400" />
+      {/* Use native HTML5 audio controls - most reliable */}
+      <audio
+        key={`audio-${message.id}`}
+        src={audioUrl}
+        controls
+        preload="metadata"
+        controlsList="nodownload"
+        className="w-full"
+        style={{ 
+          maxWidth: '300px',
+          height: '40px'
+        }}
+        onError={(e) => {
+          console.error('Audio error:', e);
+          console.error('Audio element:', {
+            src: audioUrl,
+            error: e.currentTarget.error
+          });
+          setError(true);
+        }}
+        onPlay={() => {
+          setHasInteracted(true);
+          console.log('Audio playing:', audioUrl);
+        }}
+      />
       
-      <span className="text-xs text-gray-500 tabular-nums">
-        {audioState?.duration ? formatTime(audioState.currentTime) : '0:00'}
-      </span>
+      {/* Download link as backup */}
+      <a 
+        href={audioUrl}
+        download
+        className="text-xs text-blue-600 hover:underline flex items-center gap-1"
+        onClick={() => setHasInteracted(true)}
+      >
+        <Download className="h-3 w-3" />
+        Download audio
+      </a>
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison: only re-render if the audio URL or isOwn actually changed
+  const prevUrl = prevProps.message.mediaUrl || prevProps.message.message;
+  const nextUrl = nextProps.message.mediaUrl || nextProps.message.message;
+  return prevUrl === nextUrl && prevProps.isOwn === nextProps.isOwn;
+});
+
+// Add display name for debugging
+AudioMessage.displayName = 'AudioMessage';
 
 /**
  * Image Message Component
@@ -152,13 +190,34 @@ function AudioMessage({
 function ImageMessage({ message }: { message: OrderMessage }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  
+  const imageUrl = message.mediaUrl || message.message;
+
+  useEffect(() => {
+    console.log('ImageMessage rendering:', {
+      hasMediaUrl: !!message.mediaUrl,
+      hasMessage: !!message.message,
+      finalUrl: imageUrl,
+      messageType: message.messageType
+    });
+  }, [message.mediaUrl, message.message, imageUrl, message.messageType]);
 
   return (
     <div className="max-w-sm">
       {error ? (
-        <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
-          <ImageIcon className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">Image unavailable</span>
+        <div className="flex flex-col gap-2 p-3 bg-gray-100 rounded-lg">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-600">Image unavailable</span>
+          </div>
+          <a 
+            href={imageUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-blue-600 hover:underline"
+          >
+            Try opening: {imageUrl?.substring(0, 50)}...
+          </a>
         </div>
       ) : (
         <div className="relative">
@@ -168,20 +227,24 @@ function ImageMessage({ message }: { message: OrderMessage }) {
             </div>
           )}
           <img
-            src={message.mediaUrl || message.message}
+            src={imageUrl}
             alt="Shared image"
             className={cn(
               'max-w-full h-auto rounded-lg transition-opacity',
               isLoading ? 'opacity-0' : 'opacity-100'
             )}
-            onLoad={() => setIsLoading(false)}
-            onError={() => {
+            onLoad={() => {
+              console.log('Image loaded successfully:', imageUrl);
+              setIsLoading(false);
+            }}
+            onError={(e) => {
+              console.error('Image load error:', imageUrl, e);
               setError(true);
               setIsLoading(false);
             }}
             onClick={() => {
               // Open in modal/full screen
-              window.open(message.mediaUrl || message.message, '_blank');
+              window.open(imageUrl, '_blank');
             }}
             style={{ cursor: 'pointer' }}
           />
@@ -195,6 +258,12 @@ function ImageMessage({ message }: { message: OrderMessage }) {
  * Document Message Component
  */
 function DocumentMessage({ message }: { message: OrderMessage }) {
+  const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const fileUrl = message.mediaUrl || message.message;
+  
   const getFileName = (url: string) => {
     try {
       return decodeURIComponent(url.split('/').pop() || 'document');
@@ -203,28 +272,107 @@ function DocumentMessage({ message }: { message: OrderMessage }) {
     }
   };
 
+  const getFileExtension = (url: string) => {
+    return url.split('.').pop()?.toLowerCase() || '';
+  };
+
+  const fileName = getFileName(fileUrl);
+  const fileExtension = getFileExtension(fileUrl);
+  const isPDF = fileExtension === 'pdf';
+
   const handleDownload = () => {
-    const fileUrl = message.mediaUrl || message.message;
     const link = document.createElement('a');
     link.href = fileUrl;
-    link.download = getFileName(fileUrl);
+    link.download = fileName;
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const handleViewFull = () => {
+    window.open(fileUrl, '_blank');
+  };
+
+  const togglePreview = () => {
+    if (!showPreview) {
+      setIsLoading(true);
+    }
+    setShowPreview(!showPreview);
+  };
+
   return (
-    <div 
-      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg max-w-xs cursor-pointer hover:bg-gray-100 transition-colors"
-      onClick={handleDownload}
-    >
-      <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{getFileName(message.mediaUrl || message.message)}</p>
-        <p className="text-xs text-gray-500">Click to download</p>
+    <div className="flex flex-col gap-2 max-w-lg">
+      {/* Document Header */}
+      <div 
+        className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+        onClick={isPDF ? togglePreview : handleDownload}
+      >
+        <FileText className="h-8 w-8 text-blue-600 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium truncate">{fileName}</p>
+          <p className="text-xs text-gray-500">
+            {isPDF ? (showPreview ? 'Click to collapse' : 'Click to preview') : 'Click to download'}
+          </p>
+        </div>
+        {isPDF ? (
+          showPreview ? <X className="h-4 w-4 text-gray-400" /> : <Download className="h-4 w-4 text-gray-400" />
+        ) : (
+          <Download className="h-4 w-4 text-gray-400" />
+        )}
       </div>
-      <Download className="h-4 w-4 text-gray-400" />
+
+      {/* PDF Preview */}
+      {isPDF && showPreview && (
+        <div className="relative bg-white border rounded-lg overflow-hidden">
+          {/* Loading State */}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                <p className="text-sm text-gray-600">Loading PDF...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="p-4 text-center">
+              <p className="text-sm text-gray-600 mb-2">Unable to preview PDF</p>
+              <Button size="sm" onClick={handleViewFull} variant="outline">
+                Open in new tab
+              </Button>
+            </div>
+          )}
+
+          {/* PDF Iframe */}
+          {!error && (
+            <iframe
+              src={`${fileUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+              className="w-full h-[500px] border-0"
+              title={fileName}
+              onLoad={() => setIsLoading(false)}
+              onError={() => {
+                setIsLoading(false);
+                setError(true);
+              }}
+            />
+          )}
+
+          {/* Action Buttons */}
+          {!error && (
+            <div className="flex items-center justify-end gap-2 p-2 bg-gray-50 border-t">
+              <Button size="sm" onClick={handleViewFull} variant="outline">
+                <span className="text-xs">Open Full Screen</span>
+              </Button>
+              <Button size="sm" onClick={handleDownload} variant="outline">
+                <Download className="h-3 w-3 mr-1" />
+                <span className="text-xs">Download</span>
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -233,19 +381,6 @@ function DocumentMessage({ message }: { message: OrderMessage }) {
  * Message Bubble Component
  */
 function MessageBubble({ message, isOwn, showAvatar, showTimestamp }: MessageBubbleProps) {
-  const [audioStates, setAudioStates] = useState<AudioState>({});
-  
-  const handleAudioToggle = useCallback((messageId: string) => {
-    // Audio playback logic would go here
-    setAudioStates(prev => ({
-      ...prev,
-      [messageId]: {
-        ...prev[messageId],
-        isPlaying: !prev[messageId]?.isPlaying
-      }
-    }));
-  }, []);
-
   const getReadStatus = () => {
     if (!message.readBy) return null;
     
@@ -282,8 +417,6 @@ function MessageBubble({ message, isOwn, showAvatar, showTimestamp }: MessageBub
           <AudioMessage
             message={message}
             isOwn={isOwn}
-            audioState={audioStates[message.id!]}
-            onPlayToggle={handleAudioToggle}
           />
         );
       default:
@@ -427,7 +560,7 @@ export function MessageList({
 
     messages.forEach((message, index) => {
       const messageDate = formatDateHeader(message.sentAt);
-      const messageTime = new Date(message.sentAt).getTime();
+      const messageTime = message.sentAt ? new Date(message.sentAt).getTime() : Date.now();
       
       // Start new date group if date changed
       if (messageDate !== currentDate) {
@@ -499,7 +632,7 @@ export function MessageList({
             {/* Messages */}
             {group.messages.map(({ message, showAvatar, showTimestamp }, messageIndex) => (
               <MessageBubble
-                key={`${message.id}-${messageIndex}`}
+                key={message.id}
                 message={message}
                 isOwn={message.senderId === currentUserId}
                 showAvatar={showAvatar}

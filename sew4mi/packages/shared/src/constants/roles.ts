@@ -116,7 +116,6 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
   [USER_ROLES.CUSTOMER]: [
     '/dashboard',
     '/orders',
-    '/orders/new',
     '/tailors',
     '/tailors/search',
     '/measurements',

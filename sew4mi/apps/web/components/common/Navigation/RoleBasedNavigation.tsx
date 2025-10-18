@@ -75,22 +75,21 @@ export function RoleBasedNavigation({
             icon: Home 
           },
           { 
-            href: '/orders', 
-            label: 'My Orders', 
-            icon: Package,
-            permission: PERMISSIONS.VIEW_OWN_ORDERS
-          },
-          { 
-            href: '/orders/new', 
-            label: 'New Order', 
-            icon: ShoppingBag,
-            permission: PERMISSIONS.PLACE_ORDERS
-          },
-          { 
             href: '/tailors', 
             label: 'Browse Tailors', 
             icon: Search,
             permission: PERMISSIONS.BROWSE_TAILORS
+          },
+          {
+            href: '/favorites',
+            label: 'Favorites',
+            icon: Heart
+          },
+          { 
+            href: '/orders', 
+            label: 'My Orders', 
+            icon: Package,
+            permission: PERMISSIONS.VIEW_OWN_ORDERS
           },
           { 
             href: '/measurements', 
@@ -103,11 +102,6 @@ export function RoleBasedNavigation({
             label: 'Family Profiles',
             icon: UserPlus,
             permission: PERMISSIONS.MANAGE_FAMILY_PROFILES
-          },
-          {
-            href: '/favorites',
-            label: 'Favorites',
-            icon: Heart
           },
           {
             href: '/loyalty',

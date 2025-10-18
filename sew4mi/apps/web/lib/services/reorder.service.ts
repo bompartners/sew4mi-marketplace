@@ -2,7 +2,7 @@
  * Service for Story 4.3: Reorder System Business Logic
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type {
   ReorderRequest,
   ReorderModifications,

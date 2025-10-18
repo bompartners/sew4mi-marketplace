@@ -15,6 +15,7 @@ import { useOrderCreation } from '@/hooks/useOrderCreation';
 import { useAuth } from '@/hooks/useAuth';
 
 // Import step components
+import { TailorSelection } from './TailorSelection';
 import { GarmentTypeSelection } from './GarmentTypeSelection';
 import { GarmentSpecifications } from './GarmentSpecifications';
 import { MeasurementSelection } from './MeasurementSelection';
@@ -27,33 +28,48 @@ interface OrderCreationWizardProps {
   onCancel?: () => void;
 }
 
-const STEPS = [
-  {
-    key: OrderCreationStep.GARMENT_TYPE,
-    title: 'Garment Type',
-    description: 'Choose what you want made'
-  },
-  {
-    key: OrderCreationStep.SPECIFICATIONS,
-    title: 'Specifications',
-    description: 'Fabric and special requirements'
-  },
-  {
-    key: OrderCreationStep.MEASUREMENTS,
-    title: 'Measurements',
-    description: 'Select your measurement profile'
-  },
-  {
-    key: OrderCreationStep.TIMELINE,
-    title: 'Timeline',
-    description: 'Delivery date and urgency'
-  },
-  {
-    key: OrderCreationStep.SUMMARY,
-    title: 'Summary',
-    description: 'Review and confirm order'
+const getSteps = (hasTailor: boolean) => {
+  const steps = [];
+  
+  // Add tailor selection as first step if no initial tailor
+  if (!hasTailor) {
+    steps.push({
+      key: 'TAILOR_SELECTION' as OrderCreationStep,
+      title: 'Select Tailor',
+      description: 'Choose your preferred tailor'
+    });
   }
-];
+  
+  steps.push(
+    {
+      key: OrderCreationStep.GARMENT_TYPE,
+      title: 'Garment Type',
+      description: 'Choose what you want made'
+    },
+    {
+      key: OrderCreationStep.SPECIFICATIONS,
+      title: 'Specifications',
+      description: 'Fabric and special requirements'
+    },
+    {
+      key: OrderCreationStep.MEASUREMENTS,
+      title: 'Measurements',
+      description: 'Select your measurement profile'
+    },
+    {
+      key: OrderCreationStep.TIMELINE,
+      title: 'Timeline',
+      description: 'Delivery date and urgency'
+    },
+    {
+      key: OrderCreationStep.SUMMARY,
+      title: 'Summary',
+      description: 'Review and confirm order'
+    }
+  );
+  
+  return steps;
+};
 
 export function OrderCreationWizard({ 
   initialTailorId,
@@ -73,6 +89,10 @@ export function OrderCreationWizard({
   } = useOrderCreation();
 
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [selectedTailor, setSelectedTailor] = useState<any>(undefined);
+  
+  // Generate steps based on whether we have an initial tailor
+  const STEPS = getSteps(!!initialTailorId);
   
   // Sync local step index with hook state
   useEffect(() => {
@@ -80,17 +100,18 @@ export function OrderCreationWizard({
     if (stepIndex !== -1 && stepIndex !== currentStepIndex) {
       setCurrentStepIndex(stepIndex);
     }
-  }, [state.step, currentStepIndex]);
+  }, [state.step, currentStepIndex, STEPS]);
   
   const currentStep = STEPS[currentStepIndex];
 
   // Initialize wizard state
   useEffect(() => {
     if (user?.id) {
+      const firstStep = initialTailorId ? OrderCreationStep.GARMENT_TYPE : 'TAILOR_SELECTION' as OrderCreationStep;
       updateState({
         customerId: user.id,
         tailorId: initialTailorId,
-        step: OrderCreationStep.GARMENT_TYPE,
+        step: firstStep,
         isValid: false,
         errors: {}
       });
@@ -128,13 +149,13 @@ export function OrderCreationWizard({
       return;
     }
 
-    // Calculate pricing when moving from specifications to measurements
-    if (currentStep.key === OrderCreationStep.SPECIFICATIONS && state.garmentType && state.tailorId) {
+    // Calculate pricing when moving from timeline to summary (after urgency is selected)
+    if (currentStep.key === OrderCreationStep.TIMELINE && state.garmentType && state.tailorId && state.fabricChoice && state.urgencyLevel) {
       try {
         const pricing = await calculatePricing({
           garmentTypeId: state.garmentType.id,
-          fabricChoice: state.fabricChoice!,
-          urgencyLevel: state.urgencyLevel || UrgencyLevel.STANDARD,
+          fabricChoice: state.fabricChoice,
+          urgencyLevel: state.urgencyLevel,
           tailorId: state.tailorId
         });
         
@@ -144,7 +165,26 @@ export function OrderCreationWizard({
         });
       } catch (error) {
         console.error('Pricing calculation failed:', error);
-        // Continue anyway with estimated pricing
+        // Continue anyway - use fallback pricing from hook
+        const basePrice = state.garmentType.basePrice;
+        const fabricCost = state.fabricChoice === 'TAILOR_SOURCED' ? basePrice * 0.3 : 0;
+        const urgencySurcharge = state.urgencyLevel === 'EXPRESS' ? basePrice * 0.25 : 0;
+        const totalAmount = basePrice + fabricCost + urgencySurcharge;
+
+        updateState({
+          pricingBreakdown: {
+            basePrice,
+            fabricCost,
+            urgencySurcharge,
+            totalAmount,
+            escrowBreakdown: {
+              deposit: totalAmount * 0.25,
+              fitting: totalAmount * 0.5,
+              final: totalAmount * 0.25
+            }
+          },
+          errors: {}
+        });
       }
     }
 
@@ -172,7 +212,15 @@ export function OrderCreationWizard({
     if (!state.tailorId || !state.measurementProfile || !state.garmentType || 
         !state.fabricChoice || !state.urgencyLevel || !state.estimatedDelivery ||
         !state.pricingBreakdown) {
-      console.error('Missing required order data');
+      console.error('Missing required order data', {
+        tailorId: !!state.tailorId,
+        measurementProfile: !!state.measurementProfile,
+        garmentType: !!state.garmentType,
+        fabricChoice: !!state.fabricChoice,
+        urgencyLevel: !!state.urgencyLevel,
+        estimatedDelivery: !!state.estimatedDelivery,
+        pricingBreakdown: !!state.pricingBreakdown
+      });
       return;
     }
 
@@ -189,6 +237,7 @@ export function OrderCreationWizard({
         urgencyLevel: state.urgencyLevel
       };
 
+      console.log('Creating order with data:', orderData);
       const result = await createOrder(orderData);
       
       if (result.success && result.orderId) {
@@ -203,7 +252,8 @@ export function OrderCreationWizard({
         if (onOrderCreated && result.orderNumber) {
           onOrderCreated(result.orderId, result.orderNumber);
         } else {
-          router.push(`/customer/orders/${result.orderId}`);
+          // Redirect to orders list page (order details page not yet implemented)
+          router.push(`/orders?success=true&orderNumber=${result.orderNumber}`);
         }
       }
     } catch (error) {
@@ -279,6 +329,17 @@ export function OrderCreationWizard({
       {/* Step Content */}
       <Card>
         <CardContent className="p-6">
+          {currentStep.key === 'TAILOR_SELECTION' && (
+            <TailorSelection
+              selectedTailor={selectedTailor}
+              onSelect={(tailor) => {
+                setSelectedTailor(tailor);
+                updateState({ tailorId: tailor?.user_id });
+              }}
+              errors={state.errors}
+            />
+          )}
+
           {currentStep.key === OrderCreationStep.GARMENT_TYPE && (
             <GarmentTypeSelection 
               selectedGarmentType={state.garmentType}

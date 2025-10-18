@@ -3,7 +3,7 @@
  */
 
 import { orderAnalyticsRepository } from '@/lib/repositories/order-analytics.repository';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type {
   Recommendation,
   RecommendationType,

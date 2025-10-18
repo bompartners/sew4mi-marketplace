@@ -11,6 +11,7 @@ export * from './group-order'
 export * from './loyalty'
 export * from './favorites'
 export * from './reorder'
+export * from './review'
 // Search types are exported separately to avoid conflicts
 export type {
   TailorSearchResult,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TailorSearchFiltersSchema } from '@sew4mi/shared';
 import { TailorSearchService } from '@/lib/services/tailor-search.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 const searchService = new TailorSearchService();

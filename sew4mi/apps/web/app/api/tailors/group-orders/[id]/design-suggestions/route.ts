@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { TailorGroupCoordinationService } from '@/lib/services/tailor-group-coordination.service';
 import { DesignSuggestionSubmission } from '@sew4mi/shared/types/group-order';

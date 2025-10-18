@@ -2,7 +2,7 @@
  * Repository for Story 4.3: Order Analytics Data Access Layer
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type { OrderAnalytics } from '@sew4mi/shared/types';
 
 export class OrderAnalyticsRepository {

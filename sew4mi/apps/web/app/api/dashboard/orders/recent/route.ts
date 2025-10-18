@@ -79,8 +79,8 @@ export async function GET(request: NextRequest) {
     // Transform data for frontend
     const recentOrders = (orders || []).map(order => {
       const tailorProfiles: any = order.tailor_profiles;
-      const tailorName = (Array.isArray(tailorProfiles) && tailorProfiles.length > 0)
-        ? tailorProfiles[0].business_name
+      const tailorName = (tailorProfiles && tailorProfiles.business_name)
+        ? tailorProfiles.business_name
         : 'Unknown Tailor';
 
       return {

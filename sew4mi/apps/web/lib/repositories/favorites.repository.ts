@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../supabase';
+import { createClient } from '../supabase/server';
 import { CustomerFavorite, TailorSearchItem } from '@sew4mi/shared';
 
 export class FavoritesRepository {
@@ -6,7 +6,7 @@ export class FavoritesRepository {
    * Add a tailor to user's favorites
    */
   async addFavorite(customerId: string, tailorId: string): Promise<CustomerFavorite> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('customer_favorites')
       .insert({
@@ -35,7 +35,7 @@ export class FavoritesRepository {
    * Remove a tailor from user's favorites
    */
   async removeFavorite(customerId: string, tailorId: string): Promise<void> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { error } = await supabase
       .from('customer_favorites')
       .delete()
@@ -55,7 +55,7 @@ export class FavoritesRepository {
     limit: number = 20,
     offset: number = 0
   ): Promise<{ favorites: TailorSearchItem[]; total: number }> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     // Get favorites with tailor details
     const { data: favoritesData, error } = await supabase
       .from('customer_favorites')
@@ -142,7 +142,7 @@ export class FavoritesRepository {
    * Check if a tailor is favorited by user
    */
   async isFavorite(customerId: string, tailorId: string): Promise<boolean> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('customer_favorites')
       .select('id')
@@ -166,7 +166,7 @@ export class FavoritesRepository {
   ): Promise<string[]> {
     if (tailorIds.length === 0) return [];
 
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('customer_favorites')
       .select('tailor_id')
@@ -184,7 +184,7 @@ export class FavoritesRepository {
    * Get favorite count for a tailor
    */
   async getFavoriteCount(tailorId: string): Promise<number> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { count, error } = await supabase
       .from('customer_favorites')
       .select('*', { count: 'exact', head: true })
@@ -206,7 +206,7 @@ export class FavoritesRepository {
     byLocation: Array<{ city: string; count: number }>;
     averageRating: number;
   }> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase
       .from('customer_favorites')
       .select(`

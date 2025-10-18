@@ -26,7 +26,7 @@ export const CreateOrderInputSchema = z.object({
   totalAmount: z.number()
     .min(30, 'Minimum order amount is GHS 30')
     .max(5000, 'Maximum order amount is GHS 5000'),
-  estimatedDelivery: z.date()
+  estimatedDelivery: z.coerce.date()
     .refine((date) => date > new Date(), 'Delivery date must be in the future'),
   urgencyLevel: z.nativeEnum(UrgencyLevel, {
     errorMap: () => ({ message: 'Invalid urgency level' })
@@ -47,7 +47,7 @@ export const ValidateMeasurementsRequestSchema = z.object({
 
 export const TailorAvailabilityRequestSchema = z.object({
   tailorId: z.string().uuid('Invalid tailor ID'),
-  estimatedDelivery: z.date(),
+  estimatedDelivery: z.coerce.date(),
   urgencyLevel: z.nativeEnum(UrgencyLevel)
 });
 
@@ -84,7 +84,7 @@ export const OrderMeasurementProfileSchema = z.object({
     neckSize: z.number().min(20).max(60).optional()
   }),
   voiceNoteUrl: z.string().url().optional(),
-  lastUpdated: z.date(),
+  lastUpdated: z.coerce.date(),
   isActive: z.boolean()
 });
 
@@ -97,7 +97,7 @@ export const OrderCreationStateSchema = z.object({
   measurementProfile: OrderMeasurementProfileSchema.optional(),
   specialInstructions: z.string().max(500).optional(),
   urgencyLevel: z.nativeEnum(UrgencyLevel).optional(),
-  estimatedDelivery: z.date().optional(),
+  estimatedDelivery: z.coerce.date().optional(),
   pricingBreakdown: z.object({
     basePrice: z.number(),
     fabricCost: z.number(),
@@ -130,7 +130,7 @@ export const MeasurementSelectionStepSchema = z.object({
 
 export const TimelineSelectionStepSchema = z.object({
   urgencyLevel: z.nativeEnum(UrgencyLevel),
-  estimatedDelivery: z.date()
+  estimatedDelivery: z.coerce.date()
     .refine((date) => date > new Date(), 'Delivery date must be in the future')
     .refine((date) => {
       const maxDate = new Date();

@@ -8,7 +8,7 @@
  * fabric coordination, and payment tracking.
  */
 
-import { createServerSupabaseClient } from '../supabase';
+import { createClient as createServerSupabaseClient } from '../supabase/server';
 import { GroupOrderRepository } from '../repositories/groupOrderRepository';
 import {
   EnhancedGroupOrder,

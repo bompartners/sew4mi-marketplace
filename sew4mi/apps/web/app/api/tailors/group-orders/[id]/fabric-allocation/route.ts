@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { createErrorResponse } from '@/lib/utils/api-error-handler';
 import { FabricQuantityCalculation } from '@sew4mi/shared/types/group-order';
 

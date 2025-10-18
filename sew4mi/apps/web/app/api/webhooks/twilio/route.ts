@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 // Import not needed since we'll access headers from request
 import { twilioService, MessageStatus } from '@/lib/services/twilio.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST handler for Twilio webhooks

@@ -2,7 +2,7 @@
  * Repository for Story 4.3: Loyalty System Data Access Layer
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type {
   LoyaltyAccount,
   LoyaltyTransaction,

@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../supabase';
+import { createClient } from '../supabase/server';
 import {
   TailorSearchFilters,
   TailorSearchResult,
@@ -19,7 +19,7 @@ export class TailorSearchRepository {
     userId?: string
   ): Promise<TailorSearchResult> {
     const startTime = Date.now();
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     
     let query = supabase
       .from('tailor_profiles')
@@ -214,7 +214,7 @@ export class TailorSearchRepository {
       return { suggestions: [], categories: { tailors: [], specializations: [], locations: [] } };
     }
 
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.rpc('get_search_suggestions', {
       p_query: query,
       p_limit: limit
@@ -247,7 +247,7 @@ export class TailorSearchRepository {
    * Get featured tailors
    */
   async getFeaturedTailors(filters: FeaturedTailorFilters = { limit: 10 }): Promise<FeaturedTailor[]> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     let query = supabase
       .from('featured_tailors')
       .select(`
@@ -326,7 +326,7 @@ export class TailorSearchRepository {
     filters: TailorSearchFilters,
     userId?: string
   ): Promise<TailorSearchItem> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const searchItem = this.mapTailorToSearchItem(tailor);
 
     // Calculate distance if user location provided
@@ -422,7 +422,7 @@ export class TailorSearchRepository {
     userLat?: number,
     userLng?: number
   ): Promise<number> {
-    const supabase = await getSupabaseClient();
+    const supabase = await createClient();
     const { data, error } = await supabase.rpc('calculate_search_score', {
       p_tailor_id: tailorId,
       p_query: query,

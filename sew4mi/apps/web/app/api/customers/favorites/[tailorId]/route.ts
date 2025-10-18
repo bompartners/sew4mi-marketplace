@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { FavoritesService } from '@/lib/services/favorites.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 const favoritesService = new FavoritesService();
 

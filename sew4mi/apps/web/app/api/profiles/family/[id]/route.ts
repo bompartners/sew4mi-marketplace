@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { FamilyProfileService } from '@/lib/services/family-profile.service';
 import { UpdateFamilyProfileRequest } from '@sew4mi/shared/types/family-profiles';
 

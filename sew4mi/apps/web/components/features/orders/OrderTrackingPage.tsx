@@ -25,6 +25,7 @@ import { OrderChat } from './OrderChat';
 import { MilestonePhotoGallery } from './MilestonePhotoGallery';
 import { NotificationSettings } from './NotificationSettings';
 import { format, parseISO } from 'date-fns';
+import { useRealtimeOrder } from '@/hooks/useRealtimeOrder';
 
 /**
  * Props for OrderTrackingPage component
@@ -300,8 +301,26 @@ export function OrderTrackingPage({
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isNotificationSettingsOpen, setIsNotificationSettingsOpen] = useState(false);
 
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Use Supabase Realtime for order updates instead of WebSocket
+  const { isConnected: isRealtimeConnected } = useRealtimeOrder({
+    orderId,
+    onOrderUpdate: (updates) => {
+      console.log('Real-time order update received:', updates);
+      // Refresh order data when updates are received
+      if (Object.keys(updates).length > 0) {
+        loadOrder();
+      }
+    },
+    onStatusChange: (newStatus) => {
+      console.log('Order status changed to:', newStatus);
+      setOrder(prev => prev ? { ...prev, status: newStatus as OrderStatus, currentStatus: newStatus as OrderStatus } : null);
+    },
+    onMilestoneUpdate: () => {
+      console.log('Milestone updated, refreshing order...');
+      loadOrder();
+    },
+    enabled: enableRealTime
+  });
 
   /**
    * Load order details
@@ -326,56 +345,6 @@ export function OrderTrackingPage({
       setIsLoading(false);
     }
   }, [orderId, userId]);
-
-  /**
-   * Connect to real-time updates
-   */
-  const connectWebSocket = useCallback(() => {
-    if (!enableRealTime) return;
-
-    try {
-      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/orders/${orderId}/track?userId=${userId}`;
-      wsRef.current = new WebSocket(wsUrl);
-
-      wsRef.current.onopen = () => {
-        console.log('Connected to order tracking WebSocket');
-      };
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          switch (data.type) {
-            case 'order_updated':
-              setOrder(prev => prev ? { ...prev, ...data.updates } : null);
-              break;
-            case 'milestone_updated':
-              // Refresh order to get updated milestones
-              loadOrder();
-              break;
-            default:
-              break;
-          }
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
-        }
-      };
-
-      wsRef.current.onclose = () => {
-        // Attempt to reconnect
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connectWebSocket();
-        }, 5000);
-      };
-
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
-
-    } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
-    }
-  }, [orderId, userId, enableRealTime, loadOrder]);
 
   /**
    * Handle participant contact
@@ -459,17 +428,8 @@ export function OrderTrackingPage({
   // Initialize on mount
   useEffect(() => {
     loadOrder();
-    connectWebSocket();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [loadOrder, connectWebSocket]);
+    // Real-time updates are now handled by useRealtimeOrder hook
+  }, [loadOrder]);
 
   if (isLoading) {
     return (
@@ -591,23 +551,27 @@ export function OrderTrackingPage({
         </TabsContent>
 
         <TabsContent value="timeline" className="mt-6">
-          <OrderProgressTimeline
-            orderId={orderId}
-            userId={userId}
-            userRole={userRole}
-            showPhotoGallery={false}
-            enableRealTime={enableRealTime}
-            detailed={showDetailedTimeline}
-          />
+          {order && (
+            <OrderProgressTimeline
+              order={{
+                ...order,
+                // Convert date strings to Date objects for the component
+                estimatedCompletion: order.estimatedCompletion 
+                  ? new Date(order.estimatedCompletion) 
+                  : undefined
+              }}
+              showPhotos={false}
+              enableRealTime={enableRealTime}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="photos" className="mt-6">
-          <MilestonePhotoGallery
-            orderId={orderId}
-            userId={userId}
-            userRole={userRole}
-            showUploadButton={userRole === OrderParticipantRole.TAILOR}
-          />
+          {order && (
+            <MilestonePhotoGallery
+              milestones={order.milestones}
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="chat" className="mt-6">

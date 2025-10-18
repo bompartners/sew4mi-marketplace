@@ -1,18 +1,17 @@
 /**
  * Supabase client exports
  * @file index.ts
+ * 
+ * IMPORTANT: This barrel file ONLY exports client-side Supabase code to prevent
+ * server-only imports (like 'next/headers') from contaminating client bundles.
+ * 
+ * Import Guidelines:
+ * - Client Components: import from '@/lib/supabase' or '@/lib/supabase/client'
+ * - Server Components/API Routes: import directly from '@/lib/supabase/server'
+ * - Never import server code through this barrel file
  */
 
-// Server-side exports
-export { createServiceRoleClient, createClient } from './server';
-export { createClient as createServerSupabaseClient } from './server'; // Alias for backwards compatibility
-
-// Client-side exports
-export { createClient as createClientSupabaseClient } from './client'; // For client components
+// Client-side exports only
+export { createClient as createClientSupabaseClient } from './client';
 export { createClient as createClientComponentClient } from './client'; // Alias for backwards compatibility
-
-// For repositories - create client on demand
-export async function getSupabaseClient() {
-  const { createClient } = await import('./server');
-  return createClient();
-}
+export { createClient } from './client'; // Default export for convenience

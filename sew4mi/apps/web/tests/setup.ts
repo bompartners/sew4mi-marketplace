@@ -21,6 +21,33 @@ vi.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+// Mock Next.js headers and cookies
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(() => ({
+    getAll: vi.fn(() => []),
+    get: vi.fn((name: string) => undefined),
+    set: vi.fn(),
+    delete: vi.fn(),
+    has: vi.fn(() => false),
+  })),
+  headers: vi.fn(() => ({
+    get: vi.fn((name: string) => null),
+    has: vi.fn(() => false),
+    forEach: vi.fn(),
+    entries: vi.fn(() => []),
+  })),
+}));
+
+// Mock Supabase server client creation
+vi.mock('@/lib/supabase/server', () => {
+  const { createMockSupabaseClient } = require('./mocks/supabase');
+  
+  return {
+    createClient: vi.fn(() => Promise.resolve(createMockSupabaseClient())),
+    createServiceRoleClient: vi.fn(() => createMockSupabaseClient()),
+  };
+});
+
 // Mock Next.js dynamic imports
 vi.mock('next/dynamic', () => {
   return {

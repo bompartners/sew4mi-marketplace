@@ -4,7 +4,7 @@
  */
 
 import { favoriteOrderRepository } from '@/lib/repositories/favorite-order.repository';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type { FavoriteOrder, AddToFavoritesRequest, FavoritesListResponse } from '@sew4mi/shared/types';
 
 export class FavoriteOrdersService {

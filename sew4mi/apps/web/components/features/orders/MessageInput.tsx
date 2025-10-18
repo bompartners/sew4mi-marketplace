@@ -88,6 +88,7 @@ export function MessageInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioBlobUrlRef = useRef<string | null>(null);
 
   /**
    * Handle typing indicators
@@ -261,11 +262,13 @@ export function MessageInput({
     
     const response = await fetch('/api/orders/messages/upload', {
       method: 'POST',
+      credentials: 'include',
       body: formData
     });
     
     if (!response.ok) {
-      throw new Error('File upload failed');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'File upload failed');
     }
     
     const data = await response.json();
@@ -352,8 +355,34 @@ export function MessageInput({
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
+      // Revoke blob URL on unmount
+      if (audioBlobUrlRef.current) {
+        URL.revokeObjectURL(audioBlobUrlRef.current);
+      }
     };
   }, []);
+
+  // Create and manage audio blob URL
+  useEffect(() => {
+    // Revoke previous blob URL if it exists
+    if (audioBlobUrlRef.current) {
+      URL.revokeObjectURL(audioBlobUrlRef.current);
+      audioBlobUrlRef.current = null;
+    }
+
+    // Create new blob URL if we have an audio blob
+    if (voiceRecording.audioBlob) {
+      audioBlobUrlRef.current = URL.createObjectURL(voiceRecording.audioBlob);
+    }
+
+    // Cleanup function to revoke on change
+    return () => {
+      if (audioBlobUrlRef.current) {
+        URL.revokeObjectURL(audioBlobUrlRef.current);
+        audioBlobUrlRef.current = null;
+      }
+    };
+  }, [voiceRecording.audioBlob]);
 
   return (
     <div className={cn('p-3 bg-white border-t', className)}>
@@ -419,9 +448,15 @@ export function MessageInput({
       )}
 
       {/* Voice Playback */}
-      {voiceRecording.audioBlob && !voiceRecording.isRecording && (
+      {voiceRecording.audioBlob && !voiceRecording.isRecording && audioBlobUrlRef.current && (
         <div className="flex items-center gap-2 mb-2 p-2 bg-blue-50 rounded-lg">
-          <audio controls src={URL.createObjectURL(voiceRecording.audioBlob)} className="flex-1 h-8" />
+          <audio 
+            key={audioBlobUrlRef.current}
+            controls 
+            src={audioBlobUrlRef.current} 
+            className="flex-1 h-8"
+            preload="metadata"
+          />
           <Button size="sm" variant="ghost" onClick={() => setVoiceRecording({ isRecording: false, duration: 0 })}>
             <X className="h-4 w-4" />
           </Button>

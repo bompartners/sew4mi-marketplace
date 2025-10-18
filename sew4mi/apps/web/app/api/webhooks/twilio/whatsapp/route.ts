@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { twilioService } from '@/lib/services/twilio.service';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * POST handler for Twilio WhatsApp webhooks

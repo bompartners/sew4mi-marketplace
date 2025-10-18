@@ -6,7 +6,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { MessageSquare, Phone, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { OrderMessage, OrderParticipantRole, OrderMessageType } from '@sew4mi/sh
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { sanitizeMessage } from '@/lib/utils/sanitize';
+import { useRealtimeOrderMessages } from '@/hooks/useRealtimeOrderMessages';
 
 /**
  * Props for OrderChat component
@@ -176,40 +177,53 @@ export function OrderChat({
 }: OrderChatProps) {
   const [messages, setMessages] = useState<OrderMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-  
-  const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const reconnectAttempts = useRef(0);
 
-  /**
-   * Load initial messages
-   */
-  const loadMessages = useCallback(async () => {
-    try {
-      setError(null);
-      const response = await fetch(`/api/orders/${orderId}/messages`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to load messages');
-      }
-      
-      const data = await response.json();
-      setMessages(data.messages || []);
-      
-      // Mark messages as read
-      if (data.messages?.some((msg: OrderMessage) => !msg.readBy?.includes(userId))) {
-        await markMessagesAsRead();
-      }
-    } catch (error) {
-      console.error('Failed to load messages:', error);
-      setError('Failed to load chat messages');
-    } finally {
-      setIsLoading(false);
+  // Memoize callbacks to prevent infinite loops
+  const handleNewMessage = useCallback((message: any) => {
+    console.log('New message received via Realtime:', message);
+    
+    // Transform snake_case to camelCase for frontend
+    const transformedMessage: OrderMessage = {
+      id: message.id,
+      orderId: message.order_id || message.orderId,
+      senderId: message.sender_id || message.senderId,
+      senderType: message.sender_type || message.senderType,
+      senderName: message.sender_name || message.senderName,
+      message: message.message,
+      messageType: message.message_type || message.messageType,
+      mediaUrl: message.media_url || message.mediaUrl,
+      isInternal: message.is_internal || message.isInternal,
+      sentAt: message.sent_at || message.sentAt,
+      readBy: message.read_by || message.readBy,
+      readAt: message.read_at || message.readAt,
+      metadata: message.metadata
+    };
+    
+    setMessages(prev => [...prev, transformedMessage]);
+    if (transformedMessage.senderId !== userId) {
+      setUnreadCount(prev => prev + 1);
     }
-  }, [orderId, userId]);
+  }, [userId]);
+
+  const handleMessageRead = useCallback((messageId: string, readerId: string) => {
+    console.log('Message read:', messageId, 'by:', readerId);
+    setMessages(prev => prev.map(msg =>
+      msg.id === messageId
+        ? { ...msg, readBy: [...(msg.readBy || []), readerId] }
+        : msg
+    ));
+  }, []);
+
+  // Use Supabase Realtime for chat messages instead of WebSocket
+  const { isConnected, sendTypingIndicator } = useRealtimeOrderMessages({
+    orderId,
+    userId,
+    onNewMessage: handleNewMessage,
+    onMessageRead: handleMessageRead,
+    enabled: true
+  });
 
   /**
    * Mark messages as read
@@ -218,6 +232,7 @@ export function OrderChat({
     try {
       await fetch(`/api/orders/${orderId}/messages/mark-read`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       });
@@ -228,71 +243,53 @@ export function OrderChat({
   }, [orderId, userId]);
 
   /**
-   * Connect to WebSocket for real-time messaging
+   * Load initial messages
    */
-  const connectWebSocket = useCallback(() => {
+  const loadMessages = useCallback(async () => {
     try {
-      const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001'}/orders/${orderId}/chat?userId=${userId}`;
-      wsRef.current = new WebSocket(wsUrl);
-
-      wsRef.current.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-        reconnectAttempts.current = 0;
-        console.log('Connected to chat WebSocket');
-      };
-
-      wsRef.current.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          
-          switch (data.type) {
-            case 'message':
-              setMessages(prev => [...prev, data.message]);
-              if (data.message.senderId !== userId) {
-                setUnreadCount(prev => prev + 1);
-              }
-              break;
-            case 'typing':
-              // Handle typing indicators in MessageList component
-              break;
-            case 'message_read':
-              setMessages(prev => prev.map(msg => 
-                msg.id === data.messageId 
-                  ? { ...msg, readBy: [...(msg.readBy || []), data.userId] }
-                  : msg
-              ));
-              break;
-            default:
-              break;
-          }
-        } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+      setError(null);
+      const response = await fetch(`/api/orders/${orderId}/messages`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
         }
-      };
-
-      wsRef.current.onclose = () => {
-        setIsConnected(false);
-        // Attempt to reconnect with exponential backoff
-        if (reconnectAttempts.current < 5) {
-          const delay = Math.pow(2, reconnectAttempts.current) * 1000;
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttempts.current++;
-            connectWebSocket();
-          }, delay);
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Order not found');
+        } else if (response.status === 401) {
+          throw new Error('Please log in to view messages');
+        } else if (response.status === 403) {
+          throw new Error('You do not have access to this order');
         } else {
-          setError('Connection lost. Please refresh to reconnect.');
+          throw new Error(`Server error: ${response.status}`);
         }
-      };
-
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setError('Connection error occurred');
-      };
-
+      }
+      
+      const data = await response.json();
+      setMessages(data.messages || []);
+      
+      // Mark messages as read (don't add to dependencies to avoid loops)
+      const hasUnread = data.messages?.some((msg: OrderMessage) => !msg.readBy?.includes(userId));
+      if (hasUnread) {
+        // Call mark as read without creating dependency
+        fetch(`/api/orders/${orderId}/messages/mark-read`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        }).then(() => setUnreadCount(0))
+          .catch(err => console.error('Failed to mark messages as read:', err));
+      }
     } catch (error) {
-      console.error('Failed to connect WebSocket:', error);
-      setError('Failed to connect to chat');
+      console.error('Failed to load messages:', error);
+      const errorMessage = error instanceof Error 
+        ? `Failed to load chat messages: ${error.message}`
+        : 'Failed to load chat messages';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   }, [orderId, userId]);
 
@@ -303,67 +300,68 @@ export function OrderChat({
     if (!content.trim() || !isConnected) return;
 
     try {
-      // Sanitize message content to prevent XSS attacks
-      const sanitizedContent = sanitizeMessage(content.trim());
+      // For media messages (images, voice), don't sanitize URLs
+      const isMediaMessage = type === OrderMessageType.IMAGE || type === OrderMessageType.VOICE;
+      const sanitizedContent = isMediaMessage ? content.trim() : sanitizeMessage(content.trim());
 
       if (!sanitizedContent) {
         setError('Message content is invalid');
         return;
       }
 
-      const message: Partial<OrderMessage> = {
+      // For media messages, put URL in mediaUrl field and use a descriptive message
+      const message: any = {
         orderId,
         senderId: userId,
         senderType: userRole,
         senderName: 'User', // You might want to pass this as a prop
-        message: sanitizedContent,
+        message: isMediaMessage ? (type === OrderMessageType.IMAGE ? 'Image' : 'Voice message') : sanitizedContent,
         messageType: type,
         isInternal: false,
         readBy: [userId]
       };
 
-      // Send via WebSocket for real-time delivery
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.send(JSON.stringify({
-          type: 'send_message',
-          data: message
-        }));
+      // Add mediaUrl for media messages
+      if (isMediaMessage) {
+        message.mediaUrl = sanitizedContent;
       }
 
-      // Also send to API for persistence
+      // Send via API for persistence (Realtime will handle updates)
       const response = await fetch(`/api/orders/${orderId}/messages`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(message)
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        if (response.status === 401) {
+          throw new Error('Please log in to send messages');
+        } else if (response.status === 403) {
+          throw new Error('You do not have permission to send messages');
+        } else {
+          throw new Error(`Failed to send message: ${response.status}`);
+        }
       }
 
-      const savedMessage = await response.json();
+      const data = await response.json();
+      const savedMessage = data.message;
       onMessageSent?.(savedMessage);
 
     } catch (error) {
       console.error('Failed to send message:', error);
-      setError('Failed to send message. Please try again.');
+      const errorMessage = error instanceof Error 
+        ? error.message
+        : 'Failed to send message. Please try again.';
+      setError(errorMessage);
     }
   }, [orderId, userId, userRole, isConnected, onMessageSent]);
 
   // Initialize chat
   useEffect(() => {
     loadMessages();
-    connectWebSocket();
-
-    return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [loadMessages, connectWebSocket]);
+    // Real-time updates are now handled by useRealtimeOrderMessages hook
+  }, [loadMessages]);
 
   // Mark messages as read when chat becomes visible
   useEffect(() => {
@@ -399,7 +397,7 @@ export function OrderChat({
   }
 
   return (
-    <Card className={cn('w-80 h-96 flex flex-col', className)}>
+    <Card className={cn('w-full max-w-2xl h-[600px] flex flex-col', className)}>
       <ChatHeader
         tailor={tailor}
         onWhatsAppRedirect={onWhatsAppRedirect}
@@ -418,7 +416,7 @@ export function OrderChat({
         )}
 
         <MessageList
-          messages={messages}
+          messages={useMemo(() => messages, [messages.length, messages[messages.length - 1]?.id])}
           currentUserId={userId}
           isLoading={isLoading}
           isConnected={isConnected}

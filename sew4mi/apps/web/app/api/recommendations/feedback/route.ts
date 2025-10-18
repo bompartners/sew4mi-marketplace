@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { recommendationEngineService } from '@/lib/services/recommendation-engine.service';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import type { RecommendationAction } from '@sew4mi/shared/types';
 
 export async function POST(request: NextRequest) {

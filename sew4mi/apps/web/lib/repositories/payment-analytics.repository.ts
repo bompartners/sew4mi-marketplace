@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import type { Database } from '@sew4mi/shared';
 
 type DbPaymentSummary = Database['public']['Views']['tailor_payment_summary']['Row'];

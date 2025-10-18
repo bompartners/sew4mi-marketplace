@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function InvoicesPage() {
   return (
-    <div className="container mx-auto py-6 px-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="flex items-center space-x-4 mb-6">
         <Button variant="ghost" asChild>

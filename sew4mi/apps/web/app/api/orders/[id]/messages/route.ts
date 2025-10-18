@@ -1,126 +1,117 @@
+/**
+ * API Route: Order Messages
+ * GET: Fetch messages for an order
+ * POST: Send a new message
+ * Story 3.4: Real-time order messaging
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
-import { z } from 'zod';
-import {
-  OrderMessage,
-  OrderMessageType,
-  OrderParticipantRole,
-  SendOrderMessageRequest,
-  SendOrderMessageResponse
-} from '@sew4mi/shared/types';
-import { sanitizeMessage, sanitizeUrl } from '@/lib/utils/sanitize';
+import { createClient } from '@/lib/supabase/server';
 
 /**
  * GET /api/orders/[id]/messages
- * Gets all messages for an order between customer and tailor
+ * Fetch all messages for an order
  */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: orderId } = await params;
     const supabase = await createClient();
-    const { id } = await params;
 
-    // Verify authentication
+    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, errors: ['Authentication required'] },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Validate order ID format
-    const orderIdSchema = z.string().uuid();
-    const validatedOrderId = orderIdSchema.parse(id);
-
-    // Verify user has access to this order
+    // Verify user has access to this order (customer or tailor)
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .select('id, customer_id, tailor_id')
-      .eq('id', validatedOrderId)
+      .eq('id', orderId)
       .single();
 
     if (orderError || !order) {
+      console.error('Order fetch error:', orderError);
       return NextResponse.json(
-        { success: false, errors: ['Order not found'] },
+        { error: 'Order not found' },
         { status: 404 }
       );
     }
 
+    // Check if user is the customer
     const isCustomer = order.customer_id === user.id;
-    const isTailor = order.tailor_id === user.id;
     
+    // Check if user is the tailor (need to look up tailor profile)
+    let isTailor = false;
+    if (order.tailor_id) {
+      const { data: tailorProfile } = await supabase
+        .from('tailor_profiles')
+        .select('user_id')
+        .eq('id', order.tailor_id)
+        .single();
+      
+      isTailor = tailorProfile?.user_id === user.id;
+    }
+
     if (!isCustomer && !isTailor) {
+      console.error('Authorization failed:', { userId: user.id, customerId: order.customer_id, tailorId: order.tailor_id, isTailor });
       return NextResponse.json(
-        { success: false, errors: ['Unauthorized access to order'] },
+        { error: 'Forbidden: You do not have access to this order' },
         { status: 403 }
       );
     }
 
-    // Get messages with sender information
+    // Fetch messages
     const { data: messages, error: messagesError } = await supabase
       .from('order_messages')
-      .select(`
-        id,
-        order_id,
-        sender_id,
-        sender_type,
-        sender_name,
-        message,
-        message_type,
-        media_url,
-        is_internal,
-        read_by,
-        sent_at,
-        read_at,
-        delivered_at
-      `)
-      .eq('order_id', validatedOrderId)
+      .select('*')
+      .eq('order_id', orderId)
       .order('sent_at', { ascending: true });
 
     if (messagesError) {
-      console.error('Messages fetch error:', messagesError);
+      console.error('Error fetching messages:', messagesError);
       return NextResponse.json(
-        { success: false, errors: ['Failed to fetch messages'] },
+        { error: 'Failed to fetch messages', details: messagesError.message },
         { status: 500 }
       );
     }
 
-    // Mark messages as read for current user
-    if (messages && messages.length > 0) {
-      const unreadMessages = messages.filter(msg => 
-        msg.sender_id !== user.id && 
-        (!msg.read_by || !msg.read_by.includes(user.id))
-      );
+    // Transform snake_case to camelCase for frontend
+    const transformedMessages = (messages || []).map((msg: any) => ({
+      id: msg.id,
+      orderId: msg.order_id,
+      senderId: msg.sender_id,
+      senderType: msg.sender_type,
+      senderName: msg.sender_name,
+      message: msg.message,
+      messageType: msg.message_type,
+      mediaUrl: msg.media_url,
+      isInternal: msg.is_internal,
+      sentAt: msg.sent_at,
+      readBy: msg.read_by,
+      readAt: msg.read_at,
+      metadata: msg.metadata
+    }));
 
-      if (unreadMessages.length > 0) {
-        const readUpdates = unreadMessages.map(msg => ({
-          id: msg.id,
-          read_by: [...(msg.read_by || []), user.id],
-          read_at: msg.sender_id !== user.id ? new Date().toISOString() : msg.read_at
-        }));
-
-        await supabase
-          .from('order_messages')
-          .upsert(readUpdates, { onConflict: 'id' });
-      }
-    }
-
-    return NextResponse.json(messages || [], { status: 200 });
+    return NextResponse.json(
+      { 
+        messages: transformedMessages,
+        success: true 
+      },
+      { status: 200 }
+    );
 
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, errors: ['Invalid order ID format'] },
-        { status: 400 }
-      );
-    }
-
-    console.error('Messages fetch error:', error);
+    console.error('Error in GET /api/orders/[id]/messages:', error);
     return NextResponse.json(
-      { success: false, errors: ['Internal server error'] },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -128,137 +119,149 @@ export async function GET(
 
 /**
  * POST /api/orders/[id]/messages
- * Send a new message in an order conversation
+ * Send a new message
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: orderId } = await params;
     const supabase = await createClient();
-    const { id } = await params;
 
-    // Verify authentication
+    // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
     if (authError || !user) {
       return NextResponse.json(
-        { success: false, errors: ['Authentication required'] },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    // Validate order ID format
-    const orderIdSchema = z.string().uuid();
-    const validatedOrderId = orderIdSchema.parse(id);
-
-    // Parse and validate request body
+    // Parse request body
     const body = await request.json();
-    const messageSchema = z.object({
-      message: z.string().min(1).max(1000),
-      messageType: z.enum(['TEXT', 'IMAGE', 'VOICE']),
-      mediaUrl: z.string().url().optional()
-    });
+    const { message, messageType, message_type, mediaUrl, media_url } = body;
 
-    const { message: rawMessage, messageType, mediaUrl: rawMediaUrl } = messageSchema.parse(body);
+    // Support both camelCase (from frontend) and snake_case
+    const finalMessageType = messageType || message_type || 'TEXT';
+    const finalMediaUrl = mediaUrl || media_url || null;
 
-    // Sanitize message content to prevent XSS attacks
-    const message = sanitizeMessage(rawMessage);
-    const mediaUrl = rawMediaUrl ? sanitizeUrl(rawMediaUrl) : undefined;
-
-    // Validate sanitized message is not empty
-    if (!message.trim()) {
+    if (!message || message.trim().length === 0) {
       return NextResponse.json(
-        { success: false, errors: ['Message content cannot be empty after sanitization'] },
+        { error: 'Message content is required' },
         { status: 400 }
       );
     }
 
     // Verify user has access to this order and get user details
-    const { data: orderData, error: orderError } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select(`
-        id, 
-        customer_id, 
-        tailor_id,
-        customer:user_profiles!orders_customer_id_fkey(first_name, last_name),
-        tailor:user_profiles!orders_tailor_id_fkey(first_name, last_name)
-      `)
-      .eq('id', validatedOrderId)
+      .select('id, customer_id, tailor_id')
+      .eq('id', orderId)
       .single();
 
-    if (orderError || !orderData) {
+    if (orderError || !order) {
+      console.error('Order fetch error:', orderError);
       return NextResponse.json(
-        { success: false, errors: ['Order not found'] },
+        { error: 'Order not found' },
         { status: 404 }
       );
     }
 
-    const isCustomer = orderData.customer_id === user.id;
-    const isTailor = orderData.tailor_id === user.id;
+    // Check if user is the customer
+    const isCustomer = order.customer_id === user.id;
     
+    // Check if user is the tailor (need to look up tailor profile)
+    let isTailor = false;
+    if (order.tailor_id) {
+      const { data: tailorProfile } = await supabase
+        .from('tailor_profiles')
+        .select('user_id')
+        .eq('id', order.tailor_id)
+        .single();
+      
+      isTailor = tailorProfile?.user_id === user.id;
+    }
+
     if (!isCustomer && !isTailor) {
+      console.error('Authorization failed:', { userId: user.id, customerId: order.customer_id, tailorId: order.tailor_id, isTailor });
       return NextResponse.json(
-        { success: false, errors: ['Unauthorized access to order'] },
+        { error: 'Forbidden: You do not have access to this order' },
         { status: 403 }
       );
     }
 
-    // Determine sender information
-    const senderType = isCustomer ? OrderParticipantRole.CUSTOMER : OrderParticipantRole.TAILOR;
-    const senderName = isCustomer 
-      ? `${orderData.customer?.first_name} ${orderData.customer?.last_name}`
-      : `${orderData.tailor?.first_name} ${orderData.tailor?.last_name}`;
+    const senderType = isCustomer ? 'CUSTOMER' : 'TAILOR';
 
-    // Create message
-    const { data: newMessage, error: messageError } = await supabase
-      .from('order_messages')
-      .insert({
-        order_id: validatedOrderId,
-        sender_id: user.id,
-        sender_type: senderType,
-        sender_name: senderName.trim(),
-        message,
-        message_type: messageType,
-        media_url: mediaUrl,
-        is_internal: false,
-        read_by: [user.id], // Sender has read their own message
-        sent_at: new Date().toISOString(),
-        delivered_at: new Date().toISOString() // Instant delivery for now
-      })
-      .select('id, sent_at, delivered_at')
+    // Get sender name from users table
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('id', user.id)
       .single();
 
-    if (messageError) {
-      console.error('Message creation error:', messageError);
+    if (userError || !userData) {
       return NextResponse.json(
-        { success: false, errors: ['Failed to send message'] },
+        { error: 'Failed to fetch user details' },
         { status: 500 }
       );
     }
 
-    // TODO: Send real-time notification to other participant
-    // This would integrate with the notification service and real-time subscriptions
+    // Insert message
+    const { data: newMessage, error: insertError } = await supabase
+      .from('order_messages')
+      .insert({
+        order_id: orderId,
+        sender_id: user.id,
+        sender_type: senderType,
+        sender_name: userData.full_name,
+        message: message.trim(),
+        message_type: finalMessageType,
+        media_url: finalMediaUrl,
+        is_internal: false,
+        read_by: [user.id] // Sender has read their own message
+      })
+      .select()
+      .single();
 
-    const response: SendOrderMessageResponse = {
-      messageId: newMessage.id,
-      sentAt: new Date(newMessage.sent_at),
-      deliveredAt: newMessage.delivered_at ? new Date(newMessage.delivered_at) : undefined
-    };
-
-    return NextResponse.json(response, { status: 201 });
-
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const errors = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+    if (insertError) {
+      console.error('Error inserting message:', insertError);
       return NextResponse.json(
-        { success: false, errors },
-        { status: 400 }
+        { error: 'Failed to send message', details: insertError.message },
+        { status: 500 }
       );
     }
 
-    console.error('Message send error:', error);
+    // Transform snake_case to camelCase for frontend
+    const transformedMessage = {
+      id: newMessage.id,
+      orderId: newMessage.order_id,
+      senderId: newMessage.sender_id,
+      senderType: newMessage.sender_type,
+      senderName: newMessage.sender_name,
+      message: newMessage.message,
+      messageType: newMessage.message_type,
+      mediaUrl: newMessage.media_url,
+      isInternal: newMessage.is_internal,
+      sentAt: newMessage.sent_at,
+      readBy: newMessage.read_by,
+      readAt: newMessage.read_at,
+      metadata: newMessage.metadata
+    };
+
     return NextResponse.json(
-      { success: false, errors: ['Internal server error'] },
+      { 
+        message: transformedMessage,
+        success: true 
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error('Error in POST /api/orders/[id]/messages:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

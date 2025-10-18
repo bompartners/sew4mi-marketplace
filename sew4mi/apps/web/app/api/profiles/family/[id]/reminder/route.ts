@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { ReminderFrequency } from '@sew4mi/shared/types/family-profiles';
 import { FamilyProfileService } from '@/lib/services/family-profile.service';

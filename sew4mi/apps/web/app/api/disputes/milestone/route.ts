@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 // MilestoneDisputeRequest type available but not used in this implementation
 
 /**

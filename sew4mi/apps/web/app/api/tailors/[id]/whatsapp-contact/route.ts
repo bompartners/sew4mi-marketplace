@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { tailorProfileService } from '@/lib/services/tailor-profile.service';
 import { WhatsAppContactSchema, WHATSAPP_MESSAGE_TEMPLATES } from '@sew4mi/shared';
 

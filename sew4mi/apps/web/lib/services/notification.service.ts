@@ -3,8 +3,14 @@
  * Handles in-app, WhatsApp, SMS, and email notifications
  */
 
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClientSupabaseClient } from '@/lib/supabase';
 import { WhatsAppIntegrationService } from './whatsapp-integration.service';
+
+export enum NotificationPermission {
+  DEFAULT = 'default',
+  GRANTED = 'granted',
+  DENIED = 'denied'
+}
 
 export enum NotificationType {
   ORDER_UPDATE = 'order_update',
@@ -13,7 +19,9 @@ export enum NotificationType {
   MESSAGE_RECEIVED = 'message_received',
   COMPLETION = 'completion',
   PAYMENT_REMINDER = 'payment_reminder',
-  FITTING_REMINDER = 'fitting_reminder'
+  FITTING_REMINDER = 'fitting_reminder',
+  MILESTONE_UPDATE = 'milestone_update',
+  DELIVERY_READY = 'delivery_ready'
 }
 
 export interface NotificationPayload {
@@ -44,7 +52,7 @@ export class NotificationService {
    * Send notification to user via specified channels
    */
   async sendNotification(payload: NotificationPayload): Promise<void> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createClientSupabaseClient();
 
     // Get user preferences and contact info
     const { data: profile } = await supabase
@@ -95,7 +103,7 @@ export class NotificationService {
    * Send in-app notification
    */
   private async sendInAppNotification(payload: NotificationPayload): Promise<void> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createClientSupabaseClient();
 
     const { error } = await supabase
       .from('notifications')
@@ -182,7 +190,7 @@ export class NotificationService {
     groupOrderId: string,
     notification: Omit<NotificationPayload, 'userId'>
   ): Promise<void> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createClientSupabaseClient();
 
     // Get all participants
     const { data: items } = await supabase
@@ -200,7 +208,7 @@ export class NotificationService {
    * Mark notifications as read
    */
   async markAsRead(notificationIds: string[]): Promise<void> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createClientSupabaseClient();
 
     const { error } = await supabase
       .from('notifications')
@@ -217,7 +225,7 @@ export class NotificationService {
    * Get unread notification count for user
    */
   async getUnreadCount(userId: string): Promise<number> {
-    const supabase = createServerSupabaseClient();
+    const supabase = createClientSupabaseClient();
 
     const { count, error } = await supabase
       .from('notifications')
@@ -305,6 +313,208 @@ export class NotificationService {
       channels: ['in-app', 'whatsapp'],
       priority: 'normal'
     });
+  }
+
+  /**
+   * Initialize browser notification support
+   */
+  async initialize(): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    return 'Notification' in window && 'serviceWorker' in navigator;
+  }
+
+  /**
+   * Get current notification permission status
+   */
+  getPermissionStatus(): NotificationPermission {
+    if (typeof window === 'undefined') return NotificationPermission.DEFAULT;
+    if (!('Notification' in window)) return NotificationPermission.DEFAULT;
+    
+    const permission = window.Notification.permission;
+    return permission as NotificationPermission;
+  }
+
+  /**
+   * Request notification permission from user
+   */
+  async requestPermission(): Promise<NotificationPermission> {
+    if (typeof window === 'undefined') return NotificationPermission.DEFAULT;
+    if (!('Notification' in window)) return NotificationPermission.DEFAULT;
+
+    try {
+      const permission = await window.Notification.requestPermission();
+      return permission as NotificationPermission;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return NotificationPermission.DEFAULT;
+    }
+  }
+
+  /**
+   * Subscribe to push notifications
+   */
+  async subscribeToPush(userId: string): Promise<PushSubscription | null> {
+    if (typeof window === 'undefined') return null;
+    if (!('serviceWorker' in navigator)) return null;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      
+      // Check if already subscribed
+      const existingSubscription = await registration.pushManager.getSubscription();
+      if (existingSubscription) {
+        return existingSubscription;
+      }
+
+      // Subscribe to push
+      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!vapidPublicKey) {
+        console.error('VAPID public key not configured');
+        return null;
+      }
+
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: this.urlBase64ToUint8Array(vapidPublicKey)
+      });
+
+      // Send subscription to server
+      await fetch('/api/notifications/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, subscription })
+      });
+
+      return subscription;
+    } catch (error) {
+      console.error('Error subscribing to push:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Unsubscribe from push notifications
+   */
+  async unsubscribeFromPush(userId: string): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    if (!('serviceWorker' in navigator)) return false;
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        await subscription.unsubscribe();
+        
+        // Notify server
+        await fetch('/api/notifications/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId })
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error unsubscribing from push:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send local browser notification
+   */
+  async sendLocalNotification(options: {
+    title: string;
+    body: string;
+    icon?: string;
+    type: NotificationType;
+    orderId?: string;
+    url?: string;
+  }): Promise<boolean> {
+    if (typeof window === 'undefined') return false;
+    if (!('Notification' in window)) return false;
+    if (window.Notification.permission !== 'granted') return false;
+
+    try {
+      const notification = new window.Notification(options.title, {
+        body: options.body,
+        icon: options.icon || '/icons/notification.png',
+        badge: '/icons/badge.png',
+        tag: options.orderId || 'general',
+        data: {
+          type: options.type,
+          orderId: options.orderId,
+          url: options.url
+        }
+      });
+
+      // Handle notification click
+      notification.onclick = () => {
+        window.focus();
+        if (options.url) {
+          window.location.href = options.url;
+        }
+        notification.close();
+      };
+
+      return true;
+    } catch (error) {
+      console.error('Error sending local notification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Test notification
+   */
+  async testNotification(): Promise<boolean> {
+    return this.sendLocalNotification({
+      title: 'Test Notification',
+      body: 'If you can see this, notifications are working! 🎉',
+      type: NotificationType.ORDER_UPDATE,
+      url: '/dashboard'
+    });
+  }
+
+  /**
+   * Update notification preferences
+   */
+  async updateNotificationPreferences(
+    userId: string,
+    preferences: any
+  ): Promise<boolean> {
+    try {
+      const response = await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, preferences })
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Convert VAPID key to Uint8Array
+   */
+  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+
+    return outputArray;
   }
 }
 

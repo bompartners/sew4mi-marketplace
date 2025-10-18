@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { loyaltyService } from '@/lib/services/loyalty.service';
-import { createServerSupabaseClient } from '@/lib/supabase';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
 import { withRateLimit, loyaltyRedemptionRateLimit } from '@/lib/middleware/rate-limit';
 
 async function handler(request: NextRequest): Promise<NextResponse> {

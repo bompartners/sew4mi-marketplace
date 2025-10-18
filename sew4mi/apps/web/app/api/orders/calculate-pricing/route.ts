@@ -29,6 +29,7 @@ export async function POST(_request: NextRequest) {
 
     // Parse and validate request body
     const body = await _request.json();
+    console.log('Pricing calculation request body:', body);
     let pricingRequest: CalculatePricingRequest;
 
     try {
@@ -36,12 +37,14 @@ export async function POST(_request: NextRequest) {
     } catch (validationError) {
       if (validationError instanceof z.ZodError) {
         const errors = validationError.errors.map(err => `${err.path.join('.')}: ${err.message}`);
+        console.error('Validation errors:', errors);
         return NextResponse.json(
           { error: 'Validation failed', details: errors },
           { status: 400 }
         );
       }
       
+      console.error('Unknown validation error:', validationError);
       return NextResponse.json(
         { error: 'Invalid request data' },
         { status: 400 }
@@ -49,8 +52,10 @@ export async function POST(_request: NextRequest) {
     }
 
     // Get garment type information
-    const garmentType = GARMENT_TYPES[pricingRequest.garmentTypeId];
+    // Find garment type by ID (since keys are UPPERCASE but IDs are kebab-case)
+    const garmentType = Object.values(GARMENT_TYPES).find(gt => gt.id === pricingRequest.garmentTypeId);
     if (!garmentType || !garmentType.isActive) {
+      console.error('Garment type not found:', pricingRequest.garmentTypeId);
       return NextResponse.json(
         { error: 'Invalid or inactive garment type' },
         { status: 400 }
@@ -60,14 +65,30 @@ export async function POST(_request: NextRequest) {
     // Verify tailor exists and get their pricing preferences
     const { data: tailorProfile, error: tailorError } = await supabase
       .from('tailor_profiles')
-      .select('id, user_id, pricing_preferences, fabric_markup_percentage, express_surcharge_percentage')
+      .select('id, user_id, rush_order_fee_percentage, vacation_mode')
       .eq('user_id', pricingRequest.tailorId)
-      .eq('is_active', true)
       .single();
 
-    if (tailorError || !tailorProfile) {
+    if (tailorError) {
+      console.error('Tailor lookup error:', tailorError);
       return NextResponse.json(
-        { error: 'Selected tailor is not available' },
+        { error: 'Selected tailor not found', details: tailorError.message },
+        { status: 400 }
+      );
+    }
+
+    if (!tailorProfile) {
+      console.error('No tailor profile found for user_id:', pricingRequest.tailorId);
+      return NextResponse.json(
+        { error: 'Selected tailor profile not found' },
+        { status: 400 }
+      );
+    }
+
+    if (tailorProfile.vacation_mode) {
+      console.error('Tailor is in vacation mode:', pricingRequest.tailorId);
+      return NextResponse.json(
+        { error: 'Selected tailor is currently unavailable (vacation mode)' },
         { status: 400 }
       );
     }
@@ -78,8 +99,8 @@ export async function POST(_request: NextRequest) {
     // Calculate fabric cost
     let fabricCost = 0;
     if (pricingRequest.fabricChoice === FabricChoice.TAILOR_SOURCED) {
-      // Use tailor's markup percentage or default 30%
-      const fabricMarkupPercentage = tailorProfile.fabric_markup_percentage || 0.3;
+      // Use default 30% markup for tailor-sourced fabric
+      const fabricMarkupPercentage = 0.3;
       fabricCost = basePrice * fabricMarkupPercentage;
       
       // Add fabric requirements cost if specified
@@ -92,9 +113,9 @@ export async function POST(_request: NextRequest) {
     // Calculate urgency surcharge
     let urgencySurcharge = 0;
     if (pricingRequest.urgencyLevel === UrgencyLevel.EXPRESS) {
-      // Use tailor's express surcharge or default 25%
-      const expressSurchargePercentage = tailorProfile.express_surcharge_percentage || (URGENCY_SURCHARGE_MULTIPLIER - 1);
-      urgencySurcharge = basePrice * expressSurchargePercentage;
+      // Use tailor's rush order fee or default 25%
+      const rushFeePercentage = (tailorProfile.rush_order_fee_percentage || 25) / 100;
+      urgencySurcharge = basePrice * rushFeePercentage;
     }
 
     // Calculate total amount

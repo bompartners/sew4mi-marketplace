@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { MilestoneApprovalAction, MilestoneApprovalStatus } from '@sew4mi/shared/types';
 
 /**

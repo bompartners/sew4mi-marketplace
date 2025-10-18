@@ -12,7 +12,9 @@ import { WhatsAppContactButton } from './WhatsAppContactButton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Clock, Star, Award } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Clock, Star, Award, ShoppingBag } from 'lucide-react';
+import Link from 'next/link';
 
 interface TailorProfilePageProps {
   tailorId: string;
@@ -198,29 +200,35 @@ export function TailorProfilePage({ tailorId, initialData }: TailorProfilePagePr
       {/* Contact Section */}
       <Card className="mt-8">
         <CardContent className="p-6">
-          <h3 className="text-xl font-semibold mb-4">Contact {profile.businessName}</h3>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <h3 className="text-xl font-semibold mb-4">Ready to Order?</h3>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <Link href={`/orders/new?tailorId=${profile.id}`} className="flex-1">
+              <Button className="w-full bg-[#CE1126] hover:bg-[#CE1126]/90">
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                Start Order with {profile.businessName}
+              </Button>
+            </Link>
             <WhatsAppContactButton
               tailorId={profile.id}
               tailorName={profile.businessName}
               className="flex-1"
             />
-            
-            <div className="text-sm text-gray-600 flex-1">
-              <p className="mb-2">
-                <MapPin className="inline w-4 h-4 mr-1" />
-                {profile.city}, {profile.region}
-              </p>
-              <p className="mb-2">
-                <Clock className="inline w-4 h-4 mr-1" />
-                Usually responds within {profile.statistics.responseTime.average} {profile.statistics.responseTime.unit}
-              </p>
-              {profile.verificationStatus === 'VERIFIED' && (
-                <Badge variant="default" className="bg-green-100 text-green-800">
-                  ✓ Verified Tailor
-                </Badge>
-              )}
-            </div>
+          </div>
+          
+          <div className="text-sm text-gray-600">
+            <p className="mb-2">
+              <MapPin className="inline w-4 h-4 mr-1" />
+              {profile.city}, {profile.region}
+            </p>
+            <p className="mb-2">
+              <Clock className="inline w-4 h-4 mr-1" />
+              Usually responds within {profile.statistics.responseTime.average} {profile.statistics.responseTime.unit}
+            </p>
+            {profile.verificationStatus === 'VERIFIED' && (
+              <Badge variant="default" className="bg-green-100 text-green-800">
+                ✓ Verified Tailor
+              </Badge>
+            )}
           </div>
         </CardContent>
       </Card>
