@@ -5,6 +5,9 @@ import {
   EscrowApprovalResponseSchema 
 } from '@sew4mi/shared';
 import { EscrowService } from '../../../../../../lib/services/escrow.service';
+import { orderStatusService } from '@/lib/services/order-status.service';
+import { notificationService, NotificationType } from '@/lib/services/notification.service';
+import { paymentService } from '@/lib/services/payment.service';
 
 /**
  * POST /api/orders/[id]/milestone/approve
@@ -134,22 +137,126 @@ export async function POST(
       );
     }
 
-    // Update order status based on milestone
-    let newOrderStatus = order.status;
+    // Handle order status transitions and payment triggers
+    let statusTransitionResult = null;
+    let paymentTriggered = false;
+    
     if (stage === 'FITTING') {
-      newOrderStatus = 'FITTING_APPROVED';
+      // Transition to FITTING_COMPLETED and trigger fitting payment
+      statusTransitionResult = await orderStatusService.transitionOrder(
+        {
+          orderId,
+          currentStatus: order.status,
+          triggeredBy: 'customer',
+          metadata: { 
+            stage, 
+            approvalNotes: notes,
+            amountReleased: approvalResult.amountReleased 
+          }
+        },
+        'onFittingComplete'
+      );
+
+      // Trigger payment request for fitting stage (50%)
+      if (statusTransitionResult?.success) {
+        try {
+          // Get customer details for payment
+          const { data: customer } = await supabase
+            .from('profiles')
+            .select('phone_number')
+            .eq('id', order.customer_id)
+            .single();
+
+          if (customer?.phone_number) {
+            // Initiate fitting payment request
+            const paymentResult = await paymentService.initiatePayment({
+              amount: approvalResult.amountReleased,
+              currency: 'GHS',
+              customerPhoneNumber: customer.phone_number,
+              customerEmail: user.email || '',
+              customerName: user.user_metadata?.full_name || 'Customer',
+              description: `Fitting payment for order #${order.order_number}`,
+              reference: `ORDER_${orderId}_FITTING`,
+              paymentMethod: 'MOBILE_MONEY',
+              metadata: {
+                orderId,
+                stage: 'FITTING',
+                orderNumber: order.order_number
+              }
+            });
+
+            paymentTriggered = paymentResult.success;
+            
+            if (paymentResult.success) {
+              // Send payment reminder to customer
+              await notificationService.sendNotification({
+                userId: order.customer_id,
+                type: NotificationType.PAYMENT_REMINDER,
+                title: 'Fitting Payment Due',
+                message: `Please complete the fitting payment of GHS ${approvalResult.amountReleased} for order #${order.order_number}`,
+                data: {
+                  orderId,
+                  amount: approvalResult.amountReleased,
+                  paymentUrl: paymentResult.paymentUrl
+                },
+                channels: ['in-app', 'whatsapp'],
+                priority: 'high'
+              });
+            }
+          }
+        } catch (paymentError) {
+          console.error('Failed to trigger fitting payment:', paymentError);
+          // Don't fail the approval, but log the issue
+        }
+      }
     } else if (stage === 'FINAL') {
-      newOrderStatus = 'COMPLETED';
+      // Transition to COMPLETED
+      statusTransitionResult = await orderStatusService.transitionOrder(
+        {
+          orderId,
+          currentStatus: order.status,
+          triggeredBy: 'customer',
+          metadata: { 
+            stage, 
+            approvalNotes: notes,
+            amountReleased: approvalResult.amountReleased 
+          }
+        },
+        'onDelivered'
+      );
+
+      // Send completion notification to tailor
+      if (statusTransitionResult?.success) {
+        await notificationService.sendNotification({
+          userId: order.tailor_id,
+          type: NotificationType.COMPLETION,
+          title: 'Order Completed! 🎉',
+          message: `Order #${order.order_number} has been completed. Final payment of GHS ${approvalResult.amountReleased} has been released.`,
+          data: {
+            orderId,
+            orderNumber: order.order_number,
+            amountReleased: approvalResult.amountReleased
+          },
+          channels: ['in-app', 'whatsapp'],
+          priority: 'high'
+        });
+      }
     }
 
-    // Update order status in database
-    await supabase
-      .from('orders')
-      .update({ 
-        status: newOrderStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', orderId);
+    // Notify tailor about milestone approval
+    await notificationService.sendNotification({
+      userId: order.tailor_id,
+      type: NotificationType.MILESTONE_UPDATE,
+      title: `${stage} Milestone Approved`,
+      message: `Customer has approved the ${stage.toLowerCase()} milestone. ${stage === 'FITTING' ? 'You can continue with the order.' : 'Order is now complete!'}`,
+      data: {
+        orderId,
+        stage,
+        amountReleased: approvalResult.amountReleased
+      },
+      channels: ['in-app', 'whatsapp'],
+      priority: 'normal'
+    });
 
     // Validate response against schema
     const responseData = {

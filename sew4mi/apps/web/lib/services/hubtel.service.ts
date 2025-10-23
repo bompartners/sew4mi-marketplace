@@ -3,11 +3,9 @@ import { networkService } from './networkService';
 import { 
   HubtelPaymentRequest, 
   HubtelPaymentResponse
-  // HubtelWebhookPayload - TODO: Used for webhook processing
 } from '@sew4mi/shared/types';
 import { NETWORK_TIMEOUTS, HUBTEL_ENDPOINTS, HUBTEL_CHANNELS } from '@sew4mi/shared/constants';
 import { validateGhanaPhoneNumber } from '@sew4mi/shared';
-import crypto from 'crypto';
 
 export interface HubtelTransactionStatusResponse {
   transactionId: string;
@@ -24,7 +22,6 @@ export class HubtelService {
   private clientId: string;
   private clientSecret: string;
   private merchantId: string;
-  private webhookSecret: string;
 
   constructor() {
     validateHubtelEnvironment();
@@ -33,7 +30,6 @@ export class HubtelService {
     this.clientId = ENV_CONFIG.HUBTEL_CLIENT_ID;
     this.clientSecret = ENV_CONFIG.HUBTEL_CLIENT_SECRET;
     this.merchantId = ENV_CONFIG.HUBTEL_MERCHANT_ACCOUNT_ID;
-    this.webhookSecret = ENV_CONFIG.HUBTEL_WEBHOOK_SECRET;
   }
 
   /**
@@ -167,29 +163,6 @@ export class HubtelService {
           ? `Status check failed: ${error.message}`
           : 'Status check failed: Unknown error'
       );
-    }
-  }
-
-  /**
-   * Verify webhook signature
-   */
-  verifyWebhookSignature(payload: string, signature: string): boolean {
-    try {
-      const expectedSignature = crypto
-        .createHmac('sha256', this.webhookSecret)
-        .update(payload)
-        .digest('hex');
-      
-      // Remove 'sha256=' prefix if present
-      const cleanSignature = signature.replace(/^sha256=/, '');
-      
-      return crypto.timingSafeEqual(
-        Buffer.from(expectedSignature, 'hex'),
-        Buffer.from(cleanSignature, 'hex')
-      );
-    } catch (error) {
-      console.error('Webhook signature verification error:', error);
-      return false;
     }
   }
 

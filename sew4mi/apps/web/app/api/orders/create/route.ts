@@ -6,6 +6,7 @@ import {
   CreateOrderResponse
 } from '@sew4mi/shared/types';
 import { CreateOrderInputSchema } from '@sew4mi/shared/schemas';
+import { notificationService, NotificationType } from '@/lib/services/notification.service';
 
 /**
  * POST /api/orders/create
@@ -122,7 +123,7 @@ export async function POST(_request: NextRequest) {
       fabric_choice: orderData.fabricChoice,
       special_instructions: orderData.specialInstructions,
       urgency_level: orderData.urgencyLevel,
-      status: 'SUBMITTED',
+      status: 'SUBMITTED',  // Initial status when order is created, awaiting deposit
       total_amount: orderData.totalAmount,
       deposit_amount: depositAmount,
       fitting_payment_amount: fittingAmount,
@@ -184,10 +185,50 @@ export async function POST(_request: NextRequest) {
       // Don't fail the entire order creation, but log the error
     }
 
-    // Send notification to tailor (in real app, would use notification service)
+    // Send notifications to both tailor and customer
     try {
-      // This would be replaced with actual notification service
-      console.log(`New order notification should be sent to tailor ${orderData.tailorId}`);
+      // Get customer profile for notification
+      const { data: customerProfile } = await supabase
+        .from('profiles')
+        .select('full_name, email, phone_number')
+        .eq('id', orderData.customerId)
+        .single();
+
+      // Notify tailor about new order
+      await notificationService.sendNotification({
+        userId: orderData.tailorId,
+        type: NotificationType.ORDER_UPDATE,
+        title: 'New Order Received! 🎉',
+        message: `You have a new order #${newOrder.order_number} for ${orderData.garmentType}. Total: GHS ${orderData.totalAmount}`,
+        data: { 
+          orderId: newOrder.id,
+          orderNumber: newOrder.order_number,
+          customerName: customerProfile?.full_name || 'Customer',
+          garmentType: orderData.garmentType,
+          totalAmount: orderData.totalAmount,
+          estimatedDelivery: orderData.estimatedDelivery
+        },
+        channels: ['in-app', 'whatsapp'],
+        priority: 'high'
+      });
+
+      // Notify customer about order confirmation
+      await notificationService.sendNotification({
+        userId: orderData.customerId,
+        type: NotificationType.ORDER_UPDATE,
+        title: 'Order Created Successfully',
+        message: `Your order #${newOrder.order_number} has been created. Please pay the deposit of GHS ${depositAmount} to confirm.`,
+        data: { 
+          orderId: newOrder.id,
+          orderNumber: newOrder.order_number,
+          depositAmount: depositAmount,
+          totalAmount: orderData.totalAmount
+        },
+        channels: ['in-app', 'whatsapp'],
+        priority: 'high'
+      });
+
+      console.log(`Notifications sent for order ${newOrder.order_number}`);
     } catch (notificationError) {
       console.error('Notification error:', notificationError);
       // Don't fail order creation due to notification issues

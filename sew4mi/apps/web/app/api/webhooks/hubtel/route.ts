@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentService } from '@/lib/services/payment.service';
 import { hubtelWebhookPayloadSchema } from '@sew4mi/shared/schemas';
+import { orderStatusService } from '@/lib/services/order-status.service';
+import { createClient } from '@/lib/supabase/server';
+import { verifyHubtelWebhookIp, logIpVerification } from '@/lib/utils/ip-whitelist';
 
 // Webhook processing cache to prevent duplicate processing
 const processedWebhooks = new Map<string, { timestamp: number; status: string }>();
@@ -40,25 +43,24 @@ function markWebhookProcessed(transactionId: string, status: string) {
 /**
  * POST /api/webhooks/hubtel
  * Handles Hubtel payment status callbacks
+ * Security: IP whitelisting (as per Hubtel recommendation)
  */
 export async function POST(_request: NextRequest) {
   try {
-    // Get raw body for signature verification
-    const rawBody = await _request.text();
-    const signature = _request.headers.get('x-hubtel-signature') || 
-                     _request.headers.get('x-signature') ||
-                     _request.headers.get('signature') || '';
-
-    // Verify webhook signature
-    const webhookResult = await paymentService.processWebhook(rawBody, signature);
+    // Verify request is from Hubtel's callback IP addresses
+    const ipVerification = verifyHubtelWebhookIp(_request);
     
-    if (!webhookResult.success) {
-      console.error('Webhook verification failed:', webhookResult.message);
+    if (!ipVerification.isValid) {
+      logIpVerification(ipVerification);
+      console.error('Unauthorized webhook attempt from:', ipVerification.clientIp);
       return NextResponse.json(
-        { success: false, message: webhookResult.message },
-        { status: 400 }
+        { success: false, message: 'Unauthorized - Invalid source IP' },
+        { status: 403 }
       );
     }
+
+    // Get raw body for payload processing
+    const rawBody = await _request.text();
 
     // Parse webhook payload
     let webhookData;
@@ -92,6 +94,9 @@ export async function POST(_request: NextRequest) {
 
     const payload = validationResult.data;
 
+    // Log successful IP verification
+    logIpVerification(ipVerification, payload.transactionId);
+
     // Check for duplicate webhook (idempotency)
     if (isWebhookProcessed(payload.transactionId, payload.status)) {
       console.log(`Duplicate webhook ignored: ${payload.transactionId} - ${payload.status}`);
@@ -107,15 +112,74 @@ export async function POST(_request: NextRequest) {
       hubtelTransactionId: payload.hubtelTransactionId,
       status: payload.status,
       amount: payload.amount,
-      timestamp: payload.timestamp
+      timestamp: payload.timestamp,
+      sourceIp: ipVerification.clientIp
     });
 
-    // Process webhook through payment service (includes database update)
-    const processResult = await paymentService.processWebhook(rawBody, signature);
-    
-    if (!processResult.success) {
-      console.error('Payment service webhook processing failed:', processResult.message);
-      // Continue processing as signature was already verified
+    // Handle order status updates for successful payments
+    if (payload.status === 'Success' || payload.status === 'PAID') {
+      try {
+        // Get order associated with this transaction
+        const supabase = await createClient();
+        
+        // First check payment_transactions table
+        const { data: transaction } = await supabase
+          .from('payment_transactions')
+          .select('order_id, escrow_stage')
+          .eq('transaction_id', payload.transactionId)
+          .single();
+
+        if (transaction?.order_id) {
+          // Determine payment type from escrow stage
+          let paymentType: 'deposit' | 'fitting' | 'final' = 'deposit';
+          
+          if (transaction.escrow_stage === 'FITTING') {
+            paymentType = 'fitting';
+          } else if (transaction.escrow_stage === 'FINAL') {
+            paymentType = 'final';
+          }
+
+          // Process order status transition
+          const statusResult = await orderStatusService.handlePaymentConfirmation(
+            transaction.order_id,
+            paymentType,
+            payload.transactionId
+          );
+
+          if (statusResult.success) {
+            console.log(`Order status updated: ${statusResult.message}`);
+            console.log(`Notifications sent: ${statusResult.notifications?.join(', ')}`);
+          } else {
+            console.error(`Failed to update order status: ${statusResult.message}`);
+          }
+        } else {
+          // Fallback: Try to find order by reference in metadata
+          console.log('Transaction not found, checking order reference...');
+          
+          // Check if reference contains order ID (format: ORDER_[orderId]_[stage])
+          const referenceMatch = payload.reference?.match(/ORDER_([a-f0-9-]+)_(\w+)/i);
+          if (referenceMatch) {
+            const [, orderId, stage] = referenceMatch;
+            
+            let paymentType: 'deposit' | 'fitting' | 'final' = 'deposit';
+            if (stage === 'FITTING') paymentType = 'fitting';
+            else if (stage === 'FINAL') paymentType = 'final';
+            
+            const statusResult = await orderStatusService.handlePaymentConfirmation(
+              orderId,
+              paymentType,
+              payload.transactionId
+            );
+            
+            if (statusResult.success) {
+              console.log(`Order status updated via reference: ${statusResult.message}`);
+            }
+          }
+        }
+      } catch (orderUpdateError) {
+        console.error('Failed to update order status:', orderUpdateError);
+        // Don't fail the webhook - payment was successful
+      }
     }
     
     // Mark webhook as processed to prevent duplicates

@@ -168,21 +168,12 @@ export class PaymentService {
 
   /**
    * Process webhook notification
+   * Note: IP whitelisting is handled at the route level
    */
   async processWebhook(
-    payload: string, 
-    signature: string
+    payload: string
   ): Promise<{ success: boolean; message: string; transactionId?: string }> {
     try {
-      // Verify webhook signature
-      if (!hubtelService.verifyWebhookSignature(payload, signature)) {
-        console.error('Invalid webhook signature');
-        return { 
-          success: false, 
-          message: 'Invalid webhook signature' 
-        };
-      }
-
       // Parse webhook payload
       const webhookData: HubtelWebhookPayload = JSON.parse(payload);
       

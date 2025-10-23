@@ -14,7 +14,7 @@ export const ENV_CONFIG = {
   HUBTEL_CLIENT_ID: process.env.HUBTEL_CLIENT_ID || '',
   HUBTEL_CLIENT_SECRET: process.env.HUBTEL_CLIENT_SECRET || '',
   HUBTEL_MERCHANT_ACCOUNT_ID: process.env.HUBTEL_MERCHANT_ACCOUNT_ID || '',
-  HUBTEL_WEBHOOK_SECRET: process.env.HUBTEL_WEBHOOK_SECRET || '',
+  HUBTEL_CALLBACK_IPS: process.env.HUBTEL_CALLBACK_IPS || '', // Comma-separated IP addresses
   HUBTEL_ENVIRONMENT: (process.env.HUBTEL_ENVIRONMENT || 'sandbox') as 'sandbox' | 'production',
   HUBTEL_BASE_URL: process.env.HUBTEL_BASE_URL || 
     (process.env.HUBTEL_ENVIRONMENT === 'production' 
@@ -49,7 +49,6 @@ export function validateHubtelEnvironment(): void {
     'HUBTEL_CLIENT_ID',
     'HUBTEL_CLIENT_SECRET', 
     'HUBTEL_MERCHANT_ACCOUNT_ID',
-    'HUBTEL_WEBHOOK_SECRET',
     'HUBTEL_CALLBACK_URL',
   ] as const;
 
@@ -64,6 +63,14 @@ export function validateHubtelEnvironment(): void {
   if (!['sandbox', 'production'].includes(ENV_CONFIG.HUBTEL_ENVIRONMENT)) {
     throw new Error(
       `Invalid HUBTEL_ENVIRONMENT: ${ENV_CONFIG.HUBTEL_ENVIRONMENT}. Must be 'sandbox' or 'production'`
+    );
+  }
+
+  // Warn if callback IPs not configured (security)
+  if (!ENV_CONFIG.HUBTEL_CALLBACK_IPS) {
+    console.warn(
+      'WARNING: HUBTEL_CALLBACK_IPS not configured. Webhook IP verification is disabled. ' +
+      'This is a security risk in production.'
     );
   }
 }
