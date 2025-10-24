@@ -74,7 +74,7 @@ export function RegistrationForm({ initialRole, onSuccess, onOTPRequired }: Regi
       } else {
         // Registration completed without verification
         if (onSuccess) {
-          onSuccess(data, (result as any).user);
+          onSuccess(data, result.user);
         }
       }
     } catch (err) {

@@ -52,6 +52,10 @@ export class AuthService {
 
       if (error) {
         console.error('Supabase registration error:', error);
+        // Handle specific error codes from Supabase
+        if (error.message === 'User already registered' || error.status === 422) {
+          throw new Error('An account with this email or phone already exists. Please sign in instead.');
+        }
         throw new Error(this.formatError(error.message));
       }
 
@@ -394,6 +398,7 @@ export class AuthService {
   private formatError(errorMessage: string): string {
     // Map common Supabase errors to user-friendly messages
     const errorMap: Record<string, string> = {
+      'User already registered': 'An account with this email or phone already exists. Please sign in instead.',
       'Email already exists': 'An account with this email already exists. Please sign in instead.',
       'Phone number already exists': 'An account with this phone number already exists. Please sign in instead.',
       'Invalid login credentials': 'The email/phone or password you entered is incorrect. Please try again.',
@@ -439,18 +444,27 @@ export class AuthService {
           whatsapp_opted_in: false,
           phone_verified: false
         })
+        .select()
+        .single();
 
       if (error) {
         console.error('Failed to create user profile:', error);
         // Don't throw here as auth user is already created
+        // But log it for debugging
+        return null;
       }
 
+      console.log('✅ User profile created successfully:', data.id);
+      
+      // Wait a brief moment to ensure trigger has executed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       return data;
     } catch (error) {
       console.error('createUserProfile failed:', error);
       // Don't throw here as auth user is already created
-    }
       return null;
+    }
   }
 }
 

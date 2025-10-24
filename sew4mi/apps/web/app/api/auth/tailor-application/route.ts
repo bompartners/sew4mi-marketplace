@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         portfolio_description: applicationData.portfolioDescription,
         business_location: applicationData.businessLocation,
         workspace_photos: applicationData.workspacePhotos,
-        references: applicationData.references.map(ref => ({
+        business_references: applicationData.references.map(ref => ({
           name: ref.name,
           phone: ref.phone,
           relationship: ref.relationship
@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
         submitted_at: new Date().toISOString(),
         metadata: {
           agreed_to_terms: applicationData.agreedToTerms,
-          submission_ip: _request.headers.get('x-forwarded-for') || _request.headers.get('remote-addr'),
-          user_agent: _request.headers.get('user-agent')
+          submission_ip: request.headers.get('x-forwarded-for') || request.headers.get('remote-addr'),
+          user_agent: request.headers.get('user-agent')
         }
       })
       .select()
@@ -128,13 +128,13 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         metadata: {
           action_type: 'tailor_application_submitted',
-          user_agent: _request.headers.get('user-agent'),
-          ip_address: _request.headers.get('x-forwarded-for') || _request.headers.get('remote-addr')
+          user_agent: request.headers.get('user-agent'),
+          ip_address: request.headers.get('x-forwarded-for') || request.headers.get('remote-addr')
         }
       });
 
     // Send notification email (in background)
-    fetch(`${_request.nextUrl.origin}/api/notifications/tailor-application`, {
+    fetch(`${request.nextUrl.origin}/api/notifications/tailor-application`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

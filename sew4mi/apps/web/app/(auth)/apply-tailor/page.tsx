@@ -1,22 +1,38 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import { TailorApplicationForm } from '@/components/features/auth/TailorApplicationForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User, Loader2 } from 'lucide-react';
 import type { TailorApplication } from '@sew4mi/shared';
 
 export default function ApplyTailorPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user, isLoading: authLoading } = useAuth();
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   
-  const userId = searchParams.get('userId');
+  const urlUserId = searchParams.get('userId');
   const userName = searchParams.get('userName');
+  
+  // Use authenticated user ID or fall back to URL param
+  const userId = user?.id || urlUserId;
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login?redirect=/apply-tailor');
+    }
+  }, [authLoading, user, router]);
 
   const handleApplicationSubmit = async (data: TailorApplication) => {
+    if (!userId) {
+      throw new Error('User ID is required to submit application');
+    }
+
     try {
       // Submit tailor application
       const response = await fetch('/api/auth/tailor-application', {
@@ -54,6 +70,22 @@ export default function ApplyTailorPage() {
     // Allow users to skip application for now and complete later
     router.push('/dashboard?welcome=true&incomplete_profile=tailor');
   };
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  // Show nothing if redirecting to login
+  if (!user) {
+    return null;
+  }
 
   if (applicationSubmitted) {
     return (

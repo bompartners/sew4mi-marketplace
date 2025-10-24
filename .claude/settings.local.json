@@ -73,7 +73,8 @@
       "Bash(docker compose:*)",
       "Bash(mv:*)",
       "Bash(rm:*)",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(claude mcp add:*)"
     ],
     "deny": [],
     "ask": []

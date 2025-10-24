@@ -18,39 +18,77 @@ export class LoyaltyRepository {
   async getOrCreateAccount(userId: string): Promise<LoyaltyAccount> {
     const supabase = await createServerSupabaseClient();
 
-    // Try to get existing account
-    const { data: existing, error: fetchError } = await supabase
+    // Try to get existing account (with retries for new users)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: existing, error: fetchError } = await supabase
+        .from('loyalty_accounts')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch loyalty account: ${fetchError.message}`);
+      }
+
+      if (existing) {
+        return this.mapAccountDatabaseToModel(existing);
+      }
+
+      // If this is not the first attempt, wait a bit for the trigger to complete
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        continue;
+      }
+
+      // First attempt: try to create new account if it doesn't exist
+      const { data, error } = await supabase
+        .from('loyalty_accounts')
+        .insert({
+          user_id: userId,
+          total_points: 0,
+          available_points: 0,
+          lifetime_points: 0,
+          tier: 'BRONZE',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        // If foreign key constraint error, the user doesn't exist yet - wait and retry
+        if (error.code === '23503') {
+          console.log('User profile not ready yet, waiting...');
+          await new Promise(resolve => setTimeout(resolve, 300));
+          continue;
+        }
+        
+        // If duplicate key error, the trigger already created it - try to fetch again
+        if (error.code === '23505') {
+          console.log('Loyalty account already exists (created by trigger), fetching...');
+          continue;
+        }
+        
+        throw new Error(`Failed to create loyalty account: ${error.message}`);
+      }
+
+      return this.mapAccountDatabaseToModel(data);
+    }
+
+    // Final attempt to fetch after retries
+    const { data: finalCheck, error: finalError } = await supabase
       .from('loyalty_accounts')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (fetchError) {
-      throw new Error(`Failed to fetch loyalty account: ${fetchError.message}`);
+    if (finalError) {
+      throw new Error(`Failed to fetch loyalty account after retries: ${finalError.message}`);
     }
 
-    if (existing) {
-      return this.mapAccountDatabaseToModel(existing);
+    if (!finalCheck) {
+      throw new Error('Loyalty account could not be created or found after multiple attempts');
     }
 
-    // Create new account if it doesn't exist
-    const { data, error } = await supabase
-      .from('loyalty_accounts')
-      .insert({
-        user_id: userId,
-        total_points: 0,
-        available_points: 0,
-        lifetime_points: 0,
-        tier: 'BRONZE',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to create loyalty account: ${error.message}`);
-    }
-
-    return this.mapAccountDatabaseToModel(data);
+    return this.mapAccountDatabaseToModel(finalCheck);
   }
 
   /**

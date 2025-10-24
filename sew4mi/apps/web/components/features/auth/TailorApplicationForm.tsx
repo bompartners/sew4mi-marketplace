@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,11 @@ import {
   Briefcase,
   User,
   Camera,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
+import { uploadMultipleImages } from '@/lib/utils/image-upload';
+import { createClientSupabaseClient } from '@/lib/supabase/client';
 
 interface TailorApplicationFormProps {
   onSubmit: (data: TailorApplication) => Promise<void>;
@@ -36,13 +39,17 @@ export function TailorApplicationForm({ onSubmit, onSkip, userId: _userId }: Tai
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
-  const [uploadedFiles, _setUploadedFiles] = useState<{
+  const [uploadedFiles, setUploadedFiles] = useState<{
     workspace: string[];
     documents: string[];
   }>({
     workspace: [],
     documents: []
   });
+  const [isUploadingWorkspace, setIsUploadingWorkspace] = useState(false);
+  const [isUploadingDocument, setIsUploadingDocument] = useState(false);
+  const workspaceFileInputRef = useRef<HTMLInputElement>(null);
+  const documentsFileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -118,6 +125,152 @@ export function TailorApplicationForm({ onSubmit, onSkip, userId: _userId }: Tai
     if (current.length > 2) {
       setValue('references', current.filter((_, i) => i !== index));
     }
+  };
+
+  const handleWorkspacePhotosUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const fileArray = Array.from(files);
+    
+    // Validate number of files (1-5 photos)
+    if (fileArray.length + uploadedFiles.workspace.length > 5) {
+      setError('You can only upload up to 5 workspace photos');
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = fileArray.filter(file => {
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (!validTypes.includes(file.type)) {
+        setError(`Invalid file type: ${file.name}. Please upload JPG, PNG, or WebP images.`);
+        return false;
+      }
+
+      if (file.size > maxSize) {
+        setError(`File too large: ${file.name}. Maximum size is 5MB.`);
+        return false;
+      }
+
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    try {
+      setIsUploadingWorkspace(true);
+      setError(null);
+
+      // Upload files to Supabase Storage
+      const urls = await uploadMultipleImages(validFiles, {
+        bucket: 'tailor-applications',
+        folder: 'workspace-photos',
+        maxSizeMB: 5,
+        maxWidthOrHeight: 1920
+      });
+
+      // Update state with new URLs
+      setUploadedFiles(prev => ({
+        ...prev,
+        workspace: [...prev.workspace, ...urls]
+      }));
+
+      // Update form value
+      setValue('workspacePhotos', [...uploadedFiles.workspace, ...urls]);
+      trigger('workspacePhotos');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload photos');
+    } finally {
+      setIsUploadingWorkspace(false);
+    }
+  };
+
+  const removeWorkspacePhoto = (index: number) => {
+    const updated = uploadedFiles.workspace.filter((_, i) => i !== index);
+    setUploadedFiles(prev => ({
+      ...prev,
+      workspace: updated
+    }));
+    setValue('workspacePhotos', updated);
+    trigger('workspacePhotos');
+  };
+
+  const handleDocumentUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0]; // Only allow one document
+    
+    // Validate file type - allow common document types
+    const validTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!validTypes.includes(file.type)) {
+      setError('Invalid file type. Please upload PDF, Word, or image files.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setError('File too large. Maximum size is 10MB.');
+      return;
+    }
+
+    try {
+      setIsUploadingDocument(true);
+      setError(null);
+
+      // For documents, we'll upload them as-is without compression
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(7);
+      const fileExtension = file.name.split('.').pop();
+      const fileName = `${timestamp}_${randomString}.${fileExtension}`;
+      const filePath = `business-documents/${fileName}`;
+
+      // Upload to Supabase Storage
+      const supabase = createClientSupabaseClient();
+      const { data, error: uploadError } = await supabase.storage
+        .from('tailor-applications')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('tailor-applications')
+        .getPublicUrl(data.path);
+
+      // Update state with new URL
+      setUploadedFiles(prev => ({
+        ...prev,
+        documents: [urlData.publicUrl]
+      }));
+
+      // Update form value
+      setValue('businessRegistration', urlData.publicUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload document');
+    } finally {
+      setIsUploadingDocument(false);
+    }
+  };
+
+  const removeDocument = () => {
+    setUploadedFiles(prev => ({
+      ...prev,
+      documents: []
+    }));
+    setValue('businessRegistration', undefined);
   };
 
   const nextStep = async () => {
@@ -308,17 +461,55 @@ export function TailorApplicationForm({ onSubmit, onSkip, userId: _userId }: Tai
                   <p className="text-sm text-gray-600">
                     Upload photos of your workspace, tools, and recent work
                   </p>
-                  <Button type="button" variant="outline" size="sm" className="mt-2">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Photos
+                  <input
+                    ref={workspaceFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    multiple
+                    onChange={(e) => handleWorkspacePhotosUpload(e.target.files)}
+                    className="hidden"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => workspaceFileInputRef.current?.click()}
+                    disabled={isUploadingWorkspace || uploadedFiles.workspace.length >= 5}
+                  >
+                    {isUploadingWorkspace ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Photos ({uploadedFiles.workspace.length}/5)
+                      </>
+                    )}
                   </Button>
                 </div>
                 {uploadedFiles.workspace.length > 0 && (
-                  <div className="flex gap-2 mt-2">
-                    {uploadedFiles.workspace.map((_url, index) => (
-                      <div key={index} className="relative">
-                        <FileImage className="h-8 w-8 text-green-600" />
-                        <CheckCircle className="h-4 w-4 text-green-600 absolute -top-1 -right-1" />
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {uploadedFiles.workspace.map((url, index) => (
+                      <div key={index} className="relative group">
+                        <div className="w-20 h-20 border rounded-lg overflow-hidden">
+                          <img 
+                            src={url} 
+                            alt={`Workspace ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeWorkspacePhoto(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Remove photo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                        <CheckCircle className="h-4 w-4 text-green-600 absolute bottom-1 right-1" />
                       </div>
                     ))}
                   </div>
@@ -407,10 +598,52 @@ export function TailorApplicationForm({ onSubmit, onSkip, userId: _userId }: Tai
                   <p className="text-xs text-gray-600">
                     Upload business certificate or registration if available
                   </p>
-                  <Button type="button" variant="outline" size="sm" className="mt-2">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Upload Document
+                  <input
+                    ref={documentsFileInputRef}
+                    type="file"
+                    accept="application/pdf,image/jpeg,image/jpg,image/png,image/webp,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => handleDocumentUpload(e.target.files)}
+                    className="hidden"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-2"
+                    onClick={() => documentsFileInputRef.current?.click()}
+                    disabled={isUploadingDocument || uploadedFiles.documents.length > 0}
+                  >
+                    {isUploadingDocument ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : uploadedFiles.documents.length > 0 ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                        Document Uploaded
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Document
+                      </>
+                    )}
                   </Button>
+                  {uploadedFiles.documents.length > 0 && (
+                    <div className="mt-2 flex items-center justify-center gap-2">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <span className="text-xs text-green-600">Document uploaded successfully</span>
+                      <button
+                        type="button"
+                        onClick={removeDocument}
+                        className="text-red-500 hover:text-red-700"
+                        aria-label="Remove document"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

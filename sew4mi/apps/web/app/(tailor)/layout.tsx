@@ -3,6 +3,7 @@
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { RoleBasedNavigation } from '@/components/common/Navigation/RoleBasedNavigation';
+import { TailorApplicationGuard } from '@/components/features/tailors/TailorApplicationGuard';
 import { Loader2, Menu, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -114,7 +115,9 @@ export default function TailorLayout({
 
       {/* Page Content */}
       <main className="flex-1">
-        {children}
+        <TailorApplicationGuard>
+          {children}
+        </TailorApplicationGuard>
       </main>
 
       {/* Footer */}

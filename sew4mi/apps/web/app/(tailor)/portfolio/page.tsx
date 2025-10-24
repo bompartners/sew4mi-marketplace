@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ import {
   Loader2,
   Plus,
   CheckSquare,
-  Square
+  Square,
+  AlertCircle
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -34,6 +36,7 @@ interface PortfolioItem {
 const ITEMS_PER_PAGE = 9;
 
 export default function PortfolioPage() {
+  const router = useRouter();
   const { user, userRole, isLoading: authLoading } = useAuth();
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,8 +102,6 @@ export default function PortfolioPage() {
           setError('Please log in to view your portfolio.');
         } else if (response.status === 403) {
           setError('Access denied. You must be a tailor to view this page.');
-        } else if (response.status === 404) {
-          setError('Tailor profile not found. Please complete your profile setup.');
         } else {
           setError(errorData.error || 'Failed to load portfolio. Please try again.');
         }

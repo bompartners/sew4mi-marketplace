@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ApplicationStatusCard, type ApplicationStatus } from '@/components/features/tailors/ApplicationStatusCard';
 import { 
   Package, 
   DollarSign, 
@@ -19,7 +20,8 @@ import {
   Users,
   Scissors,
   Eye,
-  Plus
+  Plus,
+  Loader2
 } from 'lucide-react';
 
 interface TailorDashboardProps {
@@ -28,6 +30,50 @@ interface TailorDashboardProps {
 
 export function TailorDashboard({ className }: TailorDashboardProps) {
   const { user } = useAuth();
+  const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus | null>(null);
+  const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+
+  useEffect(() => {
+    fetchApplicationStatus();
+  }, []);
+
+  const fetchApplicationStatus = async () => {
+    try {
+      setIsLoadingStatus(true);
+      const response = await fetch('/api/tailors/application-status');
+      if (response.ok) {
+        const data = await response.json();
+        setApplicationStatus(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch application status:', error);
+    } finally {
+      setIsLoadingStatus(false);
+    }
+  };
+
+  // Show loading state
+  if (isLoadingStatus) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
+            <span className="text-muted-foreground">Checking your application status...</span>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show incomplete application states
+  if (applicationStatus && !applicationStatus.hasProfile) {
+    return (
+      <div className={`space-y-6 ${className}`}>
+        <ApplicationStatusCard status={applicationStatus} />
+      </div>
+    );
+  }
 
   // Mock data - in real app, this would come from API
   const dashboardData = {

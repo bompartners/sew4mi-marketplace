@@ -18,7 +18,7 @@ interface AuthState {
 
 interface AuthActions {
   signIn: (credential: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string; userRole?: UserRole }>;
-  signUp: (data: RegistrationInput) => Promise<{ requiresVerification: boolean; verificationMethod?: string }>;
+  signUp: (data: RegistrationInput) => Promise<{ requiresVerification: boolean; verificationMethod?: string; user?: User | null }>;
   signOut: () => Promise<void>;
   verifyOTP: (identifier: string, otp: string, type: 'email' | 'phone') => Promise<void>;
   resendOTP: (identifier: string, type: 'email' | 'phone') => Promise<void>;
@@ -247,7 +247,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           isLoading: false,
           initialized: true,
         }));
-        return { requiresVerification: false };
+        return { 
+          requiresVerification: false,
+          user: result.user 
+        };
       }
     } catch (error) {
       setState((prev) => ({

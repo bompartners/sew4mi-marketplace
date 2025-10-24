@@ -91,19 +91,22 @@ export default function OrdersPage() {
 
         // For tailors, we need to get their tailor_profile_id first
         if (role === 'TAILOR') {
-          // Get tailor profile
+          // Get tailor profile (might not exist if application is pending)
           const { data: tailorProfile, error: profileError } = await supabase
             .from('tailor_profiles')
             .select('id')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle(); // Use maybeSingle() instead of single() to handle 0 or 1 rows
 
+          // If error other than no rows found
           if (profileError) {
             console.error('Error fetching tailor profile:', profileError);
             throw new Error('Failed to fetch tailor profile');
           }
 
+          // If no tailor profile exists (pending application), show empty state
           if (!tailorProfile) {
+            console.log('No tailor profile found - application may be pending');
             setOrders([]);
             setLoading(false);
             return;
